@@ -1,0 +1,22 @@
+{
+  "summary": "Frontend-only retest of the one-sided SGP devig fix, on live Kalshi data. Reproduced the reported case: Luka Doncic (LAC vs LAL), 10+ Assists (+296), 10+ Rebounds (+280) and 35+ Points (+152) in the Parlay tab, DraftKings 1900 and FanDuel 1600 (no plus sign), hold 15%. parlay-fair = +2014 (4.7%), which matches the hand calculation avg(0.05, 0.0588)/1.15. parlay-ev = +64.1% (finite) against the live Kalshi combo quote of +3368. parlay-price-source shows 'Live Kalshi combo quote · 9-11 market maker quotes'. The parlay-devig-note is shown and there are no slip-method buttons in Parlay mode. Switching the method to power, worst or add on the Straight tab and returning to Parlay keeps fair at +2014 and EV at +64.1%. Hold 0% gives +1738 (correct). An extreme SGP of 99999999 shows '+99999+' with no overflow (scrollWidth equals clientWidth, text-overflow is ellipsis). Straight tab: Over-only +300 gives +320 with the 5% single hold, the same for every method, and +340 at a 10% hold. Over/Under +300/-450 gives mult +327, add +363, power +388, worst +388 (the minimum, correct). All values were verified by hand. No page errors. Two live RFQs were used.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "devigOneSided(p, hold) takes 2 args, but ParlaySlip.js:43 and StraightSlip.js:16 still pass settings.method as a 3rd, unused argument. Remove it to avoid confusion.",
+    "Open items from iteration_3 are still open (not retested): a manual Kalshi odds input is ignored while a live quote exists, a stale live-quote race when legs change, and 502 bodies are swallowed by the ingress."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Luka tickers: KXNBAAST-26OCT23LACLAL-LALLDONCIC77-10, KXNBAREB-26OCT23LACLAL-LALLDONCIC77-10, KXNBAPTS-26OCT23LACLAL-LALLDONCIC77-35 (live data, may change). Expand rows via market-row-{assists|rebounds|points}. Parlay inputs: parlay-sgp-{Book}. Straight inputs: straight-{ticker}-over/under-{Book} after toggle-book-odds-{ticker}.",
+  "test_credentials": "No auth in this app"
+}
