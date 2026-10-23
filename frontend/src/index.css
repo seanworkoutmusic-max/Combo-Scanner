@@ -17,12 +17,12 @@ body {
 
 .grid-bg {
     background-image:
-        linear-gradient(rgba(34, 211, 238, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(34, 211, 238, 0.04) 1px, transparent 1px);
+        linear-gradient(rgba(0, 217, 145, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 217, 145, 0.04) 1px, transparent 1px);
     background-size: 32px 32px;
 }
 
-::selection { background: rgba(34, 211, 238, 0.35); }
+::selection { background: rgba(0, 217, 145, 0.35); }
 
 @keyframes rowIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .row-in { animation: rowIn 0.35s ease-out both; }
@@ -35,7 +35,7 @@ body {
         --card-foreground: 210 40% 98%;
         --popover: 220 30% 9%;
         --popover-foreground: 210 40% 98%;
-        --primary: 188 86% 53%;
+        --primary: 160 100% 43%;
         --primary-foreground: 222 33% 4%;
         --secondary: 218 26% 14%;
         --secondary-foreground: 210 40% 98%;
@@ -47,7 +47,7 @@ body {
         --destructive-foreground: 210 40% 98%;
         --border: 215 35% 18%;
         --input: 215 35% 18%;
-        --ring: 188 86% 53%;
+        --ring: 160 100% 43%;
         --radius: 0.375rem;
     }
 }
