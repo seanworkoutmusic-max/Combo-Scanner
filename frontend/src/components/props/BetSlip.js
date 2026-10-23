@@ -40,7 +40,7 @@ const Settings = ({ settings, update, mode }) => (
   </div>
 );
 
-export const BetSlip = ({ legs, mode, setMode, combo, parlayOdds, setParlayOdds, straightOdds, setStraightOdds, settings, update, format, remove, clear, live, onLiveQuote, liveLoading, kalshiKey }) => (
+export const BetSlip = ({ legs, mode, setMode, combo, parlayOdds, setParlayOdds, straightOdds, setStraightOdds, settings, update, format, remove, clear, live, onLiveQuote, liveLoading, kalshiKey, quoteSize, setQuoteSize }) => (
   <aside data-testid="bet-slip" className="space-y-4">
     <div className="flex items-center justify-between">
       <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
@@ -69,7 +69,7 @@ export const BetSlip = ({ legs, mode, setMode, combo, parlayOdds, setParlayOdds,
             <div className="text-sm text-slate-500 text-center py-6">Add at least 2 legs for a parlay.</div>
           ) : (
             <ParlaySlip legs={legs} combo={combo} odds={parlayOdds} setOdds={setParlayOdds} settings={settings} format={format} remove={remove}
-              live={live} onLiveQuote={onLiveQuote} liveLoading={liveLoading} kalshiKey={kalshiKey} />
+              live={live} onLiveQuote={onLiveQuote} liveLoading={liveLoading} kalshiKey={kalshiKey} quoteSize={quoteSize} setQuoteSize={setQuoteSize} />
           )
         ) : (
           <StraightSlip legs={legs} bookOdds={straightOdds} setBookOdds={setStraightOdds} settings={settings} format={format} remove={remove} />

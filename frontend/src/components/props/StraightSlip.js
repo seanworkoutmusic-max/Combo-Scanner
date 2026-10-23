@@ -4,10 +4,22 @@ import { BookOdds } from "./BookOdds";
 import { Verdict } from "./Verdict";
 import { PriceTag } from "./MarketList";
 import { PlayerPhoto } from "./PlayerPhoto";
+import { Ladder } from "./Ladder";
+import { toast } from "sonner";
+import { getOrderbook, errMsg } from "../../lib/api";
 import { americanToProb, avg, devig, devigOneSided, evPct, legLabel, legOver } from "../../lib/slip";
 
 const StraightLeg = ({ leg, odds, setOdds, settings, format, onRemove }) => {
   const [open, setOpen] = useState(false);
+  const [book, setBook] = useState(null);
+  const toggleBook = async () => {
+    if (book) return setBook(null);
+    try {
+      setBook(await getOrderbook(leg.ticker));
+    } catch (e) {
+      toast.error(errMsg(e));
+    }
+  };
   const fairs = Object.values(odds || {})
     .map((o) => {
       const po = americanToProb(o?.over);
@@ -32,9 +44,15 @@ const StraightLeg = ({ leg, odds, setOdds, settings, format, onRemove }) => {
         </div>
       </div>
       <Verdict fair={fair} price={leg.yes_ask} ev={evPct(fair, leg.yes_ask, settings.fees)} books={fairs.length} format={format} prefix={`straight-${id}`} />
-      <button data-testid={`toggle-book-odds-${id}`} onClick={() => setOpen(!open)} className="text-xs text-cyan-300 hover:text-cyan-200">
-        {open ? "Hide book odds" : "Enter book odds"}
-      </button>
+      <div className="flex gap-4">
+        <button data-testid={`toggle-book-odds-${id}`} onClick={() => setOpen(!open)} className="text-xs text-cyan-300 hover:text-cyan-200">
+          {open ? "Hide book odds" : "Enter book odds"}
+        </button>
+        <button data-testid={`toggle-orderbook-${id}`} onClick={toggleBook} className="text-xs text-cyan-300 hover:text-cyan-200">
+          {book ? "Hide order book" : "Kalshi order book"}
+        </button>
+      </div>
+      {book && <Ladder rows={book.yes_asks} format={format} testid={`orderbook-${id}`} title="Kalshi YES asks · available now" cumulative />}
       {open && <BookOdds mode="straight" odds={odds || {}} setOdds={setOdds} prefix={`straight-${id}`} />}
     </div>
   );

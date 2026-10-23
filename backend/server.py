@@ -187,6 +187,20 @@ async def start_combo_scanner():
 
 class QuoteReq(BaseModel):
     tickers: List[str]
+    target_dollars: Optional[float] = None
+
+
+@api_router.get("/props/orderbook/{ticker}")
+async def props_orderbook(ticker: str):
+    async with httpx.AsyncClient(timeout=15) as c:
+        r = await c.get(f"{kalshi.KALSHI_BASE}/markets/{ticker}/orderbook", params={"depth": 15})
+    if r.status_code >= 400:
+        raise HTTPException(424, f"Kalshi orderbook unavailable ({r.status_code})")
+    ob = r.json().get("orderbook_fp") or {}
+    # Buying YES fills against resting NO bids at (1 - no price).
+    asks = [{"price": round(1 - float(p), 4), "contracts": float(q)} for p, q in reversed(ob.get("no_dollars") or [])]
+    bids = [{"price": float(p), "contracts": float(q)} for p, q in reversed(ob.get("yes_dollars") or [])]
+    return {"ticker": ticker, "yes_asks": asks, "yes_bids": bids}
 
 
 @api_router.post("/props/kalshi-quote")
@@ -196,7 +210,7 @@ async def props_kalshi_quote(req: QuoteReq):
     if len(req.tickers) < 2:
         raise HTTPException(400, "Pick at least 2 legs")
     try:
-        return await kalshi_auth.live_combo_quote(req.tickers)
+        return await kalshi_auth.live_combo_quote(req.tickers, target_dollars=req.target_dollars)
     except kalshi_auth.KalshiAuthError as e:
         raise HTTPException(424, str(e))
     except httpx.HTTPError as e:

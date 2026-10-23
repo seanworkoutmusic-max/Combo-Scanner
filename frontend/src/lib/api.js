@@ -11,5 +11,6 @@ export const getPropsGames = () => axios.get(`${API}/props/games`).then((r) => r
 export const getPropsPlayers = () => axios.get(`${API}/props/players`).then((r) => r.data);
 export const getPropsGame = (code) => axios.get(`${API}/props/game/${code}`).then((r) => r.data);
 export const postSlip = (tickers) => axios.post(`${API}/props/slip`, { tickers }).then((r) => r.data);
-export const postKalshiQuote = (tickers) => axios.post(`${API}/props/kalshi-quote`, { tickers }).then((r) => r.data);
+export const postKalshiQuote = (tickers, target_dollars) => axios.post(`${API}/props/kalshi-quote`, { tickers, target_dollars }).then((r) => r.data);
+export const getOrderbook = (ticker) => axios.get(`${API}/props/orderbook/${ticker}`).then((r) => r.data);
 export const errMsg = (e) => e?.response?.data?.detail || e.message;
