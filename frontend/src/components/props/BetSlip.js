@@ -63,7 +63,7 @@ export const BetSlip = ({ legs, mode, setMode, combo, parlayOdds, setParlayOdds,
       </div>
     ) : (
       <>
-        <Settings settings={settings} update={update} mode={mode} />
+        {mode === "straight" && <Settings settings={settings} update={update} mode={mode} />}
         {mode === "parlay" ? (
           legs.length < 2 ? (
             <div className="text-sm text-slate-500 text-center py-6">Add at least 2 legs for a parlay.</div>
