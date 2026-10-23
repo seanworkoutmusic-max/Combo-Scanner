@@ -13,6 +13,11 @@ const Num = ({ label, value, onChange, testid }) => (
 
 const Settings = ({ settings, update, mode }) => (
   <div className="rounded-md border border-slate-800 bg-[#0B0F17] p-3 space-y-2.5">
+    {mode === "parlay" ? (
+      <p data-testid="parlay-devig-note" className="text-[11px] text-slate-500 leading-relaxed">
+        SGP odds only have one side, so fair = book odds with the assumed hold removed. Devig methods apply to Straight bets with Over and Under.
+      </p>
+    ) : (
     <div className="flex flex-wrap gap-1" data-testid="slip-devig-method">
       {METHODS.map((m) => (
         <button key={m.id} data-testid={`slip-method-${m.id}`} onClick={() => update({ method: m.id })}
@@ -21,6 +26,7 @@ const Settings = ({ settings, update, mode }) => (
         </button>
       ))}
     </div>
+    )}
     <div className="flex flex-wrap items-center gap-4">
       {mode === "parlay" ? (
         <Num label="Assumed SGP hold %" value={settings.parlayHold} onChange={(v) => update({ parlayHold: v })} testid="input-parlay-hold" />

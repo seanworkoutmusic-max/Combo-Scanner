@@ -18,7 +18,7 @@ export const probToAmerican = (p) => {
   return p >= 0.5 ? Math.round((-100 * p) / (1 - p)) : Math.round((100 * (1 - p)) / p);
 };
 
-export const fmtAmerican = (a) => (a == null ? "—" : a > 0 ? `+${a}` : `${a}`);
+export const fmtAmerican = (a) => (a == null ? "—" : a > 99999 ? "+99999+" : a < -99999 ? "-99999+" : a > 0 ? `+${a}` : `${a}`);
 export const fmtPct = (p, d = 1) => (p == null || Number.isNaN(p) ? "—" : `${(p * 100).toFixed(d)}%`);
 export const fmtCents = (p) => (p == null ? "—" : `${Math.round(p * 100)}¢`);
 

@@ -30,8 +30,8 @@ export const devig = (pYes, pNo, method) => {
   return method === "worst" ? Math.min(vals.mult, vals.add, vals.power) : vals[method];
 };
 
-// One-sided price (e.g. an SGP): assume the market's total hold to infer the other side.
-export const devigOneSided = (pYes, holdPct, method) => devig(pYes, Math.max(1 + holdPct / 100 - pYes, 0.0001), method);
+// One-sided price (e.g. an SGP): no opposite side exists, so strip the assumed hold directly.
+export const devigOneSided = (pYes, holdPct) => pYes / (1 + (holdPct || 0) / 100);
 
 export const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
 
