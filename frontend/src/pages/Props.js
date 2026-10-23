@@ -105,9 +105,12 @@ export default function Props({ settings, update, status }) {
   const remove = (t) => setLegs(legs.filter((l) => l.ticker !== t));
 
   const getLiveQuote = async () => {
+    const sent = legs.map((l) => l.ticker);
     setLiveLoading(true);
     try {
-      const r = await postKalshiQuote(legs.map((l) => l.ticker));
+      const r = await postKalshiQuote(sent);
+      const now = JSON.parse(localStorage.getItem("slip-legs") || "[]").map((l) => l.ticker);
+      if (now.join(",") !== sent.join(",")) return;
       setLive(r);
       if (!r.yes_price) toast.info("No Kalshi market maker quoted this combo right now");
     } catch (e) {

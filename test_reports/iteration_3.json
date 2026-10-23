@@ -1,0 +1,41 @@
+{
+  "summary": "Tested ODDSKING's American-only odds, rename, and live Kalshi RFQ combo quote against live Kalshi data, on both backend and frontend. Backend: 12 passed, 1 skipped (the old exact-combo index test). New test_kalshi_quote_api.py: /api/status returns kalshi_key=true. kalshi-quote returns 400 for 0 or 1 tickers and 422 for a missing body. A live 2-leg quote (Rebounds 6+ and Assists 4+, same player) returned yes_price 0.782 with 7 quotes in 1.3s, and a repeat call within 30s came back cached and identical. Fake tickers give a clean 502 from the backend. Frontend: the header and title show ODDSKING. There is no ¢ on Player Props or the DD/TD Scanner (scanner YES/NO asks are American, e.g. -133/+127), and there is no odds-format toggle. Adding 2 legs auto-fetched a live quote: 'Live Kalshi combo quote · 8 market maker quotes · 9:13:21 PM', price -359. The refresh button works. Manual odds input (with the quote endpoint mocked to fail): '+2500' -> +2500, '-150' -> -150, '2500' -> +2500; '+', '50' and '-50' show 'Enter odds like +2500 or -150'. Letters are stripped from the input. Parlay EV with DraftKings SGP +1800 vs Kalshi +2500: fair +2085, EV +11.5%. Straight tab with DraftKings -300/+240: fair -255, EV -2.2%. Regression checks passed: ESPN photos load (naturalWidth 600), 12 game chips switch games, player search works, market rows expand with American lines. No page errors. About 5 real RFQ calls in total.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/props/kalshi-quote (and other 502 paths)", "issue": "The backend returns 502 with a JSON detail, but the Kubernetes ingress replaces 502 bodies with its own HTML page. The frontend toast then shows only 'Request failed with status code 502' and the useful Kalshi message (e.g. 'invalid parameters') is lost. Use a non-502 status for upstream errors (e.g. 424 or 503, or 400 for Kalshi 400 invalid_parameters)."},
+      {"endpoint": "kalshi_auth.live_combo_quote", "issue": "The 30s cache means 'Refresh live Kalshi combo odds' within 30s silently returns the same quote and timestamp, so the refresh looks like it did nothing. Consider a force flag for the button, or a 'cached' indicator."},
+      {"endpoint": "kalshi_auth.live_combo_quote", "issue": "An unbounded _quotes dict (memory grows with every distinct combo), and no lock, so parallel identical requests each create an RFQ."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ParlaySlip Kalshi odds input", "issue": "When a live quote exists, any typed Kalshi odds (e.g. +2500) are silently ignored, because the live quote wins in kalshiParlayPrice. The input stays editable with no feedback. Either let the manual entry override, or disable/hide the input while live, or add a hint.", "selector": "[data-testid=parlay-kalshi-quote-input]", "priority": "MEDIUM"},
+      {"component": "Props.getLiveQuote", "issue": "Race: if legs change while a quote request is in flight, the old response is still applied with setLive to the new leg set, so a stale combo price is shown. Check that the response tickers match the current tickers before calling setLive.", "selector": "[data-testid=parlay-price-source]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Header", "issues": ["The subtitle under ODDSKING still reads 'KALSHI DD/TD DEVIG'. The app is now mainly a props/parlay tool, so consider updating it."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_kalshi_quote_api.py", "/app/backend/tests/test_props_api.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Return a non-502 status for Kalshi upstream errors so the ingress doesn't swallow the detail message (affects the toast text).",
+    "Make the manual Kalshi odds input meaningful when a live quote exists: either the manual value overrides, or the input is disabled or labeled.",
+    "Guard getLiveQuote against stale responses after legs change.",
+    "Optional: a force-refresh param that bypasses the 30s cache for the refresh button; cap the _quotes cache size."
+  ],
+  "critical_code_review_comments": [
+    "pages/ComboBuilder.js is unused dead code and still shows cents ('¢ for YES', 'Break-even ¢'); lib/ev.js fmtCents is unused. Remove both so cents can't come back.",
+    "ParlaySlip still passes a 'format' prop everywhere even though format is hardcoded to 'american'. Simplify.",
+    "kalshi_auth: the event_ticker is derived with '-'.join(t.split('-')[:2]), which assumes the ticker layout SERIES-EVENT-...; this is fine for current NBA tickers but fragile.",
+    "Auto-quote fires on every leg change, 800ms after it, so quickly adding several legs can make several RFQs. Consider a longer debounce."
+  ],
+  "updated_files": ["/app/backend/tests/test_kalshi_quote_api.py"],
+  "success_rate": {"backend": "100% (12/12 run; 1 legacy combo-index test skipped)", "frontend": "~95% (all requested flows pass; minor UX issues with manual input vs live quote)"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run single tests with '-n 0' (pytest.ini sets xdist). Tickers come from /api/props/game/{code}. To test manual-input and error paths without spending RFQs, mock /api/props/kalshi-quote in Playwright with page.route. Quotes are cached for 30s per ticker set. The backend's WatchFiles also reloads when backend/tests files change.",
+  "test_credentials": "No auth in the app; /app/memory/test_credentials.md is the empty template. Kalshi keys are in backend/.env (not printed)."
+}

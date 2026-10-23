@@ -9,10 +9,10 @@ import { fmtAmerican, probToAmerican } from "../../lib/ev";
 const valid = (p) => p != null && p > 0 && p < 1;
 
 export const kalshiParlayPrice = (legs, combo, quote, live) => {
-  if (live && valid(live.yes_price)) return { price: live.yes_price, source: "live" };
   const q = americanToProb(quote);
   if (quote && q != null) return { price: q, source: "quote" };
   if (quote) return { price: null, source: "bad-quote" };
+  if (live && valid(live.yes_price)) return { price: live.yes_price, source: "live" };
   if (combo && valid(combo.yes_ask)) return { price: combo.yes_ask, source: "exact" };
   if (legs.every((l) => valid(l.yes_ask))) return { price: legs.reduce((a, l) => a * l.yes_ask, 1), source: "estimate" };
   return { price: null, source: null };
@@ -21,7 +21,7 @@ export const kalshiParlayPrice = (legs, combo, quote, live) => {
 const SOURCE_TEXT = {
   live: "Live Kalshi combo quote",
   exact: "Live Kalshi combo market",
-  quote: "Your Kalshi odds",
+  quote: "Your Kalshi odds (clear the box to use the live quote)",
   "bad-quote": "Enter odds like +2500 or -150",
   estimate: "Estimated: Kalshi legs multiplied (ignores correlation)",
 };

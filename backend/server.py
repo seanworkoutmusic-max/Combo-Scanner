@@ -43,7 +43,7 @@ async def games():
     try:
         g = await kalshi.load_markets()
     except httpx.HTTPError as e:
-        raise HTTPException(502, f"Kalshi unavailable: {e}")
+        raise HTTPException(424, f"Kalshi unavailable: {e}")
     out = [{"code": x["code"], "date": x["date"], "teams": x["teams"], "label": x["label"],
             "players": sorted([{"key": k, "name": p["name"], "team": p["team"]} for k, p in x["players"].items()], key=lambda p: p["name"])}
            for x in g.values()]
@@ -123,7 +123,7 @@ async def combo(req: ComboReq):
             res, err = await optic.combo_by_book(c, fixture["id"], books_l, idx, kalshi.norm_name(req.player),
                                                  [(l.stat, l.threshold) for l in req.legs])
     except (optic.OpticError, httpx.HTTPError) as e:
-        raise HTTPException(502, str(e))
+        raise HTTPException(424, str(e))
     if err:
         raise HTTPException(404, err)
     return {"books": [{"book": b, **v} for b, v in res.items()], "updated_at": datetime.now(timezone.utc).isoformat()}
@@ -134,7 +134,7 @@ async def props_games():
     try:
         g = await kalshi_props.load_props()
     except httpx.HTTPError as e:
-        raise HTTPException(502, f"Kalshi unavailable: {e}")
+        raise HTTPException(424, f"Kalshi unavailable: {e}")
     out = [{"code": x["code"], "date": x["date"], "teams": x["teams"], "label": x["label"], "player_count": len(x["players"])}
            for x in g.values()]
     return sorted(out, key=lambda x: (x["date"], x["code"]))
@@ -189,9 +189,9 @@ async def props_kalshi_quote(req: QuoteReq):
     try:
         return await kalshi_auth.live_combo_quote(req.tickers)
     except kalshi_auth.KalshiAuthError as e:
-        raise HTTPException(502, str(e))
+        raise HTTPException(424, str(e))
     except httpx.HTTPError as e:
-        raise HTTPException(502, f"Kalshi unavailable: {e}")
+        raise HTTPException(424, f"Kalshi unavailable: {e}")
 
 
 app.include_router(api_router)

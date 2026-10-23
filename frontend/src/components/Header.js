@@ -22,7 +22,7 @@ export const Header = ({ tab, setTab, status, kalshiOk }) => (
         </div>
         <div className="leading-none hidden sm:block">
           <div className="font-display font-bold text-lg tracking-tight">ODDS<span className="text-cyan-300">KING</span></div>
-          <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Kalshi DD/TD devig</div>
+          <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Kalshi prop EV</div>
         </div>
       </div>
       <nav className="flex items-center gap-1">
