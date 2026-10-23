@@ -60,7 +60,7 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
   const fair = avg(fairs);
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-slate-800 bg-[#0F131C]">
+      <div className="rounded-md border border-slate-800 bg-[#141414]">
         <div className="flex items-center justify-between px-3 py-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">{legs.length}-Leg Same Game Parlay</span>
@@ -78,7 +78,7 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
         </div>
         <div className="px-3">{legs.map((l) => <Leg key={l.ticker} l={l} format={format} onRemove={() => remove(l.ticker)} />)}</div>
         <div className="px-3 py-2.5 border-t border-slate-800">
-          <span data-testid="parlay-price-source" className={`text-[11px] font-mono ${k.source === "exact" || k.source === "live" ? "text-emerald-400" : "text-amber-300"}`}>
+          <span data-testid="parlay-price-source" className={`text-[11px] font-mono ${k.source === "exact" || k.source === "live" ? "text-emerald-400" : "text-slate-300"}`}>
             {SOURCE_TEXT[k.source] || "No Kalshi price yet"}
             {k.source === "live" && <span className="block text-slate-500">{live.quotes} market maker quotes · {new Date(live.fetched_at * 1000).toLocaleTimeString()}</span>}
             {live && !valid(live.yes_price) && <span className="block text-slate-500">No market maker quoted this combo</span>}

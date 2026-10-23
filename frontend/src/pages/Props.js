@@ -32,7 +32,7 @@ const PlayerList = ({ players, allPlayers, player, onPick }) => {
   const nq = norm(q).trim();
   const shown = nq ? allPlayers.filter((p) => norm(p.name).includes(nq) || p.key.includes(nq)) : players;
   return (
-    <div className="rounded-md border border-slate-800 bg-[#0F131C]/80">
+    <div className="rounded-md border border-slate-800 bg-[#141414]/80">
       <div className="flex items-center gap-2 px-3 border-b border-slate-800">
         <Search className="h-3.5 w-3.5 text-slate-500" />
         <input data-testid="player-search-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player"

@@ -27,7 +27,7 @@ export const GameSelect = ({ games, value, onChange, testid }) => (
     <SelectTrigger data-testid={testid} className="w-[210px] bg-slate-950/60 border-slate-800 font-mono text-xs">
       <SelectValue placeholder="Select game" />
     </SelectTrigger>
-    <SelectContent className="bg-[#0F131C] border-slate-800">
+    <SelectContent className="bg-[#141414] border-slate-800">
       {games.map((g) => (
         <SelectItem key={g.code} value={g.code} data-testid={`game-option-${g.code}`} className="font-mono text-xs">
           {g.label} · {g.date.slice(5)}
@@ -60,7 +60,7 @@ export const BookChips = ({ all, sgp, value, onChange }) => (
 );
 
 export const ControlsBar = ({ games, game, setGame, settings, update, status, onRefresh, loading, updatedAt }) => (
-  <div className="rounded-md border border-slate-800 bg-[#0F131C]/80 backdrop-blur p-4 flex flex-wrap gap-x-6 gap-y-4 items-end">
+  <div className="rounded-md border border-slate-800 bg-[#141414]/80 backdrop-blur p-4 flex flex-wrap gap-x-6 gap-y-4 items-end">
     <div>
       <Lbl>Game</Lbl>
       <GameSelect games={games} value={game} onChange={setGame} testid="select-game-filter" />

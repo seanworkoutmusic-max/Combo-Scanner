@@ -12,7 +12,7 @@ const Num = ({ label, value, onChange, testid }) => (
 );
 
 const Settings = ({ settings, update, mode }) => (
-  <div className="rounded-md border border-slate-800 bg-[#0B0F17] p-3 space-y-2.5">
+  <div className="rounded-md border border-slate-800 bg-[#0E0E0E] p-3 space-y-2.5">
     {mode === "parlay" ? (
       <p data-testid="parlay-devig-note" className="text-[11px] text-slate-500 leading-relaxed">
         SGP odds only have one side, so fair = book odds with the assumed hold removed. Devig methods apply to Straight bets with Over and Under.

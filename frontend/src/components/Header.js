@@ -3,7 +3,7 @@ import { HowItWorks } from "./HowItWorks";
 
 const Dot = ({ ok, label, testid }) => (
   <span data-testid={testid} className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-400">
-    <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-amber-400"}`} />
+    <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-slate-500"}`} />
     {label}
   </span>
 );
@@ -14,7 +14,7 @@ const TABS = [
 ];
 
 export const Header = ({ tab, setTab, status, kalshiOk }) => (
-  <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#07090E]/85 backdrop-blur-xl">
+  <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#0A0A0A]/85 backdrop-blur-xl">
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-6">
       <div className="flex items-center gap-2.5">
         <img data-testid="site-logo" src="/logo.png" alt="COMBOS logo" className="h-9 w-9 rounded-md object-cover" />

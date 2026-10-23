@@ -39,7 +39,7 @@ export const ScannerRow = ({ item, open, onToggle, settings, index }) => {
         <td className="py-2.5 px-3">
           <span
             className={`text-[10px] font-mono px-1.5 py-0.5 rounded-sm border ${
-              kind === "td" ? "border-fuchsia-400/40 text-fuchsia-300" : "border-sky-400/40 text-sky-300"
+              kind === "td" ? "border-slate-500 text-slate-100" : "border-sky-400/40 text-sky-300"
             }`}
           >
             {kind === "td" ? "TRIPLE-DBL" : "DOUBLE-DBL"}

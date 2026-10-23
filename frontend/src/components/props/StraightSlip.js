@@ -31,7 +31,7 @@ const StraightLeg = ({ leg, odds, setOdds, settings, format, onRemove }) => {
   const fair = avg(fairs);
   const id = leg.ticker;
   return (
-    <div data-testid={`straight-leg-${id}`} className="rounded-md border border-slate-800 bg-[#0F131C] p-3 space-y-3">
+    <div data-testid={`straight-leg-${id}`} className="rounded-md border border-slate-800 bg-[#141414] p-3 space-y-3">
       <div className="flex items-start justify-between gap-2">
         <PlayerPhoto src={leg.headshot} name={leg.player} size={34} />
         <div className="flex-1 min-w-0">

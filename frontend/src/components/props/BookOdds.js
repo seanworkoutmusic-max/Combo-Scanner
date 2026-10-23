@@ -27,7 +27,7 @@ export const BookOdds = ({ mode, odds, setOdds, prefix }) => (
       {mode === "straight" ? (<><span>Over</span><span>Under</span></>) : <span>SGP odds</span>}
     </div>
     {BOOKS.map((b) => (
-      <div key={b} className="grid gap-2 items-center rounded border border-slate-800/70 bg-[#0B0F17] px-2 py-1.5"
+      <div key={b} className="grid gap-2 items-center rounded border border-slate-800/70 bg-[#0E0E0E] px-2 py-1.5"
         style={{ gridTemplateColumns: mode === "straight" ? "1fr 80px 80px" : "1fr 90px" }}>
         <BookName b={b} />
         {mode === "straight" ? (

@@ -76,11 +76,11 @@ export default function Scanner({ games, status, settings, update }) {
         updatedAt={data?.updated_at}
       />
       {data?.message && (
-        <div data-testid="scan-message" className="text-xs font-mono text-amber-300 border border-amber-500/30 bg-amber-500/5 rounded px-3 py-2">
+        <div data-testid="scan-message" className="text-xs font-mono text-slate-300 border border-slate-500/30 bg-slate-500/5 rounded px-3 py-2">
           {data.message}
         </div>
       )}
-      <div data-testid="scanner-table-container" className="rounded-md border border-slate-800 bg-[#0F131C]/70 overflow-x-auto">
+      <div data-testid="scanner-table-container" className="rounded-md border border-slate-800 bg-[#141414]/70 overflow-x-auto">
         <table className="w-full min-w-[960px]">
           <thead>
             <tr className="text-[10px] uppercase tracking-widest text-slate-500 font-mono">

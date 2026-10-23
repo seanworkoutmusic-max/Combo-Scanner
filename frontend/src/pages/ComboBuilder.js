@@ -86,7 +86,7 @@ export default function ComboBuilder({ games, status, settings, update }) {
         <p className="text-sm text-slate-400 mt-1">Price any custom stat combo with real book SGPs, then compare to your Kalshi combo quote.</p>
       </div>
       <div className="grid lg:grid-cols-[380px_1fr] gap-5">
-        <div className="rounded-md border border-slate-800 bg-[#0F131C]/80 p-5 space-y-5">
+        <div className="rounded-md border border-slate-800 bg-[#141414]/80 p-5 space-y-5">
           <div>
             <Lbl>Game</Lbl>
             <GameSelect games={games} value={game} onChange={(v) => { setGame(v); setPlayer(""); }} testid="combo-game-select" />
@@ -97,7 +97,7 @@ export default function ComboBuilder({ games, status, settings, update }) {
               <SelectTrigger data-testid="combo-player-select" className="bg-slate-950/60 border-slate-800 text-sm">
                 <SelectValue placeholder="Select player" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0F131C] border-slate-800 max-h-72">
+              <SelectContent className="bg-[#141414] border-slate-800 max-h-72">
                 {players.map((p) => (
                   <SelectItem key={p.key} value={p.name} data-testid={`player-option-${p.key.replace(/\s/g, "-")}`}>
                     {p.name} <span className="text-slate-500 text-xs font-mono ml-1">{p.team}</span>
@@ -153,7 +153,7 @@ const Stat = ({ label, value, testid, cls = "text-slate-100" }) => (
 );
 
 const ComboResults = ({ result, res, ests, settings, update }) => (
-  <div data-testid="combo-results-panel" className="rounded-md border border-slate-800 bg-[#0F131C]/80 p-5 space-y-5">
+  <div data-testid="combo-results-panel" className="rounded-md border border-slate-800 bg-[#141414]/80 p-5 space-y-5">
     <div className="flex flex-wrap gap-1">
       {METHODS.map((m) => (
         <button
