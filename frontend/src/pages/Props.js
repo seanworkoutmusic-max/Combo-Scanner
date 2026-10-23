@@ -55,7 +55,7 @@ export default function Props({ settings, update, status }) {
   const [player, setPlayer] = useState(null);
   const [legs, setLegs] = useStored("slip-legs", []);
   const [mode, setMode] = useStored("slip-mode", "parlay");
-  const format = "american";
+  const format = settings.fees ? "fee" : "raw";
   const [combo, setCombo] = useState(null);
   const [live, setLive] = useState(null);
   const [liveLoading, setLiveLoading] = useState(false);

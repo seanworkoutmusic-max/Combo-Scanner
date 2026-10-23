@@ -28,7 +28,7 @@ const Settings = ({ settings, update, mode }) => (
         <Num label="Hold if no Under %" value={settings.singleHold} onChange={(v) => update({ singleHold: v })} testid="input-single-hold" />
       )}
       <label className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
-        Kalshi fees <Switch data-testid="slip-toggle-fees" checked={settings.fees} onCheckedChange={(v) => update({ fees: v })} />
+        Kalshi fees (prices include them) <Switch data-testid="slip-toggle-fees" checked={settings.fees} onCheckedChange={(v) => update({ fees: v })} />
       </label>
     </div>
   </div>
