@@ -1,4 +1,4 @@
-import { Activity, BookOpen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { HowItWorks } from "./HowItWorks";
 
 const Dot = ({ ok, label, testid }) => (
@@ -17,11 +17,9 @@ export const Header = ({ tab, setTab, status, kalshiOk }) => (
   <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#07090E]/85 backdrop-blur-xl">
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-6">
       <div className="flex items-center gap-2.5">
-        <div className="h-8 w-8 rounded bg-cyan-400/10 border border-cyan-400/40 grid place-items-center">
-          <Activity className="h-4 w-4 text-cyan-300" />
-        </div>
+        <img data-testid="site-logo" src="/logo.png" alt="COMBOS logo" className="h-9 w-9 rounded-md object-cover" />
         <div className="leading-none hidden sm:block">
-          <div className="font-display font-bold text-lg tracking-tight">ODDS<span className="text-cyan-300">KING</span></div>
+          <div data-testid="site-title" className="font-display font-bold text-lg tracking-tight">COMBOS</div>
           <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Kalshi prop EV</div>
         </div>
       </div>
