@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { fmtAmerican, probToAmerican } from "../../lib/ev";
 
-const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 export const PriceTag = ({ p, format }) => {
   if (p == null || p <= 0 || p >= 1) return <span className="text-slate-600">—</span>;

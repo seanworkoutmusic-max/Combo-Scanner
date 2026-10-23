@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { getPropsGames, getPropsGame, postSlip, errMsg } from "../lib/api";
 import { MarketList } from "../components/props/MarketList";
 import { BetSlip } from "../components/props/BetSlip";
+import { PlayerPhoto } from "../components/props/PlayerPhoto";
 
 const useStored = (key, init) => {
   const [v, setV] = useState(() => {
@@ -37,8 +38,9 @@ const PlayerList = ({ players, player, setPlayer }) => {
       <div className="max-h-[260px] lg:max-h-[640px] overflow-y-auto">
         {shown.map((p) => (
           <button key={p.key} data-testid={`player-item-${p.key.replace(/\s/g, "-")}`} onClick={() => setPlayer(p.key)}
-            className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors ${player === p.key ? "bg-cyan-400/10 text-cyan-100" : "text-slate-300 hover:bg-slate-800/30"}`}>
-            <span>{p.name}</span><span className="text-[10px] font-mono text-slate-500">{p.team}</span>
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${player === p.key ? "bg-cyan-400/10 text-cyan-100" : "text-slate-300 hover:bg-slate-800/30"}`}>
+            <PlayerPhoto src={p.headshot} name={p.name} size={30} />
+            <span className="flex-1 truncate">{p.name}</span><span className="text-[10px] font-mono text-slate-500">{p.team}</span>
           </button>
         ))}
       </div>
@@ -91,7 +93,10 @@ export default function Props({ settings, update }) {
 
   const toggle = (line) => {
     if (selected.has(line.ticker)) return setLegs(legs.filter((l) => l.ticker !== line.ticker));
-    setLegs([...legs, { ...line, player: current.name, team: current.team }]);
+    const same = legs.find((l) => l.player === current.name && l.market === line.market);
+    if (same) toast.info(`Replaced ${same.threshold ? `${same.threshold}+` : ""} ${line.market}: lines in the same market overlap`);
+    else toast.success(`Added ${current.name} ${line.threshold ? `${line.threshold}+ ` : ""}${line.market}`, { duration: 1500 });
+    setLegs([...legs.filter((l) => l !== same), { ...line, player: current.name, team: current.team, headshot: current.headshot }]);
   };
   const remove = (t) => setLegs(legs.filter((l) => l.ticker !== t));
 
@@ -102,11 +107,14 @@ export default function Props({ settings, update }) {
         <PlayerList players={data?.players || []} player={player} setPlayer={setPlayer} />
         <section className="min-w-0">
           <div className="flex items-end justify-between gap-3 border-b border-slate-800 pb-3 mb-1">
-            <div>
-              <h1 data-testid="player-name-heading" className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
-                {current?.name || "—"}
-              </h1>
-              <div className="text-xs font-mono text-slate-500 mt-1">{current ? `${current.team} · ${data.game.label} · ${data.game.date}` : ""}</div>
+            <div className="flex items-center gap-4">
+              <PlayerPhoto src={current?.headshot} name={current?.name} size={72} testid="player-photo-heading" />
+              <div>
+                <h1 data-testid="player-name-heading" className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
+                  {current?.name || "—"}
+                </h1>
+                <div className="text-xs font-mono text-slate-500 mt-1">{current ? `${current.team} · ${data.game.label} · ${data.game.date}` : ""}</div>
+              </div>
             </div>
             <div className="flex rounded border border-slate-800 p-0.5" data-testid="odds-format-toggle">
               {[["american", "American"], ["cents", "Cents"]].map(([id, lbl]) => (

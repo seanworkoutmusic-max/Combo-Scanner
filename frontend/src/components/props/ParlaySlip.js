@@ -2,13 +2,16 @@ import { Trash2 } from "lucide-react";
 import { BookOdds } from "./BookOdds";
 import { Verdict } from "./Verdict";
 import { PriceTag } from "./MarketList";
+import { PlayerPhoto } from "./PlayerPhoto";
 import { americanToProb, avg, devigOneSided, evPct, legOver } from "../../lib/slip";
 
 const valid = (p) => p != null && p > 0 && p < 1;
 
 export const kalshiParlayPrice = (legs, combo, quote) => {
+  const q = Number(quote);
+  if (quote && q >= 1 && q <= 99) return { price: q / 100, source: "quote" };
+  if (quote) return { price: null, source: "bad-quote" };
   if (combo && valid(combo.yes_ask)) return { price: combo.yes_ask, source: "exact" };
-  if (quote) return { price: Number(quote) / 100, source: "quote" };
   if (legs.every((l) => valid(l.yes_ask))) return { price: legs.reduce((a, l) => a * l.yes_ask, 1), source: "estimate" };
   return { price: null, source: null };
 };
@@ -16,12 +19,14 @@ export const kalshiParlayPrice = (legs, combo, quote) => {
 const SOURCE_TEXT = {
   exact: "Live Kalshi combo market",
   quote: "Your Kalshi quote",
+  "bad-quote": "Quote must be 1–99¢",
   estimate: "Estimated: Kalshi legs multiplied (ignores correlation)",
 };
 
 const Leg = ({ l, format, onRemove }) => (
   <div data-testid={`parlay-leg-${l.ticker}`} className="flex items-center justify-between gap-3 py-2.5 border-b border-slate-800/60 last:border-0">
-    <div className="min-w-0">
+    <PlayerPhoto src={l.headshot} name={l.player} size={30} />
+    <div className="min-w-0 flex-1">
       <div className="text-sm font-semibold text-slate-100 truncate">{legOver(l)} · {l.player} {l.market}</div>
       <div className="text-[11px] font-mono text-slate-500">{l.team}{l.threshold ? ` · ${l.threshold}+` : ""}</div>
     </div>
@@ -48,8 +53,11 @@ export const ParlaySlip = ({ legs, combo, quote, setQuote, odds, setOdds, settin
         </div>
         <div className="px-3">{legs.map((l) => <Leg key={l.ticker} l={l} format={format} onRemove={() => remove(l.ticker)} />)}</div>
         <div className="px-3 py-2.5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
-          <span data-testid="parlay-price-source" className={`text-[11px] font-mono ${k.source === "exact" ? "text-emerald-400" : "text-amber-300"}`}>
+          <span data-testid="parlay-price-source" className={`text-[11px] font-mono ${k.source === "exact" ? "text-emerald-400" : k.source === "bad-quote" ? "text-red-400" : "text-amber-300"}`}>
             {SOURCE_TEXT[k.source] || "No Kalshi price yet"}
+            {combo && valid(combo.yes_ask) && k.source !== "exact" && (
+              <span className="block text-emerald-400">Live combo market: {Math.round(combo.yes_ask * 100)}¢</span>
+            )}
           </span>
           <label className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
             Kalshi quote ¢

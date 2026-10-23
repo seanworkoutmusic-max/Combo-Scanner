@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 import { BookOdds } from "./BookOdds";
 import { Verdict } from "./Verdict";
 import { PriceTag } from "./MarketList";
+import { PlayerPhoto } from "./PlayerPhoto";
 import { americanToProb, avg, devig, devigOneSided, evPct, legLabel, legOver } from "../../lib/slip";
 
 const StraightLeg = ({ leg, odds, setOdds, settings, format, onRemove }) => {
@@ -20,7 +21,8 @@ const StraightLeg = ({ leg, odds, setOdds, settings, format, onRemove }) => {
   return (
     <div data-testid={`straight-leg-${id}`} className="rounded-md border border-slate-800 bg-[#0F131C] p-3 space-y-3">
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <PlayerPhoto src={leg.headshot} name={leg.player} size={34} />
+        <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold text-slate-100">{legOver(leg)} · {leg.player} {leg.market}</div>
           <div className="text-[11px] font-mono text-slate-500">{leg.team} · {legLabel(leg)}</div>
         </div>

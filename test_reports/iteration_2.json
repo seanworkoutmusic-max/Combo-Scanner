@@ -1,0 +1,48 @@
+{
+  "summary": "Tested the new Player Props page (frontend and backend) against live Kalshi data. Backend: 14 passed, 1 skipped (the old scanner suite plus the new test_props_api.py). The skipped test is the exact Kalshi combo match, and it skipped because that feature does not work: the background combo scan has failed with Kalshi 429 'Too Many Requests' on every run since startup, so the combo index stays empty ({indexed:0, scanned:0, updated:null}) and the slip never gets a combo price. Frontend: these all work: switching games with the chips, player search and selection, opening market rows, line buttons showing American odds, the American/Cents toggle, adding and removing legs (click again, trash icon, Clear), the leg count badge, and the slip surviving a reload via localStorage. Parlay: legs-multiplied estimate shows the 'Estimated: Kalshi legs multiplied' label, a typed Kalshi quote switches the label to 'Your Kalshi quote' and changes the price (12 -> +733), SGP odds give fair and EV (DK +250 -> fair +303, EV -41.9%), and the devig method, hold % and fees controls all change EV. Straight: each leg shows its Kalshi price, the book-odds panel opens, and -120/+100 gives fair -109 and EV -11.1%. The over-only case uses the single hold %. The DD/TD Scanner tab loads and the OpticOdds banner appears only there. At 390px mobile there is no horizontal overflow. No page errors.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "kalshi_props.scan_combos / POST /api/props/slip (combo)", "issue": "Kalshi returns 429 after about 35 pages (about 4s) of unthrottled /markets?mve_filter=only paging. raise_for_status throws and the partly built index is thrown away. Every scan in the logs failed (20:47, 20:50, 20:52), so exact combo prices never appear. A manual probe showed that retrying 429s with backoff gets past the limit, but 60 pages (60k markets) is still not the end of the list.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "kalshi_props.scan_combos", "issue": "max_pages=60 is too small: there are more than 60k open MVE markets (almost all KXMVECROSSCATEGORY), so NBA combos past page 60 are never indexed."},
+      {"endpoint": "kalshi_props.load_props", "issue": "Fetches all 15 series at once with no lock. Any series that fails (for example a 429, since it shares the rate limit with the combo scan) is silently dropped, and the partial data is cached."},
+      {"endpoint": "GET /api/props/game/{code}, POST /api/props/slip", "issue": "httpx errors from load_props are not caught (only /props/games catches them), so a Kalshi outage returns a raw 500 instead of a 502."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Parlay estimate", "issue": "Nested lines from the same player and market (e.g. Points 15+ and Points 20+) can both go into a parlay, and the estimate multiplies them: +114 shown, while the true price is about -133 (the 20+ leg alone). This gives a badly wrong price and EV. Block same-market legs, or keep only the highest line and warn.", "selector": "[data-testid=parlay-kalshi-price]", "priority": "MEDIUM"},
+      {"component": "Kalshi quote input", "issue": "Quote '150' or '.' shows '—' under the 'Your Kalshi quote' label with no message saying the quote is invalid. If an exact combo exists, the user's quote is silently ignored, because the combo is checked first.", "selector": "[data-testid=parlay-kalshi-quote-input]", "priority": "LOW"},
+      {"component": "Hold % input", "issue": "Clearing the field sets the hold to 0, because Number('') is 0. EV changes with no warning.", "selector": "[data-testid=input-parlay-hold]", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Exact combo", "issue": "parlay-price-source never shows 'Live Kalshi combo market' because the backend combo index is empty (see the 429 issue).", "affected_selectors": ["[data-testid=parlay-price-source]"]}
+    ],
+    "design_issues": [
+      {"screen": "Mobile 390px Props", "issues": ["The bet slip sits below the whole market list, so after tapping a line there is no visible feedback unless you scroll down. Consider a sticky slip count bar or a toast."]},
+      {"screen": "Market rows", "issues": ["Some testids end in a stray hyphen, e.g. market-row-pra-points-rebounds-assists- and market-row-sb-steals-blocks- (trim trailing '-' in slug())."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_props_api.py", "/app/backend/tests/test_ev_scanner_api.py", "/app/backend/tests/probe_combo_scan.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix scan_combos: retry 429s with backoff (about 2s*attempt) and/or add a short delay between pages; don't throw away the partial index on failure (save what was collected, or merge it); raise max_pages or stop early once an NBA-only filter is possible. Then check that POST /api/props/slip returns a combo for a known pair.",
+    "Make sure load_props and scan_combos don't burst Kalshi's rate limit at the same time (shared semaphore or throttle); add a lock to load_props so cache misses don't all fetch at once.",
+    "Catch httpx.HTTPError in /api/props/game/{code} and /api/props/slip and return 502.",
+    "Prevent or warn about nested lines from the same player and market in a parlay, because the multiplied estimate is wrong.",
+    "Validate the Kalshi quote (must be 1-99) and show an error; decide whether the user's quote or an exact combo should win."
+  ],
+  "critical_code_review_comments": [
+    "kalshi_props.scan_combos: no throttling or retry, and _combos is only updated after the loop finishes, so one 429 means an empty index forever.",
+    "Props.js refreshSlip: if a ticker is gone from Kalshi (r.legs[i] null), the leg keeps its old price with no stale marker.",
+    "Props.js: parlayOdds and the quote are cleared on every leg change, so adding or removing a leg wipes the SGP odds the user typed (maybe intended, but not explained in the UI).",
+    "PROP_SERIES maps both KXNBASTOCK and KXNBASTOCKS to the same label; if both series ever list markets, lines would be duplicated."
+  ],
+  "updated_files": ["/app/backend/tests/test_props_api.py", "/app/backend/tests/probe_combo_scan.py"],
+  "success_rate": {"backend": "93% (14/15; exact combo match not working because the combo index never builds)", "frontend": "~95% (all requested UI flows work; exact-combo source can't show; parlay estimate wrong for nested lines)"},
+  "seed_data_creation": "None. Only localStorage slip state in the test browser.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Each browser_automation call starts a fresh browser, so test localStorage persistence by reloading inside one script. Kalshi tickers change daily: take them from /api/props/game/{code}. Check the combo index with POST /api/props/slip -> combo_index.indexed and in backend.err.log ('combo scan failed'). probe_combo_scan.py is a manual diagnostic (it retries 429s with backoff), not a pytest test.",
+  "rca of the issue": "Exact combo missing. Reproduce: POST /api/props/slip with the two PRA tickers -> combo:null, combo_index {indexed:0, scanned:0}. The backend log shows 'combo scan failed: 429 Too Many Requests' on every run. Cause: scan_combos pages /markets?mve_filter=only&limit=1000 as fast as it can; Kalshi rate-limits after about 35 requests. raise_for_status aborts the scan before _combos.update(), so nothing is saved. Fix: retry 429s with backoff (verified: the probe reached 60 pages in about 22s), save partial results, and raise max_pages (more than 60k open MVE markets)."
+}

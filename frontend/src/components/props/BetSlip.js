@@ -6,7 +6,7 @@ import { StraightSlip } from "./StraightSlip";
 const Num = ({ label, value, onChange, testid }) => (
   <label className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
     {label}
-    <input data-testid={testid} type="number" step="0.5" value={value} onChange={(e) => onChange(Number(e.target.value))}
+    <input data-testid={testid} type="number" step="0.5" value={value} onChange={(e) => e.target.value !== "" && onChange(Number(e.target.value))}
       className="w-14 h-7 px-1.5 rounded border border-slate-800 bg-slate-950/70 text-slate-100" />
   </label>
 );

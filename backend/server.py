@@ -17,6 +17,7 @@ load_dotenv(ROOT_DIR / '.env')
 import kalshi  # noqa: E402
 import optic  # noqa: E402
 import kalshi_props  # noqa: E402
+import espn  # noqa: E402
 
 client = AsyncIOMotorClient(os.environ['MONGO_URL'])
 db = client[os.environ['DB_NAME']]
@@ -144,9 +145,11 @@ async def props_game(code: str):
     if not g:
         raise HTTPException(404, "Game not found on Kalshi")
     players = []
+    photos = await espn.headshots()
     for p in g["players"].values():
         markets = [{"label": lbl, "lines": p["markets"][lbl]} for lbl in kalshi_props.ORDER if lbl in p["markets"]]
         players.append({"key": p["key"], "name": p["name"], "team": p["team"], "markets": markets,
+                        "headshot": (photos.get(p["key"]) or {}).get("headshot"),
                         "line_count": sum(len(m["lines"]) for m in markets)})
     players.sort(key=lambda p: -p["line_count"])
     return {"game": {k: g[k] for k in ("code", "date", "teams", "label")}, "players": players,

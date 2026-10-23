@@ -63,30 +63,42 @@ async def load_props(ttl=20):
     return games
 
 
+async def _get_page(client, params):
+    for attempt in range(4):
+        r = await client.get(f"{KALSHI_BASE}/markets", params=params)
+        if r.status_code != 429:
+            r.raise_for_status()
+            return r.json()
+        await asyncio.sleep(2 * (attempt + 1))
+    r.raise_for_status()
+
+
 async def scan_combos(max_pages=60):
     """Index open Kalshi combo markets made only of NBA player-prop YES legs."""
     index, cur, n = {}, None, 0
-    async with httpx.AsyncClient(timeout=25) as client:
-        for _ in range(max_pages):
-            params = {"mve_filter": "only", "status": "open", "limit": 1000}
-            if cur:
-                params["cursor"] = cur
-            r = await client.get(f"{KALSHI_BASE}/markets", params=params)
-            r.raise_for_status()
-            d = r.json()
-            for m in d.get("markets", []):
-                n += 1
-                legs = m.get("mve_selected_legs") or []
-                if not legs or len(legs) > 8:
-                    continue
-                if not all(l.get("market_ticker", "").startswith(PREFIXES) and l.get("side") == "yes" for l in legs):
-                    continue
-                key = frozenset(l["market_ticker"] for l in legs)
-                index[key] = {"ticker": m["ticker"], "title": m.get("title"), **_price(m)}
-            cur = d.get("cursor")
-            if not cur:
-                break
-    _combos.update(t=time.time(), index=index, scanned=n)
+    try:
+        async with httpx.AsyncClient(timeout=25) as client:
+            for _ in range(max_pages):
+                params = {"mve_filter": "only", "status": "open", "limit": 1000}
+                if cur:
+                    params["cursor"] = cur
+                d = await _get_page(client, params)
+                for m in d.get("markets", []):
+                    n += 1
+                    legs = m.get("mve_selected_legs") or []
+                    if not legs or len(legs) > 8:
+                        continue
+                    if not all(l.get("market_ticker", "").startswith(PREFIXES) and l.get("side") == "yes" for l in legs):
+                        continue
+                    key = frozenset(l["market_ticker"] for l in legs)
+                    index[key] = {"ticker": m["ticker"], "title": m.get("title"), **_price(m)}
+                cur = d.get("cursor")
+                if not cur:
+                    break
+                await asyncio.sleep(0.4)
+    finally:
+        if index:
+            _combos.update(t=time.time(), index=index, scanned=n)
 
 
 async def combo_loop():

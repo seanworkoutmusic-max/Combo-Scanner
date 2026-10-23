@@ -1,0 +1,24 @@
+# DoubleEdge – Kalshi NBA prop / combo EV tool
+
+## Original problem
+EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+ pts/reb/ast) against the sportsbook average. Later: a player-page and bet-slip UI (like OddsJam) where you add NBA player props and see the Kalshi price in American odds; ESPN player photos.
+
+## User choices
+- Wanted real book SGP prices (OpticOdds), but has NO API key, so book odds are typed in by hand.
+- Kalshi prices pulled live (public API). Devig method can be switched (mult/add/power/worst). EV % only, no bet sizing.
+
+## Architecture
+- Backend FastAPI: kalshi.py (DD/TD loader), kalshi_props.py (all player-prop series plus a background combo-market index), espn.py (roster headshots), optic.py (OpticOdds SGP engine, idle without a key), devig.py.
+- Endpoints: /api/props/games, /api/props/game/{code}, /api/props/slip, /api/games, /api/scan, /api/combo, /api/status.
+- Frontend: Player Props page (game strip, player list with photos, market accordion, bet slip with Straight/Parlay tabs and manual book odds), DD/TD Scanner tab.
+
+## Implemented (2026-10)
+- Live Kalshi prop lines for Points, Rebounds, Assists, Threes, PRA, PR, PA, RA, DD, TD, Steals, Blocks, SB and FTM, shown in American odds or cents.
+- Parlay Kalshi price, in this order: user quote, then the live exact combo market, then an estimate from the legs multiplied together.
+- Manual book odds produce a devigged average and EV after Kalshi fees.
+- ESPN headshots.
+
+## Backlog
+- P1: OpticOdds or another odds feed to autofill book odds, once the user has a key.
+- P1: correlation-aware Kalshi combo estimate.
+- P2: saved bets and history, alerts for +EV.
