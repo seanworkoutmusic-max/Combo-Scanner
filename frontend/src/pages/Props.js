@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
-import { getPropsGames, getPropsGame, postSlip, errMsg } from "../lib/api";
+import { getPropsGames, getPropsGame, postSlip, postKalshiQuote, errMsg } from "../lib/api";
 import { MarketList } from "../components/props/MarketList";
 import { BetSlip } from "../components/props/BetSlip";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
@@ -48,16 +48,18 @@ const PlayerList = ({ players, player, setPlayer }) => {
   );
 };
 
-export default function Props({ settings, update }) {
+export default function Props({ settings, update, status }) {
   const [games, setGames] = useState([]);
   const [game, setGame] = useState(null);
   const [data, setData] = useState(null);
   const [player, setPlayer] = useState(null);
   const [legs, setLegs] = useStored("slip-legs", []);
   const [mode, setMode] = useStored("slip-mode", "parlay");
-  const [format, setFormat] = useStored("odds-format", "american");
+  const format = "american";
   const [quote, setQuote] = useState("");
   const [combo, setCombo] = useState(null);
+  const [live, setLive] = useState(null);
+  const [liveLoading, setLiveLoading] = useState(false);
   const [parlayOdds, setParlayOdds] = useState({});
   const [straightOdds, setStraightOdds] = useState({});
 
@@ -84,9 +86,11 @@ export default function Props({ settings, update }) {
     refreshSlip();
     setParlayOdds({});
     setQuote("");
+    setLive(null);
+    const auto = status?.kalshi_key && legs.length >= 2 ? setTimeout(getLiveQuote, 800) : null;
     const t = setInterval(refreshSlip, 30000);
-    return () => clearInterval(t);
-  }, [tickers]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => { clearInterval(t); clearTimeout(auto); };
+  }, [tickers, status?.kalshi_key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = useMemo(() => data?.players.find((p) => p.key === player), [data, player]);
   const selected = useMemo(() => new Set(legs.map((l) => l.ticker)), [legs]);
@@ -99,6 +103,19 @@ export default function Props({ settings, update }) {
     setLegs([...legs.filter((l) => l !== same), { ...line, player: current.name, team: current.team, headshot: current.headshot }]);
   };
   const remove = (t) => setLegs(legs.filter((l) => l.ticker !== t));
+
+  const getLiveQuote = async () => {
+    setLiveLoading(true);
+    try {
+      const r = await postKalshiQuote(legs.map((l) => l.ticker));
+      setLive(r);
+      if (!r.yes_price) toast.info("No Kalshi market maker quoted this combo right now");
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setLiveLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -116,12 +133,6 @@ export default function Props({ settings, update }) {
                 <div className="text-xs font-mono text-slate-500 mt-1">{current ? `${current.team} · ${data.game.label} · ${data.game.date}` : ""}</div>
               </div>
             </div>
-            <div className="flex rounded border border-slate-800 p-0.5" data-testid="odds-format-toggle">
-              {[["american", "American"], ["cents", "Cents"]].map(([id, lbl]) => (
-                <button key={id} data-testid={`odds-format-${id}`} onClick={() => setFormat(id)}
-                  className={`px-2 py-1 text-[11px] rounded-sm ${format === id ? "bg-slate-800 text-white" : "text-slate-500"}`}>{lbl}</button>
-              ))}
-            </div>
           </div>
           {current ? <MarketList player={current} selected={selected} onToggle={toggle} format={format} /> :
             <div className="py-16 text-center text-sm text-slate-500">{games.length ? "Loading…" : "No open Kalshi NBA player props right now."}</div>}
@@ -131,6 +142,7 @@ export default function Props({ settings, update }) {
           parlayOdds={parlayOdds} setParlayOdds={(b, v) => setParlayOdds((o) => ({ ...o, [b]: v }))}
           straightOdds={straightOdds} setStraightOdds={(t, b, v) => setStraightOdds((o) => ({ ...o, [t]: { ...o[t], [b]: v } }))}
           settings={settings} update={update} format={format} remove={remove} clear={() => setLegs([])}
+          live={live} onLiveQuote={getLiveQuote} liveLoading={liveLoading} kalshiKey={status?.kalshi_key}
         />
       </div>
     </div>

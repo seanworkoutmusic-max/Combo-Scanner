@@ -47,7 +47,7 @@ function App() {
           </div>
         )}
         {tab === "props" ? (
-          <Props settings={settings} update={update} />
+          <Props settings={settings} update={update} status={status} />
         ) : (
           <Scanner games={games} status={status} settings={settings} update={update} />
         )}

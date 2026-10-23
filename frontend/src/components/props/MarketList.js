@@ -4,9 +4,9 @@ import { fmtAmerican, probToAmerican } from "../../lib/ev";
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-export const PriceTag = ({ p, format }) => {
+export const PriceTag = ({ p }) => {
   if (p == null || p <= 0 || p >= 1) return <span className="text-slate-600">—</span>;
-  return format === "cents" ? `${Math.round(p * 100)}¢` : fmtAmerican(probToAmerican(p));
+  return fmtAmerican(probToAmerican(p));
 };
 
 const LineButton = ({ line, selected, onToggle, format }) => (

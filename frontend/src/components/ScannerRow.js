@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { fmtAmerican, fmtCents, fmtPct, probToAmerican } from "../lib/ev";
+import { fmtAmerican, fmtPct, probToAmerican } from "../lib/ev";
 import { BookBreakdown } from "./BookBreakdown";
 
 const EvCell = ({ ev, testid }) => {
@@ -45,8 +45,8 @@ export const ScannerRow = ({ item, open, onToggle, settings, index }) => {
             {kind === "td" ? "TRIPLE-DBL" : "DOUBLE-DBL"}
           </span>
         </td>
-        <C testid={`cell-kalshi-yes-ask-${id}`} className="text-sky-300">{fmtCents(market.yes_ask)}</C>
-        <C testid={`cell-kalshi-no-ask-${id}`} className="text-slate-400">{fmtCents(market.no_ask)}</C>
+        <C testid={`cell-kalshi-yes-ask-${id}`} className="text-sky-300">{fmtAmerican(probToAmerican(market.yes_ask))}</C>
+        <C testid={`cell-kalshi-no-ask-${id}`} className="text-slate-400">{fmtAmerican(probToAmerican(market.no_ask))}</C>
         <C testid={`cell-fair-prob-${id}`} className="text-cyan-200">{fmtPct(res.fairYes)}</C>
         <C testid={`cell-fair-odds-${id}`} className="text-slate-300">{fmtAmerican(probToAmerican(res.fairYes))}</C>
         <EvCell ev={res.evYes} testid={`cell-ev-yes-${id}`} />

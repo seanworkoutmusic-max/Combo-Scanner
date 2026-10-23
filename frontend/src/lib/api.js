@@ -10,4 +10,5 @@ export const postCombo = (body) => axios.post(`${API}/combo`, body).then((r) => 
 export const getPropsGames = () => axios.get(`${API}/props/games`).then((r) => r.data);
 export const getPropsGame = (code) => axios.get(`${API}/props/game/${code}`).then((r) => r.data);
 export const postSlip = (tickers) => axios.post(`${API}/props/slip`, { tickers }).then((r) => r.data);
+export const postKalshiQuote = (tickers) => axios.post(`${API}/props/kalshi-quote`, { tickers }).then((r) => r.data);
 export const errMsg = (e) => e?.response?.data?.detail || e.message;

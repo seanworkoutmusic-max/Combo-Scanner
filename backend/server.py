@@ -18,6 +18,7 @@ import kalshi  # noqa: E402
 import optic  # noqa: E402
 import kalshi_props  # noqa: E402
 import espn  # noqa: E402
+import kalshi_auth  # noqa: E402
 
 client = AsyncIOMotorClient(os.environ['MONGO_URL'])
 db = client[os.environ['DB_NAME']]
@@ -33,7 +34,7 @@ def _books(books: Optional[str]):
 
 @api_router.get("/status")
 async def status():
-    return {"opticodds_key": bool(optic.api_key()), "books": optic.ALL_BOOKS, "default_books": optic.DEFAULT_BOOKS,
+    return {"opticodds_key": bool(optic.api_key()), "kalshi_key": kalshi_auth.configured(), "books": optic.ALL_BOOKS, "default_books": optic.DEFAULT_BOOKS,
             "sgp_books": sorted(optic.SGP_BOOKS)}
 
 
@@ -173,6 +174,24 @@ async def props_slip(req: SlipReq):
 @app.on_event("startup")
 async def start_combo_scanner():
     asyncio.create_task(kalshi_props.combo_loop())
+
+
+class QuoteReq(BaseModel):
+    tickers: List[str]
+
+
+@api_router.post("/props/kalshi-quote")
+async def props_kalshi_quote(req: QuoteReq):
+    if not kalshi_auth.configured():
+        raise HTTPException(400, "Kalshi API key not connected")
+    if len(req.tickers) < 2:
+        raise HTTPException(400, "Pick at least 2 legs")
+    try:
+        return await kalshi_auth.live_combo_quote(req.tickers)
+    except kalshi_auth.KalshiAuthError as e:
+        raise HTTPException(502, str(e))
+    except httpx.HTTPError as e:
+        raise HTTPException(502, f"Kalshi unavailable: {e}")
 
 
 app.include_router(api_router)
