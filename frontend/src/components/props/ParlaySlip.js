@@ -8,10 +8,7 @@ import { fmtAmerican, probToAmerican } from "../../lib/ev";
 
 const valid = (p) => p != null && p > 0 && p < 1;
 
-export const kalshiParlayPrice = (legs, combo, quote, live) => {
-  const q = americanToProb(quote);
-  if (quote && q != null) return { price: q, source: "quote" };
-  if (quote) return { price: null, source: "bad-quote" };
+export const kalshiParlayPrice = (legs, combo, live) => {
   if (live && valid(live.yes_price)) return { price: live.yes_price, source: "live" };
   if (combo && valid(combo.yes_ask)) return { price: combo.yes_ask, source: "exact" };
   if (legs.every((l) => valid(l.yes_ask))) return { price: legs.reduce((a, l) => a * l.yes_ask, 1), source: "estimate" };
@@ -21,8 +18,6 @@ export const kalshiParlayPrice = (legs, combo, quote, live) => {
 const SOURCE_TEXT = {
   live: "Live Kalshi combo quote",
   exact: "Live Kalshi combo market",
-  quote: "Your Kalshi odds (clear the box to use the live quote)",
-  "bad-quote": "Enter odds like +2500 or -150",
   estimate: "Estimated: Kalshi legs multiplied (ignores correlation)",
 };
 
@@ -40,8 +35,8 @@ const Leg = ({ l, format, onRemove }) => (
   </div>
 );
 
-export const ParlaySlip = ({ legs, combo, quote, setQuote, odds, setOdds, settings, format, remove, live, onLiveQuote, liveLoading, kalshiKey }) => {
-  const k = kalshiParlayPrice(legs, combo, quote, live);
+export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remove, live, onLiveQuote, liveLoading, kalshiKey }) => {
+  const k = kalshiParlayPrice(legs, combo, live);
   const fairs = Object.values(odds)
     .map((o) => americanToProb(o?.price))
     .filter((p) => p != null)
@@ -55,8 +50,8 @@ export const ParlaySlip = ({ legs, combo, quote, setQuote, odds, setOdds, settin
           <div data-testid="parlay-kalshi-price" className="font-mono text-lg font-bold text-sky-300"><PriceTag p={k.price} format={format} /></div>
         </div>
         <div className="px-3">{legs.map((l) => <Leg key={l.ticker} l={l} format={format} onRemove={() => remove(l.ticker)} />)}</div>
-        <div className="px-3 py-2.5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
-          <span data-testid="parlay-price-source" className={`text-[11px] font-mono ${k.source === "exact" || k.source === "live" ? "text-emerald-400" : k.source === "bad-quote" ? "text-red-400" : "text-amber-300"}`}>
+        <div className="px-3 py-2.5 border-t border-slate-800">
+          <span data-testid="parlay-price-source" className={`text-[11px] font-mono ${k.source === "exact" || k.source === "live" ? "text-emerald-400" : "text-amber-300"}`}>
             {SOURCE_TEXT[k.source] || "No Kalshi price yet"}
             {k.source === "live" && <span className="block text-slate-500">{live.quotes} market maker quotes · {new Date(live.fetched_at * 1000).toLocaleTimeString()}</span>}
             {live && !valid(live.yes_price) && <span className="block text-slate-500">No market maker quoted this combo</span>}
@@ -64,16 +59,6 @@ export const ParlaySlip = ({ legs, combo, quote, setQuote, odds, setOdds, settin
               <span className="block text-emerald-400">Live combo market: {fmtAmerican(probToAmerican(combo.yes_ask))}</span>
             )}
           </span>
-          <label className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
-            Kalshi odds
-            <input
-              data-testid="parlay-kalshi-quote-input"
-              value={quote}
-              onChange={(e) => setQuote(e.target.value.replace(/[^0-9+-]/g, ""))}
-              placeholder="+2500"
-              className="w-20 h-7 px-2 rounded border border-slate-800 bg-slate-950/70 text-slate-100"
-            />
-          </label>
         </div>
         <div className="px-3 pb-3">
           <button

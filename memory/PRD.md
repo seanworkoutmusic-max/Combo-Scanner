@@ -14,7 +14,7 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 
 ## Implemented (2026-10)
 - Live Kalshi prop lines for Points, Rebounds, Assists, Threes, PRA, PR, PA, RA, DD, TD, Steals, Blocks, SB and FTM, shown in American odds or cents.
-- Parlay Kalshi price, in this order: odds the user types, then a live Kalshi RFQ quote (using the user's Kalshi API key: create the combo market, read market-maker quotes, cancel the RFQ, never accept), then the live exact combo market, then the legs multiplied together.
+- Parlay Kalshi price, in this order: a live Kalshi RFQ quote (using the user's Kalshi API key: create the combo market, read market-maker quotes, cancel the RFQ, never accept), then the live exact combo market, then the legs multiplied together. The manual Kalshi odds box was removed.
 - American odds only. App renamed ODDSKING.
 - Manual book odds produce a devigged average and EV after Kalshi fees.
 - ESPN headshots.

@@ -56,7 +56,6 @@ export default function Props({ settings, update, status }) {
   const [legs, setLegs] = useStored("slip-legs", []);
   const [mode, setMode] = useStored("slip-mode", "parlay");
   const format = "american";
-  const [quote, setQuote] = useState("");
   const [combo, setCombo] = useState(null);
   const [live, setLive] = useState(null);
   const [liveLoading, setLiveLoading] = useState(false);
@@ -85,7 +84,6 @@ export default function Props({ settings, update, status }) {
   useEffect(() => {
     refreshSlip();
     setParlayOdds({});
-    setQuote("");
     setLive(null);
     const auto = status?.kalshi_key && legs.length >= 2 ? setTimeout(getLiveQuote, 800) : null;
     const t = setInterval(refreshSlip, 30000);
@@ -141,7 +139,7 @@ export default function Props({ settings, update, status }) {
             <div className="py-16 text-center text-sm text-slate-500">{games.length ? "Loading…" : "No open Kalshi NBA player props right now."}</div>}
         </section>
         <BetSlip
-          legs={legs} mode={mode} setMode={setMode} combo={combo} quote={quote} setQuote={setQuote}
+          legs={legs} mode={mode} setMode={setMode} combo={combo}
           parlayOdds={parlayOdds} setParlayOdds={(b, v) => setParlayOdds((o) => ({ ...o, [b]: v }))}
           straightOdds={straightOdds} setStraightOdds={(t, b, v) => setStraightOdds((o) => ({ ...o, [t]: { ...o[t], [b]: v } }))}
           settings={settings} update={update} format={format} remove={remove} clear={() => setLegs([])}
