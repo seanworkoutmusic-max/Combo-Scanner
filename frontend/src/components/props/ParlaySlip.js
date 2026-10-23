@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Trash2, ChevronDown } from "lucide-react";
+import { Trash2, ChevronDown, RefreshCw, ExternalLink } from "lucide-react";
 import { BookOdds } from "./BookOdds";
 import { Verdict } from "./Verdict";
 import { PriceTag } from "./MarketList";
 import { PlayerPhoto } from "./PlayerPhoto";
 import { Ladder } from "./Ladder";
-import { americanToProb, avg, devigOneSided, evPct, legOver } from "../../lib/slip";
+import { americanToProb, avg, devigOneSided, evPct, legOver, kalshiGameUrl } from "../../lib/slip";
 import { fmtAmerican, probToAmerican } from "../../lib/ev";
 
 const valid = (p) => p != null && p > 0 && p < 1;
@@ -62,7 +62,18 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
     <div className="space-y-4">
       <div className="rounded-md border border-slate-800 bg-[#0F131C]">
         <div className="flex items-center justify-between px-3 py-3 border-b border-slate-800">
-          <div className="text-sm font-semibold">{legs.length}-Leg Same Game Parlay</div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold">{legs.length}-Leg Same Game Parlay</span>
+            <button
+              data-testid="refresh-live-quote-btn"
+              onClick={onLiveQuote}
+              disabled={!kalshiKey || liveLoading}
+              title={kalshiKey ? "Refresh live Kalshi odds" : "Connect Kalshi API key for live odds"}
+              className="h-6 w-6 grid place-items-center rounded-full text-slate-400 hover:text-sky-300 hover:bg-slate-800 disabled:opacity-40 transition-colors"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${liveLoading ? "animate-spin text-sky-300" : ""}`} />
+            </button>
+          </div>
           <div data-testid="parlay-kalshi-price" className="font-mono text-lg font-bold text-sky-300"><PriceTag p={k.price} format={format} /></div>
         </div>
         <div className="px-3">{legs.map((l) => <Leg key={l.ticker} l={l} format={format} onRemove={() => remove(l.ticker)} />)}</div>
@@ -77,22 +88,15 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
           </span>
         </div>
         <div className="px-3 pb-3 space-y-2.5">
-          <div className="flex gap-2">
-            <label className="flex items-center gap-1.5 h-9 px-2 rounded border border-slate-800 bg-slate-950/70 text-[11px] font-mono text-slate-400 shrink-0">
-              Size $
-              <input data-testid="quote-size-input" type="number" min={1} value={quoteSize}
-                onChange={(e) => e.target.value !== "" && setQuoteSize(Math.max(1, Number(e.target.value)))}
-                className="w-14 bg-transparent text-slate-100 outline-none" />
-            </label>
-            <button
-              data-testid="get-live-kalshi-quote-btn"
-              onClick={onLiveQuote}
-              disabled={!kalshiKey || liveLoading}
-              className="flex-1 h-9 rounded bg-sky-400 text-slate-950 text-sm font-semibold hover:bg-sky-300 disabled:opacity-40 transition-colors"
-            >
-              {liveLoading ? "Asking Kalshi market makers…" : !kalshiKey ? "Connect Kalshi API key for live combo odds" : live ? "Refresh live Kalshi combo odds" : "Get live Kalshi combo odds"}
-            </button>
-          </div>
+          <a
+            data-testid="bet-on-kalshi-btn"
+            href={kalshiGameUrl(legs[0]?.ticker)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full h-10 rounded bg-emerald-400 text-slate-950 text-sm font-bold tracking-widest uppercase hover:bg-emerald-300 transition-colors"
+          >
+            Bet on Kalshi <ExternalLink className="h-3.5 w-3.5" />
+          </a>
           {live?.ladder?.length > 0 && <LiquidityDropdown rows={live.ladder} format={format} />}
         </div>
       </div>
