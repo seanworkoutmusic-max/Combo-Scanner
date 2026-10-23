@@ -1,4 +1,4 @@
-# COMBOS (formerly ODDSKING) – Kalshi NBA prop / combo EV tool
+# Combo Builder (formerly COMBOS / ODDSKING) – Kalshi NBA prop / combo EV tool
 
 ## Original problem
 EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+ pts/reb/ast) against the sportsbook average. Later: a player-page and bet-slip UI (like OddsJam) where you add NBA player props and see the Kalshi price in American odds; ESPN player photos.
