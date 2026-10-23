@@ -149,6 +149,60 @@ async def props_players():
             for g in games.values() for p in g["players"].values()]
 
 
+_rfq_sem = asyncio.Semaphore(2)
+
+PAIRINGS = [
+    [("Rebounds", 10), ("Assists", 10)],
+    [("Points", None), ("Rebounds", 10)],
+    [("Points", None), ("Assists", 10)],
+    [("Points", None), ("Rebounds", 10), ("Assists", 10)],
+    [("Rebounds", 8), ("Assists", 8)],
+    [("Points", None), ("Rebounds", 8), ("Assists", 8)],
+]
+
+
+def _pick(markets, label, want):
+    lines = [l for l in markets.get(label, []) if l["threshold"]]
+    if not lines:
+        return None
+    if want is None:
+        exact = [l for l in lines if l["threshold"] == 10]
+        return exact[0] if exact else min(lines, key=lambda l: l["threshold"])
+    return next((l for l in lines if l["threshold"] == want), None)
+
+
+@api_router.get("/scanner/player")
+async def scanner_player(game: str, player: str):
+    g = (await kalshi_props.load_props()).get(game)
+    p = g and g["players"].get(player)
+    if not p:
+        raise HTTPException(404, "Player not found on Kalshi")
+    photos = await espn.headshots()
+    singles = [{"name": lbl, "line": p["markets"][lbl][0]} for lbl in ("Double Double", "Triple Double") if lbl in p["markets"]]
+    combos, seen = [], set()
+    for pairing in PAIRINGS:
+        legs = [_pick(p["markets"], lbl, want) for lbl, want in pairing]
+        key = tuple(l["ticker"] for l in legs if l)
+        if None in legs or key in seen:
+            continue
+        seen.add(key)
+        combos.append({"name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs})
+
+    async def quote(c):
+        if not kalshi_auth.configured():
+            return
+        async with _rfq_sem:
+            try:
+                c["live"] = await kalshi_auth.live_combo_quote([l["ticker"] for l in c["legs"]], target_dollars=100)
+            except (kalshi_auth.KalshiAuthError, httpx.HTTPError) as e:
+                c["error"] = str(e)[:160]
+
+    await asyncio.gather(*[quote(c) for c in combos])
+    return {"game": {k: g[k] for k in ("code", "date", "label")}, "player": {"key": p["key"], "name": p["name"], "team": p["team"],
+            "headshot": (photos.get(p["key"]) or {}).get("headshot")}, "singles": singles, "combos": combos,
+            "updated_at": datetime.now(timezone.utc).isoformat()}
+
+
 @api_router.get("/props/game/{code}")
 async def props_game(code: str):
     g = (await kalshi_props.load_props()).get(code)

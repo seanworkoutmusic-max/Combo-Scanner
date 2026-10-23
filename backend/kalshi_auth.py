@@ -97,5 +97,6 @@ async def live_combo_quote(tickers, contracts=10, wait=6.0, target_dollars=None)
     book_ask = _f(market.get("yes_ask_dollars"))
     data = {"market_ticker": mt, "yes_price": ladder[0]["price"] if ladder else None, "quotes": len(quotes), "ladder": ladder,
             "size": size, "book_yes_ask": book_ask if book_ask and 0 < book_ask < 1 else None, "fetched_at": time.time()}
-    _quotes[key] = {"t": time.time(), "data": data}
+    if quotes:
+        _quotes[key] = {"t": time.time(), "data": data}
     return data

@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import "@/App.css";
 import { Toaster } from "./components/ui/sonner";
 import { Header } from "./components/Header";
-import { SetupBanner } from "./components/SetupBanner";
-import Scanner from "./pages/Scanner";
+import DDScanner from "./pages/DDScanner";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
 
@@ -40,16 +39,10 @@ function App() {
     <div className="App grid-bg">
       <Header tab={tab} setTab={setTab} status={status} kalshiOk={!gamesErr && games.length > 0} />
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
-        {tab === "scanner" && status && !status.opticodds_key && <SetupBanner />}
-        {gamesErr && (
-          <div data-testid="kalshi-error" className="text-sm text-red-400 border border-red-900/60 bg-red-950/30 rounded px-4 py-3">
-            Kalshi error: {gamesErr}
-          </div>
-        )}
         {tab === "props" ? (
           <Props settings={settings} update={update} status={status} />
         ) : (
-          <Scanner games={games} status={status} settings={settings} update={update} />
+          <DDScanner settings={settings} />
         )}
       </main>
       <Toaster theme="dark" />

@@ -20,7 +20,6 @@ export const Header = ({ tab, setTab, status, kalshiOk }) => (
         <img data-testid="site-logo" src="/logo.png" alt="Combo Builder logo" className="h-7 w-7 rounded object-cover" />
         <div className="leading-none hidden sm:block">
           <div data-testid="site-title" className="font-display font-bold text-lg tracking-tight">Combo Builder</div>
-          <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Kalshi prop EV</div>
         </div>
       </div>
       <nav className="flex items-center gap-1">
