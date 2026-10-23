@@ -1,0 +1,29 @@
+{
+  "summary": "Tested the backend and frontend of the rebuilt Kalshi-only DD/TD Scanner and the header change, on live Kalshi data. All 10 requested items pass. Backend: GET /api/scanner/player for Luka returns name 'Luka Dončić', an ESPN headshot, Double Double and Triple Double singles, and 6 combos. Every combo has a live.yes_price (19-25 market maker quotes). The endpoint returns 404 for an unknown player or game and 422 when params are missing. A full scan takes about 9.8s. Frontend: the header shows the logo and 'Combo Builder' with no 'Kalshi prop EV' subtitle. The scanner tab loads Luka by default with his photo to the left of his name. Double Double shows +114 and Triple Double +685. All 6 combo rows show leg chips and a live price, e.g. 10+ Reb & 10+ Ast at +1301. Bet on Kalshi links to https://kalshi.com/combos/games/la-clippers-at-la-lakers/game-lines. Refresh updates the scanner-updated time. Searching 'jalen johnson' and picking him loads his page: ATL vs CHA, 6 combos, link atl-hawks-at-cha-hornets. At 390px there is no horizontal overflow (scrollWidth 390 = clientWidth). Player Props still works: 2 legs give a live combo quote of -399 from 16 quotes. No page errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Header", "issues": ["The OPTICODDS status dot is still shown although the OpticOdds scanner was removed. Remove it if OpticOdds is no longer used."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_scanner_player_api.py", "/app/test_reports/pytest/pytest_scanner.xml"],
+  "action_items": [
+    "Optional: guard DDScanner.load against stale responses. If the user picks player B while player A's ~8s load is still running, A's response can arrive last and overwrite B. Use a request id or AbortController.",
+    "Optional: remove the OPTICODDS status dot from the header."
+  ],
+  "critical_code_review_comments": [
+    "DDScanner.load has no stale-response guard (race when switching players quickly).",
+    "_pick for Points with want=None takes threshold 10 if it exists, otherwise the lowest line. So the points leg can be very likely (Luka 25+ at -430, Jalen Johnson 15+ at -458) and adds little to the combo. This may be intended, but consider a points line closer to even odds.",
+    "Data observation, not a bug: Luka's Triple Double single is +685 (0.12), while the live 10+ Reb & 10+ Ast combo is +1301 (~0.07). A triple double requires both of those, so the TD market looks mispriced compared with the combo. This may be worth showing to users as an edge.",
+    "The refresh button was already re-enabled 300ms after the click and the request came back fast. Check whether kalshi_auth caches quotes; if it does, add a 'cached' indicator."
+  ],
+  "updated_files": ["/app/backend/tests/test_scanner_player_api.py"],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Luka: game 26OCT23LACLAL, key 'luka doncic'. Scanner testids: scanner-player-search, scanner-player-option-{key-with-dashes}, scanner-player-name, scanner-player-photo, single-card-double-double/triple-double, combo-row-i, combo-live-i, scanner-refresh-btn, scanner-updated, scanner-bet-on-kalshi. Props: market-row-{rebounds|assists}, line-btn-{ticker}, parlay-price-source.",
+  "test_credentials": "No auth in this app"
+}
