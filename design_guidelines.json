@@ -1,0 +1,134 @@
+{
+  "project_title": "Kalshi EV Combo Devigger & Sportsbook Arbitrage Software",
+  "app_type": "dashboard",
+  "theme": {
+    "mode": "dark",
+    "background": "#07090E",
+    "surface": "#0F131C",
+    "card": "#161E2E",
+    "card_border": "#223147",
+    "primary_accent": "#22D3EE",
+    "positive_ev": "#10B981",
+    "negative_ev": "#EF4444",
+    "warning_amber": "#F59E0B",
+    "text_primary": "#F8FAFC",
+    "text_secondary": "#94A3B8",
+    "text_muted": "#64748B",
+    "brand_kalshi": "#38BDF8",
+    "book_draftkings": "#22C55E",
+    "book_fanduel": "#3B82F6",
+    "book_betmgm": "#EAB308",
+    "book_caesars": "#EC4899",
+    "book_betrivers": "#06B6D4"
+  },
+  "typography": {
+    "font_family_heading": "General Sans, Barlow, system-ui, sans-serif",
+    "font_family_body": "Inter, system-ui, sans-serif",
+    "font_family_mono": "JetBrains Mono, Roboto Mono, monospace",
+    "scale": {
+      "h1": "text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight",
+      "h2": "text-xl sm:text-2xl font-semibold tracking-tight",
+      "h3": "text-lg font-medium",
+      "body": "text-sm sm:text-base leading-relaxed",
+      "mono_data": "font-mono text-xs sm:text-sm font-semibold tracking-wide"
+    }
+  },
+  "layout_and_spacing": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6",
+    "header_height": "h-16",
+    "grid_gap": "gap-4 sm:gap-6",
+    "table_padding": "py-3 px-4",
+    "card_padding": "p-5"
+  },
+  "key_components": {
+    "header_nav": {
+      "description": "Top fixed/sticky header with logo, view tabs (Scanner / Combo Builder), live API status indicator, refresh status, and 'How It Works' modal button.",
+      "data_testids": {
+        "nav_tab_scanner": "nav-tab-scanner",
+        "nav_tab_combo_builder": "nav-tab-combo-builder",
+        "nav_btn_how_it_works": "nav-btn-how-it-works",
+        "nav_status_kalshi": "nav-status-kalshi",
+        "nav_status_opticodds": "nav-status-opticodds"
+      }
+    },
+    "opticodds_setup_banner": {
+      "description": "Prominent warning banner displayed when OpticOdds SGP pricer API key is unconfigured or inactive.",
+      "data_testids": {
+        "banner_opticodds_warning": "banner-opticodds-warning",
+        "btn_configure_api_key": "btn-configure-api-key"
+      }
+    },
+    "controls_bar": {
+      "description": "Sticky action panel with controls: game dropdown, devig method toggle, fee toggle, min EV slider/input, +EV filter switch, and book multiselect.",
+      "data_testids": {
+        "select_game_filter": "select-game-filter",
+        "devig_method_toggle": "devig-method-toggle",
+        "toggle_kalshi_fees": "toggle-kalshi-fees",
+        "filter_min_ev_input": "filter-min-ev-input",
+        "toggle_positive_ev_only": "toggle-positive-ev-only",
+        "multiselect_sportsbooks": "multiselect-sportsbooks",
+        "btn_refresh_data": "btn-refresh-data",
+        "last_updated_timestamp": "last-updated-timestamp"
+      }
+    },
+    "scanner_table": {
+      "description": "High-density matrix table displaying players, Kalshi DD/TD markets, yes/no asks, fair prob %, fair odds, EV% for YES/NO, book counts, and source tags.",
+      "data_testids": {
+        "scanner_table_container": "scanner-table-container",
+        "row_player_market": "row-player-market-{id}",
+        "cell_kalshi_yes_ask": "cell-kalshi-yes-ask-{id}",
+        "cell_kalshi_no_ask": "cell-kalshi-no-ask-{id}",
+        "cell_fair_prob": "cell-fair-prob-{id}",
+        "cell_fair_odds": "cell-fair-odds-{id}",
+        "cell_ev_yes": "cell-ev-yes-{id}",
+        "cell_ev_no": "cell-ev-no-{id}",
+        "cell_source_tag": "cell-source-tag-{id}",
+        "btn_expand_row": "btn-expand-row-{id}",
+        "row_expansion_breakdown": "row-expansion-breakdown-{id}"
+      }
+    },
+    "combo_builder_page": {
+      "description": "Custom SGP Devig Workbench allowing users to select game, player, select legs (10+ pts, 10+ reb, 10+ ast), enter Kalshi quote in cents, and evaluate devigged EV%.",
+      "data_testids": {
+        "combo_game_select": "combo-game-select",
+        "combo_player_select": "combo-player-select",
+        "combo_leg_checkbox_pts": "combo-leg-checkbox-pts",
+        "combo_leg_checkbox_reb": "combo-leg-checkbox-reb",
+        "combo_leg_checkbox_ast": "combo-leg-checkbox-ast",
+        "combo_kalshi_quote_input": "combo-kalshi-quote-input",
+        "combo_calc_ev_btn": "combo-calc-ev-btn",
+        "combo_results_panel": "combo-results-panel",
+        "combo_fair_prob_display": "combo-fair-prob-display",
+        "combo_ev_percentage_display": "combo-ev-percentage-display"
+      }
+    },
+    "how_it_works_modal": {
+      "description": "Explainer dialog detailing the mathematical devig formulas (Multiplicative, Additive, Power, Worst-case), Kalshi fee deductions, and OpticOdds SGP synthetic pricing.",
+      "data_testids": {
+        "modal_how_it_works": "modal-how-it-works",
+        "modal_close_btn": "modal-close-btn"
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "Build a desktop-first, fully responsive dark-theme quantitative sports betting dashboard for Kalshi double-double and triple-double EV devigging.",
+    "Target file format is React JavaScript (.js) files in /app/frontend/src/.",
+    "Implement the devig algorithms cleanly: Multiplicative (proportional remove vig), Additive (equal spread), Power (exponential/shin approximation), and Worst-case (most conservative book line).",
+    "Calculate EV% correctly: EV% = (Fair_Probability * Payout_After_Kalshi_Fee) - (1 - Fair_Probability) * Risk.",
+    "Include a Kalshi taker fee toggle (7% standard fee on net gain or cents fee calculation) to show raw vs net EV%.",
+    "Ensure every row in the Scanner page is expandable to reveal per-sportsbook SGP odds (DraftKings, BetMGM, Caesars, Fanatics, BetRivers) and leg-by-leg probabilities.",
+    "Provide mock/fallback live data generator for NBA games and Kalshi quotes when live OpticOdds API key is not connected, with clear indicator banner.",
+    "Apply strict data-testid attributes across all buttons, inputs, table rows, and status indicators as defined in key_components."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": {
+    "design_principles": [
+      "Dark mode void aesthetic with high contrast data density",
+      "Mono fonts (JetBrains Mono) for all odds, probabilities, cents, and EV percentages",
+      "Subtle 1px borders with dark blue/slate tint (border-slate-800) instead of flat gray",
+      "Color-coded EV percentages: glowing green (#10B981) for positive EV, soft red (#EF4444) for negative EV",
+      "Cardless or structured dark panel containers with subtle backdrop blur",
+      "Micro-animations for row expansion, toggle switches, and real-time refresh pulses"
+    ],
+    "testing_attributes": "All interactive buttons, selects, inputs, and core data cells MUST have data-testid attributes."
+  }
+}

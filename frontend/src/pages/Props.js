@@ -1,0 +1,130 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Search } from "lucide-react";
+import { getPropsGames, getPropsGame, postSlip, errMsg } from "../lib/api";
+import { MarketList } from "../components/props/MarketList";
+import { BetSlip } from "../components/props/BetSlip";
+
+const useStored = (key, init) => {
+  const [v, setV] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(key)) ?? init; } catch { return init; }
+  });
+  useEffect(() => localStorage.setItem(key, JSON.stringify(v)), [key, v]);
+  return [v, setV];
+};
+
+const GameStrip = ({ games, game, setGame }) => (
+  <div data-testid="game-strip" className="flex gap-2 overflow-x-auto pb-1">
+    {games.map((g) => (
+      <button key={g.code} data-testid={`game-chip-${g.code}`} onClick={() => setGame(g.code)}
+        className={`shrink-0 px-3 py-1.5 rounded border font-mono text-xs transition-colors ${game === g.code ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-200" : "border-slate-800 text-slate-400 hover:text-slate-100"}`}>
+        {g.label} <span className="text-slate-500">· {g.date.slice(5)}</span>
+      </button>
+    ))}
+  </div>
+);
+
+const PlayerList = ({ players, player, setPlayer }) => {
+  const [q, setQ] = useState("");
+  const shown = players.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div className="rounded-md border border-slate-800 bg-[#0F131C]/80">
+      <div className="flex items-center gap-2 px-3 border-b border-slate-800">
+        <Search className="h-3.5 w-3.5 text-slate-500" />
+        <input data-testid="player-search-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search player"
+          className="w-full h-10 bg-transparent text-sm outline-none placeholder:text-slate-600" />
+      </div>
+      <div className="max-h-[260px] lg:max-h-[640px] overflow-y-auto">
+        {shown.map((p) => (
+          <button key={p.key} data-testid={`player-item-${p.key.replace(/\s/g, "-")}`} onClick={() => setPlayer(p.key)}
+            className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors ${player === p.key ? "bg-cyan-400/10 text-cyan-100" : "text-slate-300 hover:bg-slate-800/30"}`}>
+            <span>{p.name}</span><span className="text-[10px] font-mono text-slate-500">{p.team}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default function Props({ settings, update }) {
+  const [games, setGames] = useState([]);
+  const [game, setGame] = useState(null);
+  const [data, setData] = useState(null);
+  const [player, setPlayer] = useState(null);
+  const [legs, setLegs] = useStored("slip-legs", []);
+  const [mode, setMode] = useStored("slip-mode", "parlay");
+  const [format, setFormat] = useStored("odds-format", "american");
+  const [quote, setQuote] = useState("");
+  const [combo, setCombo] = useState(null);
+  const [parlayOdds, setParlayOdds] = useState({});
+  const [straightOdds, setStraightOdds] = useState({});
+
+  useEffect(() => {
+    getPropsGames().then((g) => { setGames(g); if (g.length) setGame(g[0].code); }).catch((e) => toast.error(errMsg(e)));
+  }, []);
+
+  useEffect(() => {
+    if (!game) return;
+    getPropsGame(game).then((d) => { setData(d); setPlayer(d.players[0]?.key || null); }).catch((e) => toast.error(errMsg(e)));
+  }, [game]);
+
+  const tickers = legs.map((l) => l.ticker).join(",");
+  const refreshSlip = useCallback(async () => {
+    if (!tickers) return setCombo(null);
+    try {
+      const r = await postSlip(tickers.split(","));
+      setCombo(r.combo);
+      setLegs((prev) => prev.map((l, i) => (r.legs[i] ? { ...l, ...r.legs[i] } : l)));
+    } catch (e) { /* keep last prices */ }
+  }, [tickers, setLegs]);
+
+  useEffect(() => {
+    refreshSlip();
+    setParlayOdds({});
+    setQuote("");
+    const t = setInterval(refreshSlip, 30000);
+    return () => clearInterval(t);
+  }, [tickers]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const current = useMemo(() => data?.players.find((p) => p.key === player), [data, player]);
+  const selected = useMemo(() => new Set(legs.map((l) => l.ticker)), [legs]);
+
+  const toggle = (line) => {
+    if (selected.has(line.ticker)) return setLegs(legs.filter((l) => l.ticker !== line.ticker));
+    setLegs([...legs, { ...line, player: current.name, team: current.team }]);
+  };
+  const remove = (t) => setLegs(legs.filter((l) => l.ticker !== t));
+
+  return (
+    <div className="space-y-4">
+      <GameStrip games={games} game={game} setGame={setGame} />
+      <div className="grid gap-5 lg:grid-cols-[220px_1fr_400px]">
+        <PlayerList players={data?.players || []} player={player} setPlayer={setPlayer} />
+        <section className="min-w-0">
+          <div className="flex items-end justify-between gap-3 border-b border-slate-800 pb-3 mb-1">
+            <div>
+              <h1 data-testid="player-name-heading" className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
+                {current?.name || "—"}
+              </h1>
+              <div className="text-xs font-mono text-slate-500 mt-1">{current ? `${current.team} · ${data.game.label} · ${data.game.date}` : ""}</div>
+            </div>
+            <div className="flex rounded border border-slate-800 p-0.5" data-testid="odds-format-toggle">
+              {[["american", "American"], ["cents", "Cents"]].map(([id, lbl]) => (
+                <button key={id} data-testid={`odds-format-${id}`} onClick={() => setFormat(id)}
+                  className={`px-2 py-1 text-[11px] rounded-sm ${format === id ? "bg-slate-800 text-white" : "text-slate-500"}`}>{lbl}</button>
+              ))}
+            </div>
+          </div>
+          {current ? <MarketList player={current} selected={selected} onToggle={toggle} format={format} /> :
+            <div className="py-16 text-center text-sm text-slate-500">{games.length ? "Loading…" : "No open Kalshi NBA player props right now."}</div>}
+        </section>
+        <BetSlip
+          legs={legs} mode={mode} setMode={setMode} combo={combo} quote={quote} setQuote={setQuote}
+          parlayOdds={parlayOdds} setParlayOdds={(b, v) => setParlayOdds((o) => ({ ...o, [b]: v }))}
+          straightOdds={straightOdds} setStraightOdds={(t, b, v) => setStraightOdds((o) => ({ ...o, [t]: { ...o[t], [b]: v } }))}
+          settings={settings} update={update} format={format} remove={remove} clear={() => setLegs([])}
+        />
+      </div>
+    </div>
+  );
+}

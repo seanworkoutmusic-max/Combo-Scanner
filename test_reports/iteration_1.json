@@ -1,0 +1,36 @@
+{
+  "summary": "First test run of the Kalshi DD/TD EV scanner (no OpticOdds key). Backend: 8/8 pytest pass (status, live Kalshi games (12 games, from KXNBA2D/KXNBA3D), scan with missing_key, unknown game 404, missing param 422, combo 400 without key, combo 422 bad body). Frontend: amber banner, live rows with yes/no asks, expand/collapse showing 'No sportsbook prices found' message, devig/source toggles, fees/+EV switches, min EV, book chips all work and persist in localStorage across reload; refresh updates timestamp; game select switches games and reloads table; How it works modal opens/closes; Combo Builder game/player selects, leg checkboxes/thresholds (Over X.5 label updates), quote input work; calc button disabled with 'Needs OpticOdds key'. Mobile 390px: no horizontal overflow outside the table on both tabs. No console page errors.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/scan, /api/combo", "issue": "kalshi.load_markets() httpx errors are not caught in /scan and /combo (only in /games) -> raw 500 if Kalshi is down/slow instead of 502."},
+      {"endpoint": "/api/combo", "issue": "Leg.threshold has no bounds validation (0 or negative accepted); stat validated only after key check (fine now, but no ge=1 constraint)."},
+      {"endpoint": "/api/scan", "issue": "If user deselects every book, frontend sends books='' and backend silently falls back to DEFAULT_BOOKS - the UI chips then don't reflect what's priced."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Scanner/Combo tabs", "issues": ["Selected game is local to each page component, so switching tabs resets the game selection back to the first game (minor UX)."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_ev_scanner_api.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Wrap kalshi.load_markets() in /api/scan and /api/combo with httpx.HTTPError -> HTTPException(502) like /api/games",
+    "Optional: add Field(ge=1, le=60) to Leg.threshold; handle empty book selection explicitly (disable or warn)",
+    "Optional: App.js getStatus() has no .catch - status failure leaves page silently without banner/books"
+  ],
+  "critical_code_review_comments": [
+    "DD inclusion-exclusion P(PR)+P(PA)+P(RA)-2P(PRA) is correct; TD = P(PRA). Worst-case on NO side uses 1-max(yes) - correct.",
+    "row-expansion-breakdown-{row.key} testid uses raw key with spaces while other row testids replace spaces with '-' (inconsistent)",
+    "Kalshi fee formula 0.07*P*(1-P) per contract ignores per-order rounding up to the cent - acceptable approximation but could understate fees on small orders"
+  ],
+  "updated_files": ["/app/backend/tests/test_ev_scanner_api.py", "/app/frontend/src/components/BookBreakdown.js (added data-testid row-expansion-empty-<key> to empty-state message)"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "None needed (no auth). /app/memory/test_credentials.md not applicable.",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "No OpticOdds key so fair/EV columns are '—' by design. When key is added, retest /api/scan optic_status=ok, breakdown-book-* rows, combo pricing and EV display. Kalshi data is live; game codes like 26OCT23ATLCHA. Expand-empty testid: row-expansion-empty-<key-with-dashes>."
+}
