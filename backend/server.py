@@ -140,6 +140,15 @@ async def props_games():
     return sorted(out, key=lambda x: (x["date"], x["code"]))
 
 
+@api_router.get("/props/players")
+async def props_players():
+    games = await kalshi_props.load_props()
+    photos = await espn.headshots()
+    return [{"key": p["key"], "name": p["name"], "team": p["team"], "game": g["code"], "game_label": g["label"],
+             "headshot": (photos.get(p["key"]) or {}).get("headshot")}
+            for g in games.values() for p in g["players"].values()]
+
+
 @api_router.get("/props/game/{code}")
 async def props_game(code: str):
     g = (await kalshi_props.load_props()).get(code)

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
-import { getPropsGames, getPropsGame, postSlip, postKalshiQuote, errMsg } from "../lib/api";
+import { getPropsGames, getPropsGame, getPropsPlayers, postSlip, postKalshiQuote, errMsg } from "../lib/api";
 import { MarketList } from "../components/props/MarketList";
 import { BetSlip } from "../components/props/BetSlip";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
@@ -25,22 +25,27 @@ const GameStrip = ({ games, game, setGame }) => (
   </div>
 );
 
-const PlayerList = ({ players, player, setPlayer }) => {
+const norm = (s) => (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+const PlayerList = ({ players, allPlayers, player, onPick }) => {
   const [q, setQ] = useState("");
-  const shown = players.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+  const nq = norm(q).trim();
+  const shown = nq ? allPlayers.filter((p) => norm(p.name).includes(nq) || p.key.includes(nq)) : players;
   return (
     <div className="rounded-md border border-slate-800 bg-[#0F131C]/80">
       <div className="flex items-center gap-2 px-3 border-b border-slate-800">
         <Search className="h-3.5 w-3.5 text-slate-500" />
-        <input data-testid="player-search-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search player"
+        <input data-testid="player-search-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player"
           className="w-full h-10 bg-transparent text-sm outline-none placeholder:text-slate-600" />
       </div>
       <div className="max-h-[260px] lg:max-h-[640px] overflow-y-auto">
+        {nq && !shown.length && <div className="px-3 py-4 text-xs text-slate-500">No Kalshi lines for "{q}" right now.</div>}
         {shown.map((p) => (
-          <button key={p.key} data-testid={`player-item-${p.key.replace(/\s/g, "-")}`} onClick={() => setPlayer(p.key)}
+          <button key={`${p.game || ""}-${p.key}`} data-testid={`player-item-${p.key.replace(/\s/g, "-")}`} onClick={() => { onPick(p); setQ(""); }}
             className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${player === p.key ? "bg-cyan-400/10 text-cyan-100" : "text-slate-300 hover:bg-slate-800/30"}`}>
             <PlayerPhoto src={p.headshot} name={p.name} size={30} />
-            <span className="flex-1 truncate">{p.name}</span><span className="text-[10px] font-mono text-slate-500">{p.team}</span>
+            <span className="flex-1 truncate">{p.name}</span>
+            <span className="text-[10px] font-mono text-slate-500">{nq ? p.game_label : p.team}</span>
           </button>
         ))}
       </div>
@@ -61,15 +66,29 @@ export default function Props({ settings, update, status }) {
   const [liveLoading, setLiveLoading] = useState(false);
   const [parlayOdds, setParlayOdds] = useState({});
   const [straightOdds, setStraightOdds] = useState({});
+  const [allPlayers, setAllPlayers] = useState([]);
+  const pending = useRef(null);
 
   useEffect(() => {
     getPropsGames().then((g) => { setGames(g); if (g.length) setGame(g[0].code); }).catch((e) => toast.error(errMsg(e)));
+    getPropsPlayers().then(setAllPlayers).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!game) return;
-    getPropsGame(game).then((d) => { setData(d); setPlayer(d.players[0]?.key || null); }).catch((e) => toast.error(errMsg(e)));
+    getPropsGame(game).then((d) => {
+      setData(d);
+      const want = pending.current && d.players.find((p) => p.key === pending.current);
+      pending.current = null;
+      setPlayer(want ? want.key : d.players[0]?.key || null);
+    }).catch((e) => toast.error(errMsg(e)));
   }, [game]);
+
+  const pickPlayer = (p) => {
+    if (!p.game || p.game === game) return setPlayer(p.key);
+    pending.current = p.key;
+    setGame(p.game);
+  };
 
   const tickers = legs.map((l) => l.ticker).join(",");
   const refreshSlip = useCallback(async () => {
@@ -122,7 +141,7 @@ export default function Props({ settings, update, status }) {
     <div className="space-y-4">
       <GameStrip games={games} game={game} setGame={setGame} />
       <div className="grid gap-5 lg:grid-cols-[220px_1fr_400px]">
-        <PlayerList players={data?.players || []} player={player} setPlayer={setPlayer} />
+        <PlayerList players={data?.players || []} allPlayers={allPlayers} player={player} onPick={pickPlayer} />
         <section className="min-w-0">
           <div className="flex items-end justify-between gap-3 border-b border-slate-800 pb-3 mb-1">
             <div className="flex items-center gap-4">
