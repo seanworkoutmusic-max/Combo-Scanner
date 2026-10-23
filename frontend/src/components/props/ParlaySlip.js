@@ -97,7 +97,7 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
           >
             Bet on Kalshi <ExternalLink className="h-3.5 w-3.5" />
           </a>
-          {live?.ladder?.length > 0 && <LiquidityDropdown rows={live.ladder} format={format} />}
+          {live?.ladder?.length > 0 && <LiquidityDropdown key={live.market_ticker} rows={live.ladder} format={format} />}
         </div>
       </div>
       <Verdict fair={fair} price={k.price} ev={evPct(fair, k.price, settings.fees)} books={fairs.length} format={format} prefix="parlay" />
