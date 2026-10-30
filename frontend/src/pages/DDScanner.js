@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, ExternalLink } from "lucide-react";
-import { getPropsGames, getScannerGame, errMsg } from "../lib/api";
+import { getScannerGames, getScannerGame, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
+
+const when = (g) => {
+  const d = new Date(`${g.date}T12:00:00`);
+  const day = d.toDateString() === new Date().toDateString() ? "Today" : d.toLocaleDateString([], { weekday: "short" });
+  return g.start ? `${day} ${new Date(g.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : day;
+};
 
 const valid = (p) => p != null && p > 0 && p < 1;
 const HEADS = ["Player", "TD", "FanDuel", "DraftKings", "EV"];
@@ -74,7 +80,7 @@ export default function DDScanner({ settings }) {
   const players = data?.players || [];
 
   useEffect(() => {
-    getPropsGames().then((g) => {
+    getScannerGames().then((g) => {
       setGames(g);
       setGame((prev) => prev || g[0]?.code || "");
     }).catch((e) => toast.error(errMsg(e)));
@@ -120,6 +126,7 @@ export default function DDScanner({ settings }) {
             <button key={g.code} data-testid={`scanner-game-${g.code}`} onClick={() => setGame(g.code)}
               className={`shrink-0 px-2.5 py-1 text-sm font-semibold transition-colors ${i ? "border-l border-slate-800" : ""} ${game === g.code ? "text-white" : "text-slate-500 hover:text-slate-200"}`}>
               <GameLabel code={g.code} />
+              <span data-testid={`scanner-game-when-${g.code}`} className="ml-1.5 text-[10px] font-mono font-normal text-slate-500">{when(g)}</span>
             </button>
           ))}
         </div>
@@ -167,7 +174,9 @@ export default function DDScanner({ settings }) {
         )}
         {data && !players.length && (
           <div className="py-16 text-center text-sm text-slate-500">
-            No player in this game has Kalshi {tdPts}+ points, 10+ rebounds and 10+ assists lines, so there's no triple-double combo to price.
+            {games.find((g) => g.code === game)?.kalshi
+              ? `No player in this game has Kalshi ${tdPts}+ points, 10+ rebounds and 10+ assists lines, so there's no triple-double combo to price.`
+              : "Kalshi hasn't opened player props for this game yet and FanDuel/DraftKings haven't posted triple-double odds. Check back closer to tip-off."}
           </div>
         )}
       </div>

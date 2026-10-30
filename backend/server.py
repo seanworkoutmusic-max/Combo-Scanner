@@ -230,11 +230,30 @@ async def td_watch(limit: int = Query(40, ge=5, le=200)):
     return {"season": stats["season"], "players": rows[:limit], "updated_at": datetime.fromtimestamp(stats["t"], timezone.utc).isoformat() if stats["t"] else None}
 
 
+@api_router.get("/scanner/games")
+async def scanner_games():
+    """Every game today/tomorrow (ET) from the sportsbook schedule, merged with whatever Kalshi has open."""
+    try:
+        kal = await kalshi_props.load_props()
+    except httpx.HTTPError:
+        kal = {}
+    try:
+        sched = await odds_api.schedule()
+    except httpx.HTTPError as e:
+        logger.warning("Odds API schedule failed: %s", e)
+        sched = []
+    out = {s["code"]: {**s, "kalshi": s["code"] in kal} for s in sched}
+    for x in kal.values():
+        out.setdefault(x["code"], {"code": x["code"], "date": x["date"], "teams": x["teams"], "label": x["label"], "start": None})["kalshi"] = True
+    return sorted(out.values(), key=lambda x: (x["date"], x["start"] or "", x["code"]))
+
+
 @api_router.get("/scanner/game/{code}")
 async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
-    g = (await kalshi_props.load_props()).get(code)
-    if not g:
-        raise HTTPException(404, "Game not found on Kalshi")
+    info = kalshi.parse_game_code(code)
+    if not info:
+        raise HTTPException(404, "Unknown game")
+    g = (await kalshi_props.load_props()).get(code) or {"code": code, **info, "label": " vs ".join(info["teams"]), "players": {}}
     photos = await espn.headshots()
     todo = []
     for p in g["players"].values():

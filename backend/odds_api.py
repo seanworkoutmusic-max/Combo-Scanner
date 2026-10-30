@@ -1,6 +1,8 @@
 import logging
 import os
 import time
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -39,6 +41,30 @@ async def _event_id(client, away, home):
         if e["away_team"].endswith(a) and e["home_team"].endswith(h):
             return e["id"]
     return None
+
+
+ET = ZoneInfo("America/New_York")
+ABBR = {v: k for k, v in TEAMS.items() if k != "BRK"}
+
+
+async def schedule(days=2):
+    """Today's and tomorrow's games (US Eastern) as Kalshi-style codes, from the free events list."""
+    if not configured():
+        return []
+    async with httpx.AsyncClient(timeout=20) as client:
+        await _event_id(client, "", "")
+    today = datetime.now(ET).date()
+    out = []
+    for e in _events["data"]:
+        start = datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(ET)
+        away = next((a for n, a in ABBR.items() if e["away_team"].endswith(n)), None)
+        home = next((a for n, a in ABBR.items() if e["home_team"].endswith(n)), None)
+        if not (away and home) or not 0 <= (start.date() - today).days < days:
+            continue
+        code = f"{start:%y}{start:%b}{start:%d}".upper() + away + home
+        out.append({"code": code, "date": start.date().isoformat(), "teams": [away, home], "label": f"{away} vs {home}",
+                    "start": start.isoformat()})
+    return out
 
 
 async def triple_double_odds(away, home, ttl=300):

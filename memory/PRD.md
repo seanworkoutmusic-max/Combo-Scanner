@@ -30,3 +30,6 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - P1: OpticOdds or another odds feed to autofill book odds, once the user has a key.
 - P1: correlation-aware Kalshi combo estimate.
 - P2: saved bets and history, alerts for +EV.
+
+## 2026-10-30
+- TD Scanner game tabs now come from /api/scanner/games: full NBA schedule (today+tomorrow ET, from Odds API free events list) merged with Kalshi open games. Games without Kalshi props still load FD/DK TD odds. Tabs show day + tip time. Manual refresh only (user choice). Injury tweet scanner: user cancelled.
