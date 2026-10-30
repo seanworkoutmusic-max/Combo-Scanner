@@ -11,7 +11,7 @@ const OddsInput = ({ value, onChange, testid, placeholder = "+000" }) => (
   />
 );
 
-const BOOK_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png" };
+const BOOK_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png", Fanatics: "/fanatics.png" };
 
 const BookName = ({ b }) => (
   <span className="flex items-center gap-2 text-xs text-slate-300">
@@ -26,12 +26,14 @@ export const BookOdds = ({ mode, odds, setOdds, prefix }) => mode !== "straight"
     <div className="grid grid-cols-[1fr_auto] gap-2 text-[10px] uppercase tracking-widest font-mono text-slate-500 px-1">
       <span>Book</span><span>SGP odds</span>
     </div>
-    <div className="flex items-center justify-between rounded border border-slate-800/70 bg-[#0E0E0E] px-2 py-2.5">
-      <BookName b="DraftKings" />
-      <span data-testid={`${prefix}-sgp-DraftKings`} className={`font-mono text-sm font-semibold ${odds.DraftKings?.price ? "text-white" : "text-slate-600"}`}>
-        {odds.DraftKings?.price || "—"}
-      </span>
-    </div>
+    {["DraftKings", "Fanatics"].map((b) => (
+      <div key={b} className="flex items-center justify-between rounded border border-slate-800/70 bg-[#0E0E0E] px-2 py-2.5">
+        <BookName b={b} />
+        <span data-testid={`${prefix}-sgp-${b}`} className={`font-mono text-sm font-semibold ${odds[b]?.price ? "text-white" : "text-slate-600"}`}>
+          {odds[b]?.price || "—"}
+        </span>
+      </div>
+    ))}
   </div>
 ) : (
   <div data-testid={`${prefix}-book-odds`} className="space-y-1.5">

@@ -111,9 +111,10 @@ export default function Props({ settings, update, status }) {
     if (legs.length >= 2) {
       const sent = tickers;
       postSgp(tickers.split(",")).then((r) => {
-        const dk = r.prices?.dk;
-        if (dk != null && sent === JSON.parse(localStorage.getItem("slip-legs") || "[]").map((l) => l.ticker).join(","))
-          setParlayOdds((o) => ({ ...o, DraftKings: { price: dk > 0 ? `+${dk}` : `${dk}` } }));
+        const map = { dk: "DraftKings", fan: "Fanatics" };
+        if (sent === JSON.parse(localStorage.getItem("slip-legs") || "[]").map((l) => l.ticker).join(","))
+          setParlayOdds((o) => ({ ...o, ...Object.fromEntries(Object.entries(r.prices || {}).filter(([b]) => map[b])
+            .map(([b, v]) => [map[b], { price: v > 0 ? `+${v}` : `${v}` }])) }));
       }).catch(() => {});
     }
     const auto = status?.kalshi_key && legs.length >= 2 ? setTimeout(getLiveQuote, 800) : null;
