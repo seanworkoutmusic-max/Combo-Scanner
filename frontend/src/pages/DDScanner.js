@@ -40,14 +40,15 @@ const EvLine = ({ ev, label, testid }) => (
   </div>
 );
 
-const Row = ({ p, format, i, odds, setOdds, settings }) => {
-  const tri = p.combos.find((c) => c.kind === "PRA")?.live?.yes_price;
+const Row = ({ p, format, i, odds, setOdds, settings, tdPts }) => {
+  const tri = p.combos.find((c) => c.kind === "TD" || c.also_td)?.live?.yes_price;
+  const tdKey = `td${tdPts}`;
   const dd = p.built_dd?.price;
   const lowerBound = p.built_dd && (!p.built_dd.exact || p.combos.some((c) => c.legs.some((l) => l.market === "Points" && l.threshold !== 10)));
   const slug = p.key.replace(/\s/g, "-");
   const hasTd = valid(tri);
   const evDd = evPct(fairFrom(odds.dd, settings.singleHold), dd, settings.fees);
-  const evTd = hasTd ? evPct(fairFrom(odds.td, settings.singleHold), tri, settings.fees) : null;
+  const evTd = hasTd ? evPct(fairFrom(odds[tdKey], settings.singleHold), tri, settings.fees) : null;
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
       <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
@@ -68,7 +69,7 @@ const Row = ({ p, format, i, odds, setOdds, settings }) => {
         <td key={b} className="py-3 px-4">
           <div className="space-y-1.5">
             <OddsBox testid={`${b}-dd-${slug}`} label={hasTd ? "DD" : null} value={odds.dd?.[b]} onChange={(v) => setOdds("dd", b, v)} />
-            {hasTd && <OddsBox testid={`${b}-td-${slug}`} label="TD" value={odds.td?.[b]} onChange={(v) => setOdds("td", b, v)} />}
+            {hasTd && <OddsBox testid={`${b}-td-${slug}`} label="TD" value={odds[tdKey]?.[b]} onChange={(v) => setOdds(tdKey, b, v)} />}
           </div>
         </td>
       ))}
@@ -86,11 +87,12 @@ export default function DDScanner({ settings }) {
   const [game, setGame] = useState(null);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [tdPts, setTdPts] = useState(10);
   const [bookOdds, setBookOdds] = useState(() => {
     try { return JSON.parse(localStorage.getItem("dd-book-odds") || "{}"); } catch { return {}; }
   });
   useEffect(() => localStorage.setItem("dd-book-odds", JSON.stringify(bookOdds)), [bookOdds]);
-  const players = (data?.players || []).filter((p) => valid(p.built_dd?.price) || p.combos.some((c) => c.kind === "PRA" && valid(c.live?.yes_price)));
+  const players = (data?.players || []).filter((p) => valid(p.built_dd?.price) || p.combos.some((c) => (c.kind === "TD" || c.also_td) && valid(c.live?.yes_price)));
 
   useEffect(() => {
     getPropsGames().then((g) => {
@@ -103,13 +105,13 @@ export default function DDScanner({ settings }) {
     if (!game) return;
     setLoading(true);
     try {
-      setData(await getScannerGame(game));
+      setData(await getScannerGame(game, tdPts));
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
       setLoading(false);
     }
-  }, [game]);
+  }, [game, tdPts]);
 
   useEffect(() => { setData(null); load(); }, [load]);
 
@@ -130,6 +132,7 @@ export default function DDScanner({ settings }) {
       </div>
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap">
         <div data-testid="scanner-game-tabs" className="flex items-center gap-1 overflow-x-auto">
           {games.map((g, i) => (
             <button key={g.code} data-testid={`scanner-game-${g.code}`} onClick={() => setGame(g.code)}
@@ -137,6 +140,14 @@ export default function DDScanner({ settings }) {
               {g.label}
             </button>
           ))}
+        </div>
+        <label className="flex items-center gap-2 text-sm text-slate-400">
+          TD points
+          <select data-testid="td-points-select" value={tdPts} onChange={(e) => setTdPts(Number(e.target.value))}
+            className="h-8 pl-2.5 pr-7 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm font-semibold text-white outline-none focus:border-white/60 cursor-pointer">
+            {[10, 15, 20].map((n) => <option key={n} value={n}>{n}+ pts</option>)}
+          </select>
+        </label>
         </div>
         {data?.players[0] && (
           <a data-testid="scanner-bet-on-kalshi" href={kalshiGameUrl(data.players[0].combos[0]?.legs[0]?.ticker || data.players[0].singles[0]?.line.ticker)}
@@ -150,7 +161,7 @@ export default function DDScanner({ settings }) {
         <table className="w-full min-w-[820px]">
           <thead>
             <tr className="text-xs text-slate-400">
-              {HEADS.map((h, i) => (
+              {HEADS.map((h) => (h === "TD" ? `TD (${tdPts}+ pts)` : h)).map((h, i) => (
                 <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#181818]"}`}>
                   {HEAD_LOGOS[h] ? (
                     <span className="inline-flex items-center gap-1.5">
@@ -163,7 +174,7 @@ export default function DDScanner({ settings }) {
           </thead>
           <tbody>
             {players.map((p, i) => (
-              <Row key={p.key} p={p} i={i} format={format} settings={settings} odds={bookOdds[p.key] || {}}
+              <Row key={p.key} p={p} i={i} format={format} settings={settings} tdPts={tdPts} odds={bookOdds[p.key] || {}}
                 setOdds={(m, b, v) => setBookOdds((o) => ({ ...o, [p.key]: { ...o[p.key], [m]: { ...o[p.key]?.[m], [b]: v } } }))} />
             ))}
           </tbody>

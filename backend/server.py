@@ -170,12 +170,19 @@ def _pick(markets, label, want):
     return next((l for l in lines if l["threshold"] == want), None)
 
 
-def _combos_for(p):
+def _combos_for(p, td_pts=None):
     out = []
     for kind, pairing in PAIRINGS:
         legs = [_pick(p["markets"], lbl, want) for lbl, want in pairing]
         if None not in legs:
             out.append({"kind": kind, "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs})
+    if td_pts:
+        legs = [_pick(p["markets"], "Points", td_pts), _pick(p["markets"], "Rebounds", 10), _pick(p["markets"], "Assists", 10)]
+        pra = next((c for c in out if c["kind"] == "PRA"), None)
+        if pra and None not in legs and [l["ticker"] for l in legs] == [l["ticker"] for l in pra["legs"]]:
+            pra["also_td"] = True
+        elif None not in legs:
+            out.append({"kind": "TD", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs})
     return out
 
 
@@ -192,7 +199,7 @@ async def _quote(c):
 def _built_dd(combos):
     """P(any of the pair DDs) = sum(pairs) - (k-1) * P(all three), since every pair overlap is the triple."""
     price = lambda c: (c.get("live") or {}).get("yes_price")
-    pairs = [price(c) for c in combos if c["kind"] != "PRA" and price(c)]
+    pairs = [price(c) for c in combos if c["kind"] in ("PR", "PA", "RA") and price(c)]
     tri = next((price(c) for c in combos if c["kind"] == "PRA" and price(c)), None)
     if not pairs:
         return None
@@ -208,12 +215,12 @@ def _player_payload(p, photos, combos):
 
 
 @api_router.get("/scanner/game/{code}")
-async def scanner_game(code: str):
+async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
     g = (await kalshi_props.load_props()).get(code)
     if not g:
         raise HTTPException(404, "Game not found on Kalshi")
     photos = await espn.headshots()
-    todo = [(p, _combos_for(p)) for p in g["players"].values()]
+    todo = [(p, _combos_for(p, td_pts)) for p in g["players"].values()]
     todo = [(p, c) for p, c in todo if c or "Double Double" in p["markets"] or "Triple Double" in p["markets"]]
     await asyncio.gather(*[_quote(c) for _, cs in todo for c in cs])
     players = [_player_payload(p, photos, cs) for p, cs in todo]
