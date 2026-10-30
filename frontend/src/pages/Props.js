@@ -32,7 +32,7 @@ const PlayerList = ({ players, allPlayers, player, onPick }) => {
   const nq = norm(q).trim();
   const shown = nq ? allPlayers.filter((p) => norm(p.name).includes(nq) || p.key.includes(nq)) : players;
   return (
-    <div className="rounded-md border border-slate-800 bg-[#141414]/80">
+    <div className="rounded-xl border border-slate-800 bg-[#181818]/80">
       <div className="flex items-center gap-2 px-3 border-b border-slate-800">
         <Search className="h-3.5 w-3.5 text-slate-500" />
         <input data-testid="player-search-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player"
@@ -141,14 +141,14 @@ export default function Props({ settings, update, status }) {
   return (
     <div className="space-y-4">
       <GameStrip games={games} game={game} setGame={setGame} />
-      <div className="grid gap-5 lg:grid-cols-[220px_1fr_400px]">
+      <div className="grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)_320px] xl:grid-cols-[200px_minmax(0,1fr)_360px] 2xl:grid-cols-[220px_minmax(0,1fr)_400px]">
         <PlayerList players={data?.players || []} allPlayers={allPlayers} player={player} onPick={pickPlayer} />
         <section className="min-w-0">
           <div className="flex items-end justify-between gap-3 border-b border-slate-800 pb-3 mb-1">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <PlayerPhoto src={current?.headshot} name={current?.name} size={72} testid="player-photo-heading" />
-              <div>
-                <h1 data-testid="player-name-heading" className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
+              <div className="min-w-0">
+                <h1 data-testid="player-name-heading" className="font-display text-3xl 2xl:text-4xl font-bold tracking-tight truncate">
                   {current?.name || "—"}
                 </h1>
                 <div className="text-xs font-mono text-slate-500 mt-1">{current ? `${current.team} · ${data.game.label} · ${data.game.date}` : ""}</div>

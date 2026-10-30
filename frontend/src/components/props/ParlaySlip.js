@@ -60,7 +60,7 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
   const fair = avg(fairs);
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-slate-800 bg-[#141414]">
+      <div className="rounded-xl border border-slate-800 bg-[#181818]">
         <div className="flex items-center justify-between px-3 py-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">{legs.length}-Leg Same Game Parlay</span>

@@ -23,12 +23,12 @@ module.exports = {
           200: '#FFFFFF', 300: '#FFFFFF', 400: '#00D991', 500: '#00C382'
         },
         cyan: {
-          100: '#E5FBF4',
-          200: '#B3F4DE',
-          300: '#80ECC8',
-          400: '#00D991',
-          500: '#00C382',
-          600: '#009866'
+          100: '#FFFFFF',
+          200: '#FFFFFF',
+          300: '#FFFFFF',
+          400: '#F5F5F5',
+          500: '#E5E5E5',
+          600: '#D4D4D4'
         },
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',

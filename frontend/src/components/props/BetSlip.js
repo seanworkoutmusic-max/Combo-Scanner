@@ -12,7 +12,7 @@ const Num = ({ label, value, onChange, testid }) => (
 );
 
 const Settings = ({ settings, update, mode }) => (
-  <div className="rounded-md border border-slate-800 bg-[#0E0E0E] p-3 space-y-2.5">
+  <div className="rounded-xl border border-slate-800 bg-[#0E0E0E] p-3 space-y-2.5">
     {mode === "parlay" ? (
       <p data-testid="parlay-devig-note" className="text-[11px] text-slate-500 leading-relaxed">
         SGP odds only have one side, so fair = book odds with the assumed hold removed. Devig methods apply to Straight bets with Over and Under.
@@ -58,7 +58,7 @@ export const BetSlip = ({ legs, mode, setMode, combo, parlayOdds, setParlayOdds,
       ))}
     </div>
     {legs.length === 0 ? (
-      <div data-testid="slip-empty" className="rounded-md border border-dashed border-slate-800 py-12 text-center text-sm text-slate-500">
+      <div data-testid="slip-empty" className="rounded-xl border border-dashed border-slate-800 py-12 text-center text-sm text-slate-500">
         Tap a line on the left to add it.
       </div>
     ) : (

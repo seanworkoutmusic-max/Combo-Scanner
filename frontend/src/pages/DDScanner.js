@@ -57,18 +57,18 @@ const Row = ({ r, player, format, index }) => (
 
 export default function DDScanner({ settings }) {
   const format = settings.fees ? "fee" : "raw";
-  const [targets, setTargets] = useState([]);
+  const [targets, setTargets] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     getPropsPlayers()
       .then((ps) => setTargets(SCANNER_PLAYERS.map((k) => ps.find((p) => p.key === k)).filter(Boolean)))
-      .catch((e) => toast.error(errMsg(e)));
+      .catch((e) => { setTargets([]); toast.error(errMsg(e)); });
   }, []);
 
   const load = useCallback(async () => {
-    if (!targets.length) return;
+    if (!targets?.length) return;
     setLoading(true);
     try {
       setData(await Promise.all(targets.map((t) => getScannerPlayer(t.game, t.key))));
@@ -101,7 +101,7 @@ export default function DDScanner({ settings }) {
       </div>
 
       {data.map((d) => (
-        <div key={d.player.key} data-testid={`scanner-table-${d.player.key.replace(/\s/g, "-")}`} className="rounded-md border border-slate-800 bg-[#141414]/80 overflow-x-auto">
+        <div key={d.player.key} data-testid={`scanner-table-${d.player.key.replace(/\s/g, "-")}`} className="rounded-xl border border-slate-800 bg-[#181818]/80 overflow-x-auto">
           <div className="flex items-center justify-between gap-3 px-3 py-2.5 border-b border-slate-800">
             <span className="text-xs font-mono text-slate-500">{d.game.label} · {d.game.date}</span>
             <a data-testid="scanner-bet-on-kalshi" href={kalshiGameUrl(d.singles[0]?.line.ticker || d.combos[0]?.legs[0]?.ticker)} target="_blank" rel="noopener noreferrer"
@@ -124,8 +124,8 @@ export default function DDScanner({ settings }) {
         </div>
       ))}
       {!data.length && (
-        <div data-testid="scanner-loading" className="rounded-md border border-slate-800 bg-[#141414]/70 py-16 text-center text-sm text-slate-500">
-          {loading || !targets.length ? "Asking Kalshi market makers for live combo odds…" : "No Kalshi lines for these players right now."}
+        <div data-testid="scanner-loading" className="rounded-xl border border-slate-800 bg-[#181818]/70 py-16 text-center text-sm text-slate-500">
+          {targets === null || loading ? "Asking Kalshi market makers for live combo odds…" : "Luka Dončić has no game on Kalshi today. He'll show up here on his next game day."}
         </div>
       )}
     </div>

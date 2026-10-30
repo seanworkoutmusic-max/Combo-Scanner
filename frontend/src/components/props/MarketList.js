@@ -34,8 +34,8 @@ const MarketRow = ({ player, market, selected, onToggle, format }) => {
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-3 px-2 hover:bg-slate-800/20 transition-colors"
       >
-        <span className="text-sm font-semibold text-slate-100">{player.name} {market.label}</span>
-        <span className="flex items-center gap-3">
+        <span className="text-sm font-semibold text-slate-100 text-left">{player.name} {market.label}</span>
+        <span className="flex items-center gap-3 shrink-0">
           <span className="text-xs font-mono text-slate-500">{market.lines.length} {market.lines.length === 1 ? "line" : "lines"}</span>
           <span className="h-5 w-5 grid place-items-center rounded border border-slate-700">
             <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -43,7 +43,7 @@ const MarketRow = ({ player, market, selected, onToggle, format }) => {
         </span>
       </button>
       {open && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2 px-2 pb-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2 px-2 pb-4">
           {market.lines.map((l) => (
             <LineButton key={l.ticker} line={l} selected={selected.has(l.ticker)} onToggle={onToggle} format={format} />
           ))}

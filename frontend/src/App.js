@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "@/App.css";
 import { Toaster } from "./components/ui/sonner";
-import { Header } from "./components/Header";
+import { Sidebar } from "./components/Sidebar";
 import DDScanner from "./pages/DDScanner";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
@@ -36,14 +36,16 @@ function App() {
   const update = (patch) => setSettings((p) => ({ ...p, ...patch }));
 
   return (
-    <div className="App grid-bg">
-      <Header tab={tab} setTab={setTab} status={status} kalshiOk={!gamesErr && games.length > 0} />
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
-        {tab === "props" ? (
-          <Props settings={settings} update={update} status={status} />
-        ) : (
-          <DDScanner settings={settings} />
-        )}
+    <div className="App min-h-screen bg-[#121212]">
+      <Sidebar tab={tab} setTab={setTab} kalshiOk={!gamesErr && games.length > 0} />
+      <main className="lg:pl-16 min-[1440px]:pl-56">
+        <div className="max-w-[1320px] mx-auto px-4 sm:px-6 2xl:px-10 py-6 lg:py-8 space-y-5">
+          {tab === "props" ? (
+            <Props settings={settings} update={update} status={status} />
+          ) : (
+            <DDScanner settings={settings} />
+          )}
+        </div>
       </main>
       <Toaster theme="dark" />
     </div>
