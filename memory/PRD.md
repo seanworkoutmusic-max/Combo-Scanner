@@ -19,6 +19,13 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Manual book odds produce a devigged average and EV after Kalshi fees.
 - ESPN headshots.
 
+
+## Implemented (2026-10-30)
+- TD Scanner (triple-doubles only): live Kalshi RFQ combo for N+ pts (10/15/20) & 10+ reb & 10+ ast, $10 quote size, FanDuel/DraftKings boxes, EV.
+- The Odds API (ODDS_API_KEY, free plan): player_triple_double Yes odds for FanDuel/DraftKings auto-fill the boxes at 10+ pts (odds_api.py, 5-min cache per game, events list cached 10 min).
+- TD Leaders page: ESPN season averages, TD Score = min(pts, reb, ast), blue heat on the sorted column, ESPN injury tags (OUT/Q).
+- Black/white theme, sidebar, team logos, ESPN headshots, Combo Builder branding.
+
 ## Backlog
 - P1: OpticOdds or another odds feed to autofill book odds, once the user has a key.
 - P1: correlation-aware Kalshi combo estimate.

@@ -16,14 +16,15 @@ const Price = ({ p, format, className = "", testid }) => (
   <span data-testid={testid} className={`font-mono ${className}`}>{valid(p) ? <PriceTag p={p} format={format} /> : <span className="text-slate-600">—</span>}</span>
 );
 
-const OddsBox = ({ value, onChange, testid, label }) => {
+const OddsBox = ({ value, onChange, testid, label, auto }) => {
   const bad = value && value.length > 1 && americanToProb(value) == null;
   return (
     <label className="flex items-center justify-end gap-1.5">
       {label && <span className="text-[10px] font-mono text-slate-500">{label}</span>}
-      <input data-testid={testid} value={value || ""} inputMode="numeric" placeholder="+000" title={bad ? "Use American odds like +150 or -120" : ""}
+      <input data-testid={testid} value={value || ""} inputMode="numeric" placeholder="+000"
+        title={bad ? "Use American odds like +150 or -120" : auto ? "Live from the sportsbook. Type to override." : ""}
         onChange={(e) => onChange(e.target.value.replace(/[^0-9+-]/g, ""))}
-        className={`w-20 h-8 px-2 rounded-md border bg-[#0E0E0E] font-mono text-sm text-white text-right placeholder:text-slate-700 outline-none ${bad ? "border-red-500/70" : "border-slate-700 focus:border-white/60"}`} />
+        className={`w-20 h-8 px-2 rounded-md border bg-[#0E0E0E] font-mono text-sm text-right placeholder:text-slate-700 outline-none ${auto ? "text-emerald-300" : "text-white"} ${bad ? "border-red-500/70" : "border-slate-700 focus:border-white/60"}`} />
     </label>
   );
 };
@@ -44,7 +45,9 @@ const Row = ({ p, format, i, odds, setOdds, settings, tdPts }) => {
   const tri = p.combos.find((c) => c.kind === "TD" || c.also_td)?.live?.yes_price;
   const tdKey = `td${tdPts}`;
   const slug = p.key.replace(/\s/g, "-");
-  const evTd = evPct(fairFrom(odds[tdKey], settings.singleHold), tri, settings.fees);
+  const auto = Object.fromEntries(Object.entries(p.books || {}).map(([b, v]) => [b, v > 0 ? `+${v}` : `${v}`]));
+  const merged = Object.fromEntries(BOOKS.map(([b]) => [b, odds[tdKey]?.[b] ?? auto[b]]));
+  const evTd = evPct(fairFrom(merged, settings.singleHold), tri, settings.fees);
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
       <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
@@ -59,7 +62,7 @@ const Row = ({ p, format, i, odds, setOdds, settings, tdPts }) => {
       <td className="py-3 px-4 text-right"><Price p={tri} format={format} className="text-base font-bold text-white" testid={`td-${slug}`} /></td>
       {BOOKS.map(([b]) => (
         <td key={b} className="py-3 px-4">
-          <OddsBox testid={`${b}-td-${slug}`} value={odds[tdKey]?.[b]} onChange={(v) => setOdds(tdKey, b, v)} />
+          <OddsBox testid={`${b}-td-${slug}`} value={merged[b]} auto={odds[tdKey]?.[b] == null && auto[b] != null} onChange={(v) => setOdds(tdKey, b, v)} />
         </td>
       ))}
       <td className="py-3 px-4 text-right"><EvLine ev={evTd} testid={`ev-td-${slug}`} /></td>
@@ -182,6 +185,9 @@ export default function DDScanner({ settings }) {
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
         TD is the live Kalshi combo price for {tdPts}+ points, 10+ rebounds and 10+ assists (fee included). Type FanDuel and/or DraftKings odds and EV
         updates instantly: the book odds have a {settings.singleHold}% hold removed, the books are averaged, then compared to the Kalshi combo price.
+        {data?.books?.enabled && (tdPts === 10
+          ? ` Green odds are live FanDuel/DraftKings "to record a triple-double" prices (refreshed every 5 minutes; ${data.books.credits_left ?? "?"} Odds API credits left this month). Type over them to use your own.`
+          : " Live FanDuel/DraftKings odds fill in only at 10+ pts, because books price a regular triple-double.")}
       </p>
     </div>
   );

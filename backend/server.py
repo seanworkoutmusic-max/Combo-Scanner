@@ -19,6 +19,7 @@ import optic  # noqa: E402
 import kalshi_props  # noqa: E402
 import espn  # noqa: E402
 import kalshi_auth  # noqa: E402
+import odds_api  # noqa: E402
 
 client = AsyncIOMotorClient(os.environ['MONGO_URL'])
 db = client[os.environ['DB_NAME']]
@@ -242,8 +243,12 @@ async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
             todo.append((p, [{"kind": "TD", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}]))
     await asyncio.gather(*[_quote(c) for _, cs in todo for c in cs])
     players = [_player_payload(p, photos, cs) for p, cs in todo]
+    books, books_updated = await odds_api.triple_double_odds(code[-6:-3], code[-3:]) if td_pts == 10 and players else ({}, None)
+    for pl in players:
+        pl["books"] = books.get(pl["key"]) or {}
     players.sort(key=lambda x: -((x["combos"][0].get("live") or {}).get("yes_price") or 0))
     return {"game": {k: g[k] for k in ("code", "date", "label")}, "players": players,
+            "books": {"enabled": odds_api.configured(), "updated": books_updated, "credits_left": odds_api.quota["remaining"]},
             "updated_at": datetime.now(timezone.utc).isoformat()}
 
 
