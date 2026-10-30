@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 PROP_SERIES = {
     "KXNBAPTS": "Points", "KXNBAREB": "Rebounds", "KXNBAAST": "Assists", "KXNBA3PT": "Made Threes",
     "KXNBARA": "RA (Rebounds + Assists)", "KXNBAPRA": "PRA (Points + Rebounds + Assists)", "KXNBA3D": "Triple Double",
-    "KXNBAPR": "PR (Points + Rebounds)", "KXNBA2D": "Double Double", "KXNBAPA": "PA (Points + Assists)",
+    "KXNBAPR": "PR (Points + Rebounds)", "KXNBAPA": "PA (Points + Assists)",
     "KXNBASTL": "Steals", "KXNBABLK": "Blocks", "KXNBASTOCK": "SB (Steals + Blocks)", "KXNBASTOCKS": "SB (Steals + Blocks)",
     "KXNBAFTM": "Free Throws Made",
 }

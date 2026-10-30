@@ -6,9 +6,8 @@ import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { PriceTag } from "../components/props/MarketList";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
 
-const PREFERRED_GAME = "MEMPOR";
 const valid = (p) => p != null && p > 0 && p < 1;
-const HEADS = ["Player", "DD", "TD", "FanDuel", "DraftKings", "EV"];
+const HEADS = ["Player", "TD", "FanDuel", "DraftKings", "EV"];
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
 const HEAD_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png" };
 
@@ -43,12 +42,8 @@ const EvLine = ({ ev, label, testid }) => (
 const Row = ({ p, format, i, odds, setOdds, settings, tdPts }) => {
   const tri = p.combos.find((c) => c.kind === "TD" || c.also_td)?.live?.yes_price;
   const tdKey = `td${tdPts}`;
-  const dd = p.built_dd?.price;
-  const lowerBound = p.built_dd && (!p.built_dd.exact || p.combos.some((c) => c.kind !== "TD" && c.legs.some((l) => l.market === "Points" && l.threshold !== 10)));
   const slug = p.key.replace(/\s/g, "-");
-  const hasTd = valid(tri);
-  const evDd = evPct(fairFrom(odds.dd, settings.singleHold), dd, settings.fees);
-  const evTd = hasTd ? evPct(fairFrom(odds[tdKey], settings.singleHold), tri, settings.fees) : null;
+  const evTd = evPct(fairFrom(odds[tdKey], settings.singleHold), tri, settings.fees);
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
       <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
@@ -60,23 +55,13 @@ const Row = ({ p, format, i, odds, setOdds, settings, tdPts }) => {
           </div>
         </div>
       </td>
-      <td className="py-3 px-4 text-right">
-        <Price p={dd} format={format} className="text-base font-bold text-white" testid={`dd-${slug}`} />
-        {lowerBound && <div className="text-[10px] font-mono text-slate-500">min.</div>}
-      </td>
       <td className="py-3 px-4 text-right"><Price p={tri} format={format} className="text-base font-bold text-white" testid={`td-${slug}`} /></td>
       {BOOKS.map(([b]) => (
         <td key={b} className="py-3 px-4">
-          <div className="space-y-1.5">
-            <OddsBox testid={`${b}-dd-${slug}`} label={hasTd ? "DD" : null} value={odds.dd?.[b]} onChange={(v) => setOdds("dd", b, v)} />
-            {hasTd && <OddsBox testid={`${b}-td-${slug}`} label="TD" value={odds[tdKey]?.[b]} onChange={(v) => setOdds(tdKey, b, v)} />}
-          </div>
+          <OddsBox testid={`${b}-td-${slug}`} value={odds[tdKey]?.[b]} onChange={(v) => setOdds(tdKey, b, v)} />
         </td>
       ))}
-      <td className="py-3 px-4 text-right space-y-1.5">
-        <EvLine ev={evDd} label={hasTd ? "DD" : null} testid={`ev-dd-${slug}`} />
-        {hasTd && <EvLine ev={evTd} label="TD" testid={`ev-td-${slug}`} />}
-      </td>
+      <td className="py-3 px-4 text-right"><EvLine ev={evTd} testid={`ev-td-${slug}`} /></td>
     </tr>
   );
 };
@@ -92,12 +77,12 @@ export default function DDScanner({ settings }) {
     try { return JSON.parse(localStorage.getItem("dd-book-odds") || "{}"); } catch { return {}; }
   });
   useEffect(() => localStorage.setItem("dd-book-odds", JSON.stringify(bookOdds)), [bookOdds]);
-  const players = (data?.players || []).filter((p) => valid(p.built_dd?.price) || p.combos.some((c) => (c.kind === "TD" || c.also_td) && valid(c.live?.yes_price)));
+  const players = data?.players || [];
 
   useEffect(() => {
     getPropsGames().then((g) => {
       setGames(g);
-      setGame((prev) => prev || (g.find((x) => x.code.endsWith(PREFERRED_GAME)) || g[0])?.code || "");
+      setGame((prev) => prev || g[0]?.code || "");
     }).catch((e) => toast.error(errMsg(e)));
   }, []);
 
@@ -122,8 +107,8 @@ export default function DDScanner({ settings }) {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Double & triple-double scanner</h1>
-          <p className="text-sm text-slate-400 mt-1">Live Kalshi combo prices for double-doubles and triple-doubles. Add FanDuel or DraftKings odds to see EV.</p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Triple-double scanner</h1>
+          <p className="text-sm text-slate-400 mt-1">Live Kalshi combo prices for triple-doubles. Add FanDuel or DraftKings odds to see EV.</p>
           <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()}` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
@@ -187,12 +172,15 @@ export default function DDScanner({ settings }) {
             {loading ? "Asking Kalshi market makers for live combo odds… (about 10 seconds)" : "Pick a game."}
           </div>
         )}
-        {data && !players.length && <div className="py-16 text-center text-sm text-slate-500">No double-double lines on Kalshi for this game.</div>}
+        {data && !players.length && (
+          <div className="py-16 text-center text-sm text-slate-500">
+            No player in this game has Kalshi {tdPts}+ points, 10+ rebounds and 10+ assists lines, so there's no triple-double combo to price.
+          </div>
+        )}
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
-        DD and TD are live Kalshi combo prices built from 10+ points, rebounds and assists (fee included). Type FanDuel and/or DraftKings odds and EV
+        TD is the live Kalshi combo price for {tdPts}+ points, 10+ rebounds and 10+ assists (fee included). Type FanDuel and/or DraftKings odds and EV
         updates instantly: the book odds have a {settings.singleHold}% hold removed, the books are averaged, then compared to the Kalshi combo price.
-        "min." means Kalshi had no 10+ points line, so a higher points line was used.
       </p>
     </div>
   );

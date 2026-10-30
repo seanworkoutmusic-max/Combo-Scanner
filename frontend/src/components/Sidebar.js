@@ -3,7 +3,7 @@ import { HowItWorks } from "./HowItWorks";
 
 const TABS = [
   { id: "props", label: "Player Props", testid: "nav-tab-props", icon: Layers },
-  { id: "scanner", label: "DD/TD Scanner", testid: "nav-tab-scanner", icon: Table2 },
+  { id: "scanner", label: "TD Scanner", testid: "nav-tab-scanner", icon: Table2 },
 ];
 
 const Logo = ({ collapsible }) => (

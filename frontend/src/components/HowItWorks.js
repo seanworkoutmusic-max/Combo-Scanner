@@ -14,32 +14,31 @@ export const HowItWorks = ({ trigger }) => (
     <DialogTrigger asChild>{trigger}</DialogTrigger>
     <DialogContent data-testid="modal-how-it-works" className="max-w-2xl bg-[#141414] border-slate-800 max-h-[85vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle className="font-display text-2xl">How the devig works</DialogTitle>
+        <DialogTitle className="font-display text-2xl">How it works</DialogTitle>
       </DialogHeader>
       <div className="space-y-5">
-        <Block title="1. Leg devig (per book)">
-          Each leg (10+ pts = Over 9.5, etc.) is devigged from that book's own Over/Under pair:
+        <Block title="1. Kalshi prices">
+          Every price is Kalshi's live price to buy YES, shown in American odds with Kalshi's taker fee included (<M>0.07 × P × (1 − P)</M> per contract).
+        </Block>
+        <Block title="2. Live combo quotes">
+          For a parlay or a triple-double, the app asks Kalshi's market makers for a live quote on that exact combo (a request for quote),
+          takes the best price, then cancels the request. It never places a bet.
+        </Block>
+        <Block title="3. Triple-double combos">
+          Triple-double = <M>N+ points & 10+ rebounds & 10+ assists</M>, priced as one Kalshi combo. Pick 10+, 15+ or 20+ points in the scanner.
+        </Block>
+        <Block title="4. Removing the book's margin">
+          Book odds you type are turned into a fair chance. With Over and Under:
           <ul className="list-disc ml-5 mt-1 space-y-1">
             <li><b>Multiplicative</b>: <M>p_over / (p_over + p_under)</M></li>
             <li><b>Additive</b>: <M>p_over − (overround − 1) / 2</M></li>
             <li><b>Power</b>: solve <M>p_over^k + p_under^k = 1</M>, fair = <M>p_over^k</M></li>
-            <li><b>Worst-case</b>: the least favourable of the three for the side you bet</li>
+            <li><b>Worst-case</b>: the least favourable of the three</li>
           </ul>
+          One-sided odds (parlays, triple-doubles) have an assumed hold % removed instead.
         </Block>
-        <Block title="2. SGP correlation">
-          The book's real SGP price keeps its correlation: <M>corr = SGP_implied / Π leg_implied</M>. Fair combo ={" "}
-          <M>corr × Π fair_leg</M>. An optional "SGP extra hold %" divides this further if you think books add margin on top.
-        </Block>
-        <Block title="3. Double-double from pairs">
-          Ignoring steals/blocks: <M>P(DD) = P(PR) + P(PA) + P(RA) − 2·P(PRA)</M>, each priced as a real SGP. Triple-double = <M>P(PRA)</M>.
-        </Block>
-        <Block title="4. Direct markets">
-          If a book offers "To record a double/triple-double" Yes/No, it is devigged directly. Source toggle: SGP, Direct, or Blend (all
-          estimates averaged).
-        </Block>
-        <Block title="5. Sportsbook average & EV">
-          Fair = average of per-book fair probs. Kalshi taker fee ≈ <M>0.07 × P × (1 − P)</M> per contract.{" "}
-          <M>EV% = fair / (ask + fee) − 1</M>, for both YES and NO.
+        <Block title="5. EV">
+          Fair = the average across the books you entered. <M>EV% = fair / (Kalshi price + fee) − 1</M>.
         </Block>
       </div>
     </DialogContent>

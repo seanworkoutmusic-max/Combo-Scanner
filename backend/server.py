@@ -220,11 +220,14 @@ async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
     if not g:
         raise HTTPException(404, "Game not found on Kalshi")
     photos = await espn.headshots()
-    todo = [(p, _combos_for(p, td_pts)) for p in g["players"].values()]
-    todo = [(p, c) for p, c in todo if c or "Double Double" in p["markets"] or "Triple Double" in p["markets"]]
+    todo = []
+    for p in g["players"].values():
+        legs = [_pick(p["markets"], "Points", td_pts), _pick(p["markets"], "Rebounds", 10), _pick(p["markets"], "Assists", 10)]
+        if None not in legs:
+            todo.append((p, [{"kind": "TD", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}]))
     await asyncio.gather(*[_quote(c) for _, cs in todo for c in cs])
     players = [_player_payload(p, photos, cs) for p, cs in todo]
-    players.sort(key=lambda x: -((x["built_dd"] or {}).get("price") or (x["singles"][0]["line"]["yes_ask"] if x["singles"] else 0) or 0))
+    players.sort(key=lambda x: -((x["combos"][0].get("live") or {}).get("yes_price") or 0))
     return {"game": {k: g[k] for k in ("code", "date", "label")}, "players": players,
             "updated_at": datetime.now(timezone.utc).isoformat()}
 
