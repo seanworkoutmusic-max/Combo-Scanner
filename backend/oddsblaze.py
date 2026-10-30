@@ -9,7 +9,7 @@ from kalshi import TEAMS, norm_name
 
 logger = logging.getLogger(__name__)
 ODDS = "https://odds.oddsblaze.com/"
-BOOKS = {"fanduel": "fd", "draftkings": "dk"}
+BOOKS = {"fanduel": "fd", "draftkings": "dk", "fanatics": "fan"}
 MARKETS = {"Player Points": "Points", "Player Rebounds": "Rebounds", "Player Assists": "Assists"}
 _props = {}
 _sgp = {}

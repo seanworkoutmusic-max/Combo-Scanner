@@ -8,12 +8,13 @@ import { PriceTag } from "../components/props/MarketList";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
 
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
-const HEAD_LOGOS = { "FD TD": "/fd.png", "DK TD": "/dk.png", "FD SGP": "/fd.png", "DK SGP": "/dk.png" };
+const SGP_BOOKS = [["fd", "FD"], ["dk", "DK"], ["fan", "Fanatics"]];
+const HEAD_LOGOS = { "FD TD": "/fd.png", "DK TD": "/dk.png", "FD SGP": "/fd.png", "DK SGP": "/dk.png", "Fanatics SGP": "/fanatics.png" };
 
 const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
 
 const fairFrom = (books, hold) => {
-  const ps = BOOKS.map(([b]) => americanToProb(fmt(books?.[b]))).filter((p) => p != null).map((p) => devigOneSided(p, hold));
+  const ps = Object.values(books || {}).map((v) => americanToProb(fmt(v))).filter((p) => p != null).map((p) => devigOneSided(p, hold));
   return ps.length ? ps.reduce((a, x) => a + x, 0) / ps.length : null;
 };
 
@@ -86,16 +87,16 @@ export default function DDScanner({ settings }) {
     const fair = hasSgp ? fairFrom(p.sgp, settings.singleHold) : p.combos[0].legs[0].threshold === 10 ? fairFrom(p.books, settings.singleHold) : null;
     return { ...p, price, ev: evPct(fair, price, settings.fees) };
   }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
-  const sgpBooks = BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
+  const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
   const tdBooks = tdPts === 10 ? BOOKS : [];
-  const heads = ["Player", "Game", `Kalshi TD (${tdPts}+ pts)`, ...tdBooks.map(([b]) => `${b.toUpperCase()} TD`), ...sgpBooks.map(([b]) => `${b.toUpperCase()} SGP`), "EV"];
+  const heads = ["Player", "Game", `Kalshi TD (${tdPts}+ pts)`, ...tdBooks.map(([b]) => `${b.toUpperCase()} TD`), ...sgpBooks.map(([, l]) => `${l} SGP`), "EV"];
 
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Triple-double scanner</h1>
-          <p className="text-sm text-slate-400 mt-1">Every game on one board: live Kalshi triple-double combos, ranked by EV against devigged FanDuel/DraftKings odds.</p>
+          <p className="text-sm text-slate-400 mt-1">Every game on one board: live Kalshi triple-double combos, ranked by EV against devigged sportsbook odds.</p>
           <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${rows.length} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
@@ -146,7 +147,7 @@ export default function DDScanner({ settings }) {
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
         Kalshi TD is the live combo price for {tdPts}+ points, 10+ rebounds and 10+ assists{settings.fees ? " (fee included)" : ""}. When Kalshi has no {tdPts}+ points
-        line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings same-game-parlay price for the exact same legs as the Kalshi combo
+        line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings/Fanatics same-game-parlay price for the exact same legs as the Kalshi combo
         (FanDuel SGP isn't available from OddsBlaze).
         EV compares Kalshi to the SGP price with a {settings.singleHold}% hold removed (books averaged); without an SGP price it falls back to the regular
         "to record a triple-double" odds, only for 10+ point combos.
