@@ -1,0 +1,23 @@
+{
+  "summary": "Tested the triple-double-only scanner on live Kalshi data, backend and frontend. Backend: the new test_td_only_scanner_api.py passed 6/6. For SACNOP at td_pts 10, 15 and 20, every player has exactly one combo, it is kind 'TD', and its legs are Points=td_pts, Rebounds 10 and Assists 10. Sabonis has a live price at 15. No 'Double Double' or KXNBA2D appears in /api/props/games, /api/props/game/{code} or /api/props/players. td_pts 9, 41 and 'abc' return 422, and an unknown game returns 404. Frontend: the sidebar tab and the mobile tab both read 'TD Scanner'. The title is 'Triple-double scanner' and the columns are Player, TD (N+ pts), FanDuel, DraftKings, EV. SACNOP shows one row, Sabonis, with 2 inputs (fd-td and dk-td). His TD price is +316 at 10 and +1546 at 20. EV goes from '—' to -56.0% with FD +800, then -45.0% with DK +500 added. Odds are stored per threshold (the FD box is empty at 20). MEMPOR and CLEATL show the 'No player in this game has Kalshi N+ points...' message. A regex search for DD / double-double found nothing on the scanner page, the Props page or the How it works modal, and Double Double is not in the market list. Mobile 390: scrollWidth is 390.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_td_only_scanner_api.py", "/app/test_reports/pytest/pytest_td_only.xml"],
+  "action_items": [
+    "Older test files are now outdated and fail because they still expect DD and PR/PA/RA/PRA combos: test_scanner_game_api.py (test_shape, test_combo_kinds_and_live_prices, test_singles expects 'Double Double') and test_scanner_td_pts_api.py::test_jalen_johnson_td[15] (expects also_td). Delete or update them."
+  ],
+  "critical_code_review_comments": [
+    "server.py has dead DD code: PAIRINGS, _combos_for's DD pairs (still used by scanner_player), _built_dd, and the 'Double Double' entry in the _player_payload singles tuple. built_dd is always null in scanner_game. Consider removing it.",
+    "kalshi_props.py line 51 still checks for the 'KXNBA2D' series. It's harmless but can be removed.",
+    "Internal names still use DD: DDScanner.js and the localStorage key 'dd-book-odds'. Users don't see them.",
+    "CLEATL at 10+ shows no players even though Jalen Johnson has a TD at 15 and 20. The scanner needs an exact Points=td_pts line, so this is expected, but note it.",
+    "The 'No player...' empty-state div has no data-testid."
+  ],
+  "updated_files": ["/app/backend/tests/test_td_only_scanner_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "None. The localStorage dd-book-odds was cleared before the UI tests.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Games: 26OCT29CLEATL, 26OCT29MEMPOR, 26OCT29SACNOP. At td 10, only SACNOP (Sabonis, slug domantas-sabonis) has TD rows. Use test_td_only_scanner_api.py as the regression test. The older scanner game and td_pts tests are outdated.",
+  "test_credentials": "No auth in this app"
+}
