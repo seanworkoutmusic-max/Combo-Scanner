@@ -1,0 +1,17 @@
+{
+  "summary": "Verified the fix that sets live combo quotes to $10 size. Backend: GET /api/scanner/game/26OCT29SACNOP?td_pts=20 returns Sabonis TD with live.size={target_cost_dollars:'10.00'}, yes_price 0.027 (~+3604). POST /api/props/kalshi-quote with target_dollars 10 returns size '10.00'. Frontend: the Player Props parlay slip (Trey Murphy III Reb 6+ & Ast 4+) sent the request body {tickers:[...], target_dollars:10}, and the response size was 10.00. The slip showed live price +252, 'Live Kalshi combo quote · 12 market maker quotes', SHOW LIQUIDITY (opens an order book ladder with Cost ~$9.5 per row) and BET ON KALSHI. The TD Scanner on SAC vs NOP at 20+ pts showed Sabonis at +3368, inside the +2500..+4500 band. No console errors on either page.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_quote_size_10.py", "/app/backend/tests/test_td_only_scanner_api.py", "/app/test_reports/pytest/pytest_results_iter11.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "kalshi_auth.live_combo_quote falls back to contracts_fp=10 when target_dollars is None. /api/props/kalshi-quote keeps target_dollars optional, so another caller that leaves it out would get a different quote size than the UI. Consider defaulting it to 10 on the server for consistency.",
+    "The quote cache key includes target_dollars, which is correct: $10 and $100 quotes are never mixed."
+  ],
+  "updated_files": ["/app/backend/tests/test_quote_size_10.py"],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "market-row-* is a toggle button; the line-btn-* buttons are rendered as siblings after it is opened, not as children. Select lines by ticker prefix, e.g. [data-testid^=line-btn-KXNBAREB]. Clicking the same line twice removes the leg. The SAC vs NOP game is live, so prices move. Regression tests: test_quote_size_10.py and test_td_only_scanner_api.py."
+}
