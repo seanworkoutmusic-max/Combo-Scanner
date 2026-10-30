@@ -40,11 +40,14 @@ const EvLine = ({ ev, label, testid }) => (
   </div>
 );
 
-const Row = ({ p, format, i, settings }) => {
-  const tri = p.combos.find((c) => c.kind === "TD" || c.also_td)?.live?.yes_price;
+const Row = ({ p, format, i, settings, tdPts }) => {
+  const td = p.combos.find((c) => c.kind === "TD" || c.also_td);
+  const tri = td?.live?.yes_price;
+  const ptsLeg = td?.legs[0]?.threshold;
+  const higher = ptsLeg && ptsLeg !== tdPts;
   const slug = p.key.replace(/\s/g, "-");
   const auto = Object.fromEntries(Object.entries(p.books || {}).filter(([, v]) => v != null).map(([b, v]) => [b, v > 0 ? `+${v}` : `${v}`]));
-  const evTd = evPct(fairFrom(auto, settings.singleHold), tri, settings.fees);
+  const evTd = higher || tdPts !== 10 ? null : evPct(fairFrom(auto, settings.singleHold), tri, settings.fees);
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
       <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
@@ -59,6 +62,7 @@ const Row = ({ p, format, i, settings }) => {
       <td className="py-3 px-4 text-right">
         <Price p={tri} format={format} className="text-base font-bold text-white" testid={`td-${slug}`} />
         {!p.combos.length && <div className="text-[10px] font-mono text-slate-500">no Kalshi combo</div>}
+        {higher && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{ptsLeg}+ pts (lowest Kalshi line)</div>}
       </td>
       {BOOKS.map(([b]) => (
         <td key={b} className="py-3 px-4">
@@ -163,7 +167,7 @@ export default function DDScanner({ settings }) {
           </thead>
           <tbody>
             {players.map((p, i) => (
-              <Row key={p.key} p={p} i={i} format={format} settings={settings} />
+              <Row key={p.key} p={p} i={i} format={format} settings={settings} tdPts={tdPts} />
             ))}
           </tbody>
         </table>

@@ -257,7 +257,9 @@ async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
     photos = await espn.headshots()
     todo = []
     for p in g["players"].values():
-        legs = [_pick(p["markets"], "Points", td_pts), _pick(p["markets"], "Rebounds", 10), _pick(p["markets"], "Assists", 10)]
+        pts = _pick(p["markets"], "Points", td_pts) or min(
+            (l for l in p["markets"].get("Points", []) if (l["threshold"] or 0) > td_pts), key=lambda l: l["threshold"], default=None)
+        legs = [pts, _pick(p["markets"], "Rebounds", 10), _pick(p["markets"], "Assists", 10)]
         if None not in legs:
             todo.append((p, [{"kind": "TD", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}]))
     await asyncio.gather(*[_quote(c) for _, cs in todo for c in cs])

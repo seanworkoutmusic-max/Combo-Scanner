@@ -33,3 +33,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 
 ## 2026-10-30
 - TD Scanner game tabs now come from /api/scanner/games: full NBA schedule (today+tomorrow ET, from Odds API free events list) merged with Kalshi open games. Games without Kalshi props still load FD/DK TD odds. Tabs show day + tip time. Manual refresh only (user choice). Injury tweet scanner: user cancelled.
+- TD Scanner: if Kalshi has no exact N+ points line, the TD combo uses the next higher Kalshi points line (e.g. Jokic 20+), labelled "(lowest Kalshi line)" and EV hidden.
