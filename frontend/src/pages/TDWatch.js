@@ -40,6 +40,12 @@ const Row = ({ p, i, sort, range }) => (
         <div className="flex flex-col sm:flex-row sm:items-center gap-x-1.5 text-sm whitespace-nowrap">
           <span className="flex items-center gap-1.5">
             <span className="font-semibold text-white">{p.name}</span>
+            {p.injury && (
+              <span data-testid={`tdwatch-injury-${p.key.replace(/\s/g, "-")}`} title={`${p.injury.status}${p.injury.comment ? `: ${p.injury.comment}` : ""}`}
+                className={`px-1 py-px rounded-[3px] text-[9px] font-bold leading-none tracking-wide ${p.injury.label === "OUT" ? "bg-red-600 text-white" : "bg-yellow-500/15 text-yellow-400"}`}>
+                {p.injury.label}
+              </span>
+            )}
             <TeamLogo team={p.team} size={15} />
             <span className="text-slate-400">{p.team}</span>
           </span>

@@ -89,3 +89,31 @@ async def season_averages(ttl=3600):
     if rows:
         _stats.update(t=time.time(), rows=rows, season=(d.get("requestedSeason") or {}).get("displayName"))
     return _stats
+
+
+INJ_URL = f"{ESPN}/injuries"
+_inj = {"t": 0, "map": {}}
+
+
+async def injuries(ttl=900):
+    """norm_name -> {label: OUT|Q, status, comment} from ESPN's injury report."""
+    if _inj["t"] and time.time() - _inj["t"] < ttl:
+        return _inj["map"]
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(INJ_URL)
+            r.raise_for_status()
+            teams = r.json().get("injuries", [])
+    except httpx.HTTPError as e:
+        logger.warning("ESPN injuries failed: %s", e)
+        return _inj["map"]
+    out = {}
+    for t in teams:
+        for i in t.get("injuries", []):
+            status = i.get("status") or ""
+            out[norm_name(i["athlete"].get("displayName"))] = {
+                "label": "OUT" if status.lower().startswith("out") else "Q",
+                "status": status, "comment": i.get("shortComment") or "",
+            }
+    _inj.update(t=time.time(), map=out)
+    return out
