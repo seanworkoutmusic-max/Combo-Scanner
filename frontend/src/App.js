@@ -4,6 +4,7 @@ import { Toaster } from "./components/ui/sonner";
 import { Sidebar } from "./components/Sidebar";
 import DDScanner from "./pages/DDScanner";
 import TDWatch from "./pages/TDWatch";
+import LiveTracker from "./pages/LiveTracker";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
 
@@ -45,6 +46,8 @@ function App() {
             <Props settings={settings} update={update} status={status} />
           ) : tab === "tdwatch" ? (
             <TDWatch />
+          ) : tab === "live" ? (
+            <LiveTracker />
           ) : (
             <DDScanner settings={settings} />
           )}

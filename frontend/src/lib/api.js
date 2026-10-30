@@ -13,6 +13,7 @@ export const getScannerPlayer = (game, player) => axios.get(`${API}/scanner/play
 export const getScannerGames = () => axios.get(`${API}/scanner/games`).then((r) => r.data);
 export const getScannerBoard = (td_pts) => axios.get(`${API}/scanner/board`, { params: { td_pts } }).then((r) => r.data);
 export const postSgp = (tickers) => axios.post(`${API}/props/sgp`, { tickers }).then((r) => r.data);
+export const getLiveTracker = (params) => axios.get(`${API}/live-tracker`, { params }).then((r) => r.data);
 export const getScannerGame = (code, td_pts) => axios.get(`${API}/scanner/game/${code}`, { params: { td_pts } }).then((r) => r.data);
 export const getTdWatch = () => axios.get(`${API}/tdwatch`).then((r) => r.data);
 export const getPropsGame = (code) => axios.get(`${API}/props/game/${code}`).then((r) => r.data);

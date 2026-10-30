@@ -249,6 +249,15 @@ async def scanner_games():
     return sorted(out.values(), key=lambda x: (x["date"], x["start"] or "", x["code"]))
 
 
+@api_router.get("/live-tracker")
+async def live_tracker(date: Optional[str] = Query(None, pattern=r"^\d{8}$"), include_final: bool = False):
+    try:
+        d = await espn.live_tracker(date, include_final)
+    except httpx.HTTPError as e:
+        raise HTTPException(424, f"ESPN unavailable: {e}")
+    return {**d, "updated_at": datetime.now(timezone.utc).isoformat()}
+
+
 @api_router.get("/scanner/board")
 async def scanner_board(td_pts: int = Query(10, ge=10, le=40)):
     """Every Kalshi game's triple-double combos, with FD/DK triple-double odds and exact-leg SGP prices, in one list."""

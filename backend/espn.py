@@ -117,3 +117,59 @@ async def injuries(ttl=900):
             }
     _inj.update(t=time.time(), map=out)
     return out
+
+
+SCOREBOARD = f"{ESPN}/scoreboard"
+_live = {}
+
+
+async def _box(client, event_id):
+    r = await client.get(f"{ESPN}/summary", params={"event": event_id})
+    r.raise_for_status()
+    return r.json().get("boxscore", {}).get("players", [])
+
+
+async def live_tracker(date=None, include_final=False, ttl=15):
+    """Box-score lines for every player in games currently in progress (ESPN), ranked by stats needed for 10/10/10."""
+    key = (date, include_final)
+    hit = _live.get(key)
+    if hit and time.time() - hit["t"] < ttl:
+        return hit["data"]
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.get(SCOREBOARD, params={"dates": date} if date else {})
+        r.raise_for_status()
+        events = r.json().get("events", [])
+        states = ("in", "post") if include_final else ("in",)
+        live = [e for e in events if e["status"]["type"]["state"] in states]
+        boxes = await asyncio.gather(*[_box(client, e["id"]) for e in live], return_exceptions=True)
+    games, rows = [], []
+    for e, box in zip(live, boxes):
+        comp = {c["homeAway"]: c for c in e["competitions"][0]["competitors"]}
+        ab = {k: _ABBR.get(c["team"]["abbreviation"], c["team"]["abbreviation"]) for k, c in comp.items()}
+        g = {"id": e["id"], "away": ab["away"], "home": ab["home"], "away_score": comp["away"].get("score"),
+             "home_score": comp["home"].get("score"), "clock": e["status"]["type"]["shortDetail"]}
+        games.append(g)
+        if isinstance(box, Exception):
+            logger.warning("ESPN box score %s failed: %s", e["id"], box)
+            continue
+        for t in box:
+            team = _ABBR.get(t["team"]["abbreviation"], t["team"]["abbreviation"])
+            st = (t.get("statistics") or [{}])[0]
+            idx = {k: i for i, k in enumerate(st.get("keys", []))}
+            for a in st.get("athletes", []):
+                s = a.get("stats") or []
+                if a.get("didNotPlay") or not s:
+                    continue
+                val = lambda k: int(_f(s[idx[k]])) if k in idx and idx[k] < len(s) else 0
+                pts, reb, ast = val("points"), val("rebounds"), val("assists")
+                ath = a["athlete"]
+                rows.append({"key": norm_name(ath["displayName"]), "name": ath["displayName"], "team": team,
+                             "opp": g["home"] if team == g["away"] else g["away"], "game": g["id"],
+                             "headshot": (ath.get("headshot") or {}).get("href"), "on_court": bool(a.get("active")),
+                             "min": val("minutes"), "pts": pts, "reb": reb, "ast": ast, "pf": val("fouls"),
+                             "need": sum(max(0, 10 - x) for x in (pts, reb, ast))})
+    rows.sort(key=lambda x: (x["need"], -(x["pts"] + x["reb"] + x["ast"])))
+    upcoming = [e["date"] for e in events if e["status"]["type"]["state"] == "pre"]
+    data = {"games": games, "players": rows, "next_tip": min(upcoming) if upcoming else None}
+    _live[key] = {"t": time.time(), "data": data}
+    return data

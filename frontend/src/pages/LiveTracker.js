@@ -1,0 +1,126 @@
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Crosshair, RefreshCw } from "lucide-react";
+import { getLiveTracker, errMsg } from "../lib/api";
+import { PlayerPhoto } from "../components/props/PlayerPhoto";
+import { TeamLogo } from "../components/props/TeamLogo";
+
+const STATS = [["pts", "PTS"], ["reb", "REB"], ["ast", "AST"]];
+// Green heat on "Need": brightest for players closest to a triple-double.
+const heat = (need) => `rgba(16, 185, 129, ${Math.max(0.06, 0.7 - need * 0.06).toFixed(3)})`;
+// Hidden test hook: ?date=YYYYMMDD&final=1 replays a past slate.
+const testParams = () => {
+  const q = new URLSearchParams(window.location.search);
+  return q.get("date") ? { date: q.get("date"), include_final: q.get("final") === "1" } : {};
+};
+
+const GameChip = ({ g }) => (
+  <div data-testid={`live-game-${g.id}`} className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800 bg-[#181818] text-sm font-semibold">
+    <TeamLogo team={g.away} size={16} />{g.away} <span className="font-mono text-white">{g.away_score}</span>
+    <span className="text-slate-600">–</span>
+    <span className="font-mono text-white">{g.home_score}</span> {g.home}<TeamLogo team={g.home} size={16} />
+    <span className="ml-1 text-[11px] font-mono font-normal text-emerald-400">{g.clock}</span>
+  </div>
+);
+
+const Row = ({ p, i, game }) => {
+  const slug = `${p.game}-${p.key.replace(/\s/g, "-")}`;
+  return (
+    <tr data-testid={`live-row-${slug}`} className="border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
+      <td className="py-2.5 px-4 text-sm text-slate-400 font-mono">{i + 1}</td>
+      <td className="py-2.5 px-4">
+        <div className="flex items-center gap-3">
+          <PlayerPhoto src={p.headshot} name={p.name} size={32} />
+          <div className="flex items-center gap-1.5 text-sm whitespace-nowrap">
+            <span className="font-semibold text-white">{p.name}</span>
+            {p.on_court && <span data-testid={`live-oncourt-${slug}`} title="On the court" className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+            <TeamLogo team={p.team} size={15} />
+            <span className="text-slate-400">{p.team}</span>
+            <span className="text-slate-500">vs {p.opp}</span>
+          </div>
+        </div>
+      </td>
+      <td className="py-2.5 px-4 text-right font-mono text-xs text-slate-500 whitespace-nowrap">{game?.clock}</td>
+      <td className="py-2.5 px-4 text-right font-mono text-sm text-slate-400">{p.min}</td>
+      {STATS.map(([k]) => (
+        <td key={k} data-testid={`live-${k}-${slug}`} className={`py-2.5 px-4 text-right font-mono text-sm ${p[k] >= 10 ? "text-emerald-400 font-bold" : "text-slate-200"}`}>{p[k]}</td>
+      ))}
+      <td data-testid={`live-need-${slug}`} style={{ background: heat(p.need) }} className="py-2.5 px-4 text-center font-mono text-sm font-bold text-white">
+        {p.need === 0 ? "TD" : p.need}
+      </td>
+    </tr>
+  );
+};
+
+export default function LiveTracker() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setData(await getLiveTracker(testParams()));
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 30000);
+    return () => clearInterval(t);
+  }, [load]);
+
+  const games = Object.fromEntries((data?.games || []).map((g) => [g.id, g]));
+  const players = data?.players || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
+            <Crosshair data-testid="live-tracker-logo" className="h-8 w-8 text-emerald-400" /> Live Tracker
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">Every player in games in progress, ranked by how few points, rebounds and assists they still need for a triple-double.</p>
+          <p data-testid="live-updated" className="text-sm font-semibold text-white mt-1">
+            {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · refreshes every 30 seconds` : "Loading live box scores…"}
+          </p>
+        </div>
+        <button data-testid="live-refresh-btn" onClick={load} disabled={loading}
+          className="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+        </button>
+      </div>
+
+      {data?.games?.length > 0 && (
+        <div data-testid="live-games" className="flex gap-2 overflow-x-auto">{data.games.map((g) => <GameChip key={g.id} g={g} />)}</div>
+      )}
+
+      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
+        <table data-testid="live-table" className="w-full min-w-[820px]">
+          <thead>
+            <tr className="text-xs text-slate-400">
+              <th className="py-3 px-4 text-left font-semibold">#</th>
+              <th className="py-3 px-4 text-left font-semibold">Player</th>
+              <th className="py-3 px-4 text-right font-semibold">Game</th>
+              <th className="py-3 px-4 text-right font-semibold">MIN</th>
+              {STATS.map(([k, l]) => <th key={k} className="py-3 px-4 text-right font-semibold">{l}</th>)}
+              <th className="py-3 px-4 text-center font-semibold text-white border-b-2 border-slate-300" title="Points + rebounds + assists still needed to reach 10/10/10">Need</th>
+            </tr>
+          </thead>
+          <tbody>
+            {players.map((p, i) => <Row key={`${p.game}-${p.key}`} p={p} i={i} game={games[p.game]} />)}
+          </tbody>
+        </table>
+        {data && !players.length && (
+          <div data-testid="live-empty" className="py-16 text-center text-sm text-slate-500">
+            No games in progress right now.
+            {data.next_tip && ` Next tip-off: ${new Date(data.next_tip).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}.`}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
