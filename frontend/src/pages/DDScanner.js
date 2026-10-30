@@ -18,9 +18,9 @@ const fairFrom = (books, hold) => {
   return ps.length ? ps.reduce((a, x) => a + x, 0) / ps.length : null;
 };
 
-const EvCell = ({ ev, approx, testid }) => (
+const EvCell = ({ ev, testid }) => (
   <div data-testid={testid} className={`font-mono text-sm font-bold ${ev > 0 ? "text-emerald-400" : "text-red-400"}`}>
-    {approx && <span className="text-amber-400 mr-0.5">≈</span>}{`${ev > 0 ? "+" : ""}${(ev * 100).toFixed(1)}%`}
+    {`${ev > 0 ? "+" : ""}${(ev * 100).toFixed(1)}%`}
   </div>
 );
 
@@ -53,7 +53,7 @@ const Row = ({ r, format, i }) => {
           {fmt(r.books[b]) || "—"}
         </td>
       ))}
-      <td className="py-3 px-4 text-right"><EvCell ev={r.ev} approx={r.approx} testid={`ev-td-${slug}`} /></td>
+      <td className="py-3 px-4 text-right"><EvCell ev={r.ev} testid={`ev-td-${slug}`} /></td>
     </tr>
   );
 };
@@ -133,7 +133,7 @@ export default function DDScanner({ settings }) {
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
         Kalshi TD is the live combo price for 10+ points, 10+ rebounds and 10+ assists{settings.fees ? " (fee included)" : ""}. EV compares it to the FanDuel/DraftKings
         "to record a triple-double" price with a {settings.singleHold}% hold removed (books averaged).
-        <span className="text-amber-400"> ≈</span> When Kalshi has no 10+ points line, the combo uses the player's lowest Kalshi points line, which is a harder bet than a
+        {" "}When Kalshi has no 10+ points line, the combo uses the player's lowest Kalshi points line, which is a harder bet than a
         regular triple-double, so that EV is optimistic.
         {data?.books?.credits_left ? ` ${data.books.credits_left} Odds API credits left this month.` : ""}
       </p>
