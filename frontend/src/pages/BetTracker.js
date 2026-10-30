@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ClipboardList, Trash2 } from "lucide-react";
-import { getBets, setBetStatus, deleteBet, errMsg } from "../lib/api";
+import { getBets, gradeBets, setBetStatus, deleteBet, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
@@ -49,6 +49,7 @@ const BetRow = ({ b, onStatus, onDelete }) => {
       </td>
       <td data-testid={`bet-profit-${b.id}`} className={`py-3 px-4 text-right font-mono text-sm font-bold ${b.status === "pending" ? "text-slate-500" : p > 0 ? "text-emerald-400" : p < 0 ? "text-red-400" : "text-slate-300"}`}>
         {b.status === "pending" ? "Pending" : money(p)}
+        {b.auto_graded && <div data-testid={`bet-auto-${b.id}`} className="text-[10px] font-mono font-normal text-slate-500">auto · ESPN final</div>}
       </td>
       <td className="py-3 pl-2 pr-4">
         <button data-testid={`bet-delete-${b.id}`} onClick={() => onDelete(b)} title="Delete bet" className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 className="h-4 w-4" /></button>
@@ -61,7 +62,13 @@ export default function BetTracker() {
   const [bets, setBets] = useState(null);
   const [stake, setStake] = useState(getStake());
 
-  const load = useCallback(() => getBets().then(setBets).catch((e) => toast.error(errMsg(e))), []);
+  const load = useCallback(async () => {
+    try {
+      const g = await gradeBets().catch(() => null);
+      setBets(await getBets());
+      if (g?.graded) toast.success(`Graded ${g.graded} bet${g.graded > 1 ? "s" : ""} from ESPN final box scores`);
+    } catch (e) { toast.error(errMsg(e)); }
+  }, []);
   useEffect(() => { load(); }, [load]);
 
   const onStake = (v) => { setStake(v); if (Number(v) > 0) localStorage.setItem(STAKE_KEY, String(Number(v))); };
@@ -132,7 +139,7 @@ export default function BetTracker() {
           <div data-testid="bet-empty" className="py-16 text-center text-sm text-slate-500">No bets tracked yet. Tap + next to a player on the TD Scanner to add one.</div>
         )}
       </div>
-      <p className="text-xs text-slate-500">Profit uses the locked Kalshi price before fees. Tap a result again to set the bet back to pending.</p>
+      <p className="text-xs text-slate-500">Pending bets are graded automatically from ESPN final box scores each time you open this page (player didn't play = Void). Profit uses the locked Kalshi price before fees. Tap a result to change it, or tap it again to set the bet back to pending.</p>
     </div>
   );
 }

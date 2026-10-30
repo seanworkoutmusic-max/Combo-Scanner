@@ -1,7 +1,14 @@
 from datetime import datetime, timezone
 from typing import Annotated, Dict, List, Literal, Optional
 from bson import ObjectId
+import logging
+import httpx
 from fastapi import APIRouter, HTTPException
+import espn
+import kalshi
+from kalshi import norm_name
+
+logger = logging.getLogger(__name__)
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
@@ -44,6 +51,7 @@ class BetIn(BaseModel):
 
 class Bet(BaseDocument, BetIn):
     status: Status = "pending"
+    auto_graded: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -59,6 +67,35 @@ def make_router(db):
     async def list_bets():
         return [Bet.from_mongo(d).model_dump() for d in await col.find().sort("created_at", -1).to_list(2000)]
 
+    @r.post("/grade")
+    async def grade_bets():
+        """Grade pending bets whose game is final on ESPN: every leg hit -> won, any miss -> lost, player DNP -> void."""
+        pending = [Bet.from_mongo(d) for d in await col.find({"status": "pending"}).to_list(2000)]
+        boxes, graded = {}, 0
+        for b in pending:
+            info = kalshi.parse_game_code(b.game_code)
+            if not info:
+                continue
+            if b.game_code not in boxes:
+                try:
+                    boxes[b.game_code] = await espn.final_box(info["date"].replace("-", ""), b.game_code[-6:-3], b.game_code[-3:])
+                except httpx.HTTPError as e:
+                    logger.warning("ESPN grading %s failed: %s", b.game_code, e)
+                    boxes[b.game_code] = None
+            box = boxes[b.game_code]
+            if box is None:
+                continue
+            line = box.get(norm_name(b.player))
+            if line is None:
+                status = "void"
+            elif any(l.market not in line for l in b.legs):
+                continue
+            else:
+                status = "won" if all(line[l.market] >= (l.threshold or 0) for l in b.legs) else "lost"
+            await col.update_one({"_id": ObjectId(b.id), "status": "pending"}, {"$set": {"status": status, "auto_graded": True}})
+            graded += 1
+        return {"graded": graded}
+
     @r.post("")
     async def add_bet(b: BetIn):
         bet = Bet(**b.model_dump())
@@ -73,7 +110,7 @@ def make_router(db):
 
     @r.patch("/{bet_id}")
     async def set_status(bet_id: str, s: StatusIn):
-        doc = await col.find_one_and_update({"_id": _oid(bet_id)}, {"$set": {"status": s.status}}, return_document=True)
+        doc = await col.find_one_and_update({"_id": _oid(bet_id)}, {"$set": {"status": s.status, "auto_graded": False}}, return_document=True)
         if not doc:
             raise HTTPException(404, "Bet not found")
         return Bet.from_mongo(doc).model_dump()

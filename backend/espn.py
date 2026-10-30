@@ -173,3 +173,31 @@ async def live_tracker(date=None, include_final=False, ttl=15):
     data = {"games": games, "players": rows, "next_tip": min(upcoming) if upcoming else None}
     _live[key] = {"t": time.time(), "data": data}
     return data
+
+
+async def final_box(date, away, home):
+    """Final ESPN box score for one game: {player_key: {"Points": n, ...} or None if DNP}; None if the game isn't final."""
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.get(SCOREBOARD, params={"dates": date})
+        r.raise_for_status()
+        ev = next((e for e in r.json().get("events", [])
+                   if {_ABBR.get(c["team"]["abbreviation"], c["team"]["abbreviation"]) for c in e["competitions"][0]["competitors"]} == {away, home}), None)
+        if not ev or ev["status"]["type"]["state"] != "post":
+            return None
+        box = await _box(client, ev["id"])
+    out = {}
+    for t in box:
+        st = (t.get("statistics") or [{}])[0]
+        idx = {k: i for i, k in enumerate(st.get("keys", []))}
+        for a in st.get("athletes", []):
+            s = a.get("stats") or []
+            key = norm_name(a["athlete"]["displayName"])
+            if a.get("didNotPlay") or not s:
+                out[key] = None
+                continue
+            val = lambda k: int(_f(str(s[idx[k]]).split("-")[0])) if k in idx and idx[k] < len(s) else 0
+            p, r_, a_ = val("points"), val("rebounds"), val("assists")
+            out[key] = {"Points": p, "Rebounds": r_, "Assists": a_, "Made Threes": val("threePointFieldGoalsMade-threePointFieldGoalsAttempted"),
+                        "Steals": val("steals"), "Blocks": val("blocks"), "PRA (Points + Rebounds + Assists)": p + r_ + a_,
+                        "PR (Points + Rebounds)": p + r_, "PA (Points + Assists)": p + a_, "RA (Rebounds + Assists)": r_ + a_}
+    return out
