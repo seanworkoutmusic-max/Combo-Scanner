@@ -11,7 +11,7 @@ export const getPropsGames = () => axios.get(`${API}/props/games`).then((r) => r
 export const getPropsPlayers = () => axios.get(`${API}/props/players`).then((r) => r.data);
 export const getScannerPlayer = (game, player) => axios.get(`${API}/scanner/player`, { params: { game, player } }).then((r) => r.data);
 export const getScannerGames = () => axios.get(`${API}/scanner/games`).then((r) => r.data);
-export const getScannerBoard = () => axios.get(`${API}/scanner/board`).then((r) => r.data);
+export const getScannerBoard = (td_pts) => axios.get(`${API}/scanner/board`, { params: { td_pts } }).then((r) => r.data);
 export const getScannerGame = (code, td_pts) => axios.get(`${API}/scanner/game/${code}`, { params: { td_pts } }).then((r) => r.data);
 export const getTdWatch = () => axios.get(`${API}/tdwatch`).then((r) => r.data);
 export const getPropsGame = (code) => axios.get(`${API}/props/game/${code}`).then((r) => r.data);

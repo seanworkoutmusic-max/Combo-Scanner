@@ -7,9 +7,8 @@ import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
 
-const HEADS = ["Player", "Game", "Kalshi TD", "FanDuel", "DraftKings", "EV"];
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
-const HEAD_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png" };
+const HEAD_LOGOS = { "FD TD": "/fd.png", "DK TD": "/dk.png", "FD SGP": "/fd.png", "DK SGP": "/dk.png" };
 
 const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
 
@@ -24,7 +23,11 @@ const EvCell = ({ ev, testid }) => (
   </div>
 );
 
-const Row = ({ r, format, i }) => {
+const Odds = ({ v, testid }) => (
+  <td data-testid={testid} className={`py-3 px-4 text-right font-mono text-sm ${v != null ? "text-white font-semibold" : "text-slate-600"}`}>{fmt(v) || "—"}</td>
+);
+
+const Row = ({ r, format, i, tdPts, sgpBooks }) => {
   const slug = r.key.replace(/\s/g, "-");
   const legs = r.combos[0].legs;
   return (
@@ -46,13 +49,10 @@ const Row = ({ r, format, i }) => {
       </td>
       <td className="py-3 px-4 text-right">
         <span data-testid={`td-${slug}`} className="font-mono text-base font-bold text-white"><PriceTag p={r.price} format={format} /></span>
-        {r.approx && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{legs[0].threshold}+ pts (lowest Kalshi line)</div>}
+        {legs[0].threshold !== tdPts && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{legs[0].threshold}+ pts (lowest Kalshi line)</div>}
       </td>
-      {BOOKS.map(([b]) => (
-        <td key={b} data-testid={`${b}-td-${slug}`} className={`py-3 px-4 text-right font-mono text-sm ${r.books[b] != null ? "text-white font-semibold" : "text-slate-600"}`}>
-          {fmt(r.books[b]) || "—"}
-        </td>
-      ))}
+      {BOOKS.map(([b]) => <Odds key={b} v={r.books[b]} testid={`${b}-td-${slug}`} />)}
+      {sgpBooks.map(([b]) => <Odds key={b} v={r.sgp?.[b]} testid={`${b}-sgp-${slug}`} />)}
       <td className="py-3 px-4 text-right"><EvCell ev={r.ev} testid={`ev-td-${slug}`} /></td>
     </tr>
   );
@@ -62,27 +62,32 @@ export default function DDScanner({ settings }) {
   const format = settings.fees ? "fee" : "raw";
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [tdPts, setTdPts] = useState(10);
   const reqId = useRef(0);
 
   const load = useCallback(async () => {
     const id = ++reqId.current;
     setLoading(true);
     try {
-      const d = await getScannerBoard();
+      const d = await getScannerBoard(tdPts);
       if (id === reqId.current) setData(d);
     } catch (e) {
       if (id === reqId.current) toast.error(errMsg(e));
     } finally {
       if (id === reqId.current) setLoading(false);
     }
-  }, []);
+  }, [tdPts]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { setData(null); load(); }, [load]);
 
   const rows = useMemo(() => (data?.players || []).map((p) => {
     const price = p.combos[0].live.yes_price;
-    return { ...p, price, approx: p.combos[0].legs[0].threshold !== 10, ev: evPct(fairFrom(p.books, settings.singleHold), price, settings.fees) };
+    const hasSgp = Object.keys(p.sgp || {}).length > 0;
+    const fair = hasSgp ? fairFrom(p.sgp, settings.singleHold) : p.combos[0].legs[0].threshold === 10 ? fairFrom(p.books, settings.singleHold) : null;
+    return { ...p, price, ev: evPct(fair, price, settings.fees) };
   }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
+  const sgpBooks = BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
+  const heads = ["Player", "Game", `Kalshi TD (${tdPts}+ pts)`, "FD TD", "DK TD", ...sgpBooks.map(([b]) => `${b.toUpperCase()} SGP`), "EV"];
 
   return (
     <div className="space-y-6">
@@ -100,11 +105,19 @@ export default function DDScanner({ settings }) {
         </button>
       </div>
 
+      <label className="flex items-center gap-2 text-sm text-slate-400">
+        TD points
+        <select data-testid="td-points-select" value={tdPts} onChange={(e) => setTdPts(Number(e.target.value))}
+          className="h-8 pl-2.5 pr-7 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm font-semibold text-white outline-none focus:border-white/60 cursor-pointer">
+          {[10, 15, 20].map((n) => <option key={n} value={n}>{n}+ pts</option>)}
+        </select>
+      </label>
+
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
-        <table data-testid="scanner-board" className="w-full min-w-[900px]">
+        <table data-testid="scanner-board" className="w-full min-w-[1000px]">
           <thead>
             <tr className="text-xs text-slate-400">
-              {HEADS.map((h, i) => (
+              {heads.map((h, i) => (
                 <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#181818]"}`}>
                   {HEAD_LOGOS[h] ? (
                     <span className="inline-flex items-center gap-1.5">
@@ -116,7 +129,7 @@ export default function DDScanner({ settings }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} />)}
+            {rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} tdPts={tdPts} sgpBooks={sgpBooks} />)}
           </tbody>
         </table>
         {!data && (
@@ -126,15 +139,15 @@ export default function DDScanner({ settings }) {
         )}
         {data && !rows.length && (
           <div data-testid="scanner-empty" className="py-16 text-center text-sm text-slate-500">
-            No player has both a Kalshi triple-double combo and FanDuel/DraftKings triple-double odds right now. Books usually post these on game day.
+            No player has both a live Kalshi triple-double combo and a FanDuel/DraftKings price right now. Books usually post these on game day.
           </div>
         )}
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
-        Kalshi TD is the live combo price for 10+ points, 10+ rebounds and 10+ assists{settings.fees ? " (fee included)" : ""}. EV compares it to the FanDuel/DraftKings
-        "to record a triple-double" price with a {settings.singleHold}% hold removed (books averaged).
-        {" "}When Kalshi has no 10+ points line, the combo uses the player's lowest Kalshi points line, which is a harder bet than a
-        regular triple-double, so that EV is optimistic.
+        Kalshi TD is the live combo price for {tdPts}+ points, 10+ rebounds and 10+ assists{settings.fees ? " (fee included)" : ""}. When Kalshi has no {tdPts}+ points
+        line, the player's next Kalshi points line is used (shown in amber). SGP is the sportsbook same-game-parlay price for the exact same legs as the Kalshi combo.
+        EV compares Kalshi to the SGP price with a {settings.singleHold}% hold removed (books averaged); without an SGP price it falls back to the regular
+        "to record a triple-double" odds, only for 10+ point combos.
         {data?.books?.credits_left ? ` ${data.books.credits_left} Odds API credits left this month.` : ""}
       </p>
     </div>

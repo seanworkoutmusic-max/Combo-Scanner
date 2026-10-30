@@ -20,6 +20,7 @@ import kalshi_props  # noqa: E402
 import espn  # noqa: E402
 import kalshi_auth  # noqa: E402
 import odds_api  # noqa: E402
+import oddsblaze  # noqa: E402
 
 client = AsyncIOMotorClient(os.environ['MONGO_URL'])
 db = client[os.environ['DB_NAME']]
@@ -249,8 +250,8 @@ async def scanner_games():
 
 
 @api_router.get("/scanner/board")
-async def scanner_board():
-    """Every Kalshi game's 10+ pt triple-double combos that also have FanDuel/DraftKings odds, in one list."""
+async def scanner_board(td_pts: int = Query(10, ge=10, le=40)):
+    """Every Kalshi game's triple-double combos, with FD/DK triple-double odds and exact-leg SGP prices, in one list."""
     games = await kalshi_props.load_props()
     photos = await espn.headshots()
     books = await asyncio.gather(*[odds_api.triple_double_odds(c[-6:-3], c[-3:]) for c in games])
@@ -258,17 +259,21 @@ async def scanner_board():
     for g, (bk, _) in zip(games.values(), books):
         for p in g["players"].values():
             odds = (bk.get(p["key"]) or {}).get("odds") or {}
-            pts = _pick(p["markets"], "Points", 10) or min(
-                (l for l in p["markets"].get("Points", []) if l["threshold"]), key=lambda l: l["threshold"], default=None)
+            pts = _pick(p["markets"], "Points", td_pts) or min(
+                (l for l in p["markets"].get("Points", []) if (l["threshold"] or 0) > td_pts), key=lambda l: l["threshold"], default=None)
             legs = [pts, _pick(p["markets"], "Rebounds", 10), _pick(p["markets"], "Assists", 10)]
-            if odds and None not in legs:
+            if None not in legs:
                 c = {"kind": "TD", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}
                 todo.append((g, p, c, odds))
-    await asyncio.gather(*[_quote(c) for _, _, c, _ in todo])
-    players = [{**_player_payload(p, photos, [c]), "books": odds, "game": {k: g[k] for k in ("code", "date", "label")}}
-               for g, p, c, odds in todo if (c.get("live") or {}).get("yes_price")]
+    sgps = await oddsblaze.sgp_prices([(g["code"][-6:-3], g["code"][-3:], p["key"], [(l["market"], l["threshold"]) for l in c["legs"]])
+                                       for g, p, c, _ in todo])
+    todo = [(g, p, c, odds, s) for (g, p, c, odds), s in zip(todo, sgps)
+            if s or (odds and c["legs"][0]["threshold"] == 10)]
+    await asyncio.gather(*[_quote(c) for _, _, c, _, _ in todo])
+    players = [{**_player_payload(p, photos, [c]), "books": odds, "sgp": s, "game": {k: g[k] for k in ("code", "date", "label")}}
+               for g, p, c, odds, s in todo if (c.get("live") or {}).get("yes_price")]
     return {"players": players, "games": len(games),
-            "books": {"enabled": odds_api.configured(), "credits_left": odds_api.quota["remaining"]},
+            "books": {"enabled": odds_api.configured(), "credits_left": odds_api.quota["remaining"], "sgp": oddsblaze.configured()},
             "updated_at": datetime.now(timezone.utc).isoformat()}
 
 

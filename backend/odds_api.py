@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import time
@@ -14,6 +15,7 @@ BOOKS = {"fanduel": "fd", "draftkings": "dk"}
 _events = {"t": 0, "data": []}
 _odds = {}
 quota = {"remaining": None, "used": None}
+_sem = asyncio.Semaphore(2)
 
 
 def configured():
@@ -76,7 +78,7 @@ async def triple_double_odds(away, home, ttl=300):
     if hit and time.time() - hit["t"] < ttl:
         return hit["players"], hit["updated"]
     try:
-        async with httpx.AsyncClient(timeout=20) as client:
+        async with _sem, httpx.AsyncClient(timeout=20) as client:
             eid = await _event_id(client, away, home)
             if not eid:
                 return {}, None
