@@ -43,8 +43,9 @@ async def _book_props(client, book, ttl=120):
             g = games.setdefault(key, {})
             for o in e.get("odds", []):
                 sel = o.get("selection") or {}
-                if sel.get("side") in ("Over", "Yes") and o.get("sgp") and o["market"] in MARKETS:
-                    g.setdefault(norm_name(sel["name"]), {}).setdefault(MARKETS[o["market"]], {})[sel.get("line")] = o["sgp"]
+                name = sel.get("name") or (o.get("player") or {}).get("name")
+                if name and sel.get("side") in ("Over", "Yes") and o.get("sgp") and o["market"] in MARKETS:
+                    g.setdefault(norm_name(name), {}).setdefault(MARKETS[o["market"]], {})[sel.get("line")] = o["sgp"]
     else:
         logger.info("OddsBlaze %s NBA unavailable: %s", book, r.status_code)
     _props[book] = {"t": time.time(), "games": games}
@@ -72,7 +73,13 @@ async def sgp_prices(requests):
         return out
     async with httpx.AsyncClient(timeout=30) as client:
         async with _lock:
-            props = {b: await _book_props(client, b) for b in BOOKS}
+            props = {}
+            for b in BOOKS:
+                try:
+                    props[b] = await _book_props(client, b)
+                except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
+                    logger.warning("OddsBlaze %s props failed: %s", b, e)
+                    props[b] = {}
         jobs = []
         for i, (away, home, legs) in enumerate(requests):
             for book, short in BOOKS.items():
