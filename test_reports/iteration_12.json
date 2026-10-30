@@ -1,0 +1,27 @@
+{
+  "summary": "Tested new TD Watch page end to end (backend + frontend, desktop 1920 and mobile 390). Backend /api/tdwatch: 12/12 pytest pass (shape, fields, score=min(pts,reb,ast), score desc sort, limit 5..200 with 422 at 0/4/201, consistent tonight opponents). Frontend: sidebar tab opens page; title, season subtitle (2026-27) and 'Updated Friday, 10/30, 1:43 AM' shown; 40 rows with photos (80 imgs, 0 broken), team logo + abbr, 'vs OPP tonight' tags for CLE/ATL/MEM/POR/SAC/NOP; default TD Score desc with highlight; all 6 sort headers sort desc, move highlight and renumber #; 'Playing tonight' shows 8 rows, all tagged; 'All players' restores 40. Mobile: no page overflow (scrollWidth 390), 3 nav tabs on one line, table scrolls sideways (791 vs 356).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "TD Watch mobile 390", "issues": ["'TD Score' header wraps onto two lines (add whitespace-nowrap to header buttons)", "Mobile header nav scrollWidth is a few px bigger than clientWidth, so it can be nudged sideways a tiny bit, though all 3 tabs are visible on one line"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_tdwatch_api.py", "/app/test_reports/pytest/pytest_tdwatch.xml"],
+  "action_items": [
+    "Optional: whitespace-nowrap on TD Watch sort headers",
+    "Optional: 'Playing tonight' only filters the top-40 list the client already has, so tonight players ranked below 40 never show up. Consider filtering on the server or fetching a bigger limit for that view"
+  ],
+  "critical_code_review_comments": [
+    "espn.season_averages has no asyncio lock (headshots() has one), so requests that arrive together on a cold cache each fetch ESPN separately. Minor.",
+    "If ESPN fails on a cold start, the endpoint returns season=None, players=[], updated_at=None, and the UI shows 'No players to show' with no error message. Acceptable, but could tell the user.",
+    "td_watch builds tonight's opponents by slicing g['code'][-6:-3]/[-3:], which assumes 3-letter Kalshi team codes. This works for the current data."
+  ],
+  "updated_files": ["/app/backend/tests/test_tdwatch_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "TD Watch is a tab (state-based, no route). Tests are in test_tdwatch_api.py. Data is live from ESPN plus Kalshi games for tonight (CLE-ATL, MEM-POR, SAC-NOP), and 8 of the top 40 play tonight."
+}
