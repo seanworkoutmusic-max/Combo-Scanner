@@ -5,6 +5,7 @@ import { Sidebar } from "./components/Sidebar";
 import DDScanner from "./pages/DDScanner";
 import TDWatch from "./pages/TDWatch";
 import LiveTracker from "./pages/LiveTracker";
+import BetTracker from "./pages/BetTracker";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
 
@@ -48,6 +49,8 @@ function App() {
             <TDWatch />
           ) : tab === "live" ? (
             <LiveTracker />
+          ) : tab === "bets" ? (
+            <BetTracker />
           ) : (
             <DDScanner settings={settings} />
           )}

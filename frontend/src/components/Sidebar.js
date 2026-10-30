@@ -1,4 +1,4 @@
-import { BookOpen, ChartLine, Crosshair, Layers, Table2 } from "lucide-react";
+import { BookOpen, ChartLine, ClipboardList, Crosshair, Layers, Table2 } from "lucide-react";
 import { HowItWorks } from "./HowItWorks";
 
 const TABS = [
@@ -6,6 +6,7 @@ const TABS = [
   { id: "scanner", label: "TD Scanner", testid: "nav-tab-scanner", icon: Table2 },
   { id: "tdwatch", label: "TD Leaders", testid: "nav-tab-tdwatch", icon: ChartLine },
   { id: "live", label: "Live Tracker", testid: "nav-tab-live", icon: Crosshair },
+  { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList },
 ];
 
 const Logo = ({ collapsible }) => (

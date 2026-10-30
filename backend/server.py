@@ -21,6 +21,7 @@ import espn  # noqa: E402
 import kalshi_auth  # noqa: E402
 import odds_api  # noqa: E402
 import oddsblaze  # noqa: E402
+import bets  # noqa: E402
 
 client = AsyncIOMotorClient(os.environ['MONGO_URL'])
 db = client[os.environ['DB_NAME']]
@@ -419,6 +420,7 @@ async def props_kalshi_quote(req: QuoteReq):
         raise HTTPException(424, f"Kalshi unavailable: {e}")
 
 
+api_router.include_router(bets.make_router(db))
 app.include_router(api_router)
 
 app.add_middleware(

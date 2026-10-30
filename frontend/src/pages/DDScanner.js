@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { RefreshCw, ExternalLink } from "lucide-react";
-import { getScannerBoard, errMsg } from "../lib/api";
+import { RefreshCw, ExternalLink, Plus, Check } from "lucide-react";
+import { getScannerBoard, getBets, addBet, errMsg } from "../lib/api";
+import { getStake } from "./BetTracker";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
@@ -28,13 +29,19 @@ const Odds = ({ v, testid }) => (
   <td data-testid={testid} className={`py-3 px-4 text-right font-mono text-sm ${v != null ? "text-white font-semibold" : "text-slate-600"}`}>{fmt(v) || "—"}</td>
 );
 
-const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks }) => {
+const betKey = (code, legs) => `${code}|${legs.map((l) => l.ticker).join(",")}`;
+
+const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
   const slug = r.key.replace(/\s/g, "-");
   const legs = r.combos[0].legs;
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
       <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
         <div className="flex items-center gap-3">
+          <button data-testid={`track-bet-${slug}`} onClick={() => onTrack(r)} disabled={tracked} title={tracked ? "Tracked in Bet Tracker" : "Track this bet"}
+            className={`h-8 w-8 shrink-0 grid place-items-center rounded-md border transition-colors ${tracked ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-400" : "border-slate-700 text-slate-400 hover:text-white hover:border-white/50 hover:bg-white/[0.05]"}`}>
+            {tracked ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          </button>
           <PlayerPhoto src={r.headshot} name={r.name} size={34} />
           <div className="leading-tight">
             <div className="text-sm font-semibold text-white whitespace-nowrap">{r.name}</div>
@@ -83,6 +90,28 @@ export default function DDScanner({ settings }) {
   }, [ra, tdPts]);
 
   useEffect(() => { setData(null); load(); }, [load]);
+
+  const [tracked, setTracked] = useState(new Set());
+  useEffect(() => {
+    getBets().then((bs) => setTracked(new Set(bs.map((b) => betKey(b.game_code, b.legs))))).catch(() => {});
+  }, []);
+  const onTrack = async (r) => {
+    const c = r.combos[0];
+    const k = betKey(r.game.code, c.legs);
+    setTracked((s) => new Set(s).add(k));
+    try {
+      await addBet({
+        player: r.name, team: r.team, headshot: r.headshot, game_code: r.game.code, game_label: r.game.label, combo: c.name,
+        legs: c.legs.map((l) => ({ ticker: l.ticker, market: l.market, threshold: l.threshold })),
+        price: r.price, books: { ...r.books, ...Object.fromEntries(Object.entries(r.sgp || {}).map(([b, v]) => [`${b}_sgp`, v])) },
+        ev: r.ev, stake: getStake(),
+      });
+      toast.success(`Tracked ${r.name} · ${c.name}`);
+    } catch (e) {
+      setTracked((s) => { const n = new Set(s); n.delete(k); return n; });
+      toast.error(errMsg(e));
+    }
+  };
 
   const rows = useMemo(() => (data?.players || []).map((p) => {
     const price = p.combos[0].live.yes_price;
@@ -136,7 +165,8 @@ export default function DDScanner({ settings }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} tdPts={tdPts} sgpBooks={sgpBooks} tdBooks={tdBooks} />)}
+            {rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} tdPts={tdPts} sgpBooks={sgpBooks} tdBooks={tdBooks}
+              tracked={tracked.has(betKey(r.game.code, r.combos[0].legs))} onTrack={onTrack} />)}
           </tbody>
         </table>
         {!data && (
