@@ -32,10 +32,11 @@ const Row = ({ p, format, i }) => {
   const td = p.singles.find((s) => s.name === "Triple Double")?.line;
   const built = p.built_dd;
   const cheap = dd && built && valid(dd.yes_ask) && dd.yes_ask < built.price;
+  const lowerBound = built && (!built.exact || p.combos.some((c) => c.legs.some((l) => l.market === "Points" && l.threshold !== 10)));
   const slug = p.key.replace(/\s/g, "-");
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
-      <td className="py-3 px-4">
+      <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
         <div className="flex items-center gap-3">
           <PlayerPhoto src={p.headshot} name={p.name} size={34} />
           <div className="leading-tight">
@@ -49,8 +50,8 @@ const Row = ({ p, format, i }) => {
         {cheap && <div className="text-[10px] font-mono text-emerald-400">below built</div>}
       </td>
       <td className="py-3 px-3 text-right bg-white/[0.02]" title={built ? `Built from ${built.paths} live combo path${built.paths > 1 ? "s" : ""}` : ""}>
-        <span className="text-slate-500 font-mono text-sm">{built && !built.exact ? "≥ " : ""}</span>
         <Price p={built?.price} format={format} className="text-sm font-bold text-white" testid={`built-dd-${slug}`} />
+        {lowerBound && <div className="text-[10px] font-mono text-slate-500">min. chance</div>}
       </td>
       {COMBO_COLS.map(([k]) => <ComboCell key={k} c={by[k]} format={format} testid={`combo-${k}-${slug}`} />)}
       <td className="py-3 px-3 text-right"><Price p={td?.yes_ask} format={format} className="text-sm text-white" testid={`kalshi-td-${slug}`} /></td>
@@ -125,7 +126,7 @@ export default function DDScanner({ settings }) {
           <thead>
             <tr className="text-xs text-slate-400">
               {HEADS.map((h, i) => (
-                <th key={h} className={`py-3 font-semibold ${i ? "px-3 text-right" : "px-4 text-left"} ${h === "Built DD" ? "bg-white/[0.02] text-white" : ""}`}>{h}</th>
+                <th key={h} className={`py-3 font-semibold ${i ? "px-3 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#181818]"} ${h === "Built DD" ? "bg-white/[0.02] text-white" : ""}`}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -143,6 +144,7 @@ export default function DDScanner({ settings }) {
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
         Built DD = chance of any 10+/10+ combo hitting, from live Kalshi combo prices (pairs added up, minus the triple-double overlap).
         It misses double-doubles that involve steals or blocks, so Kalshi's DD market should usually cost a bit more. Green means it's cheaper.
+        "min. chance" means Built DD is a floor, not a match: Kalshi had no 10+ points line, so a higher points line was used and the real DD chance is higher.
       </p>
     </div>
   );

@@ -1,0 +1,30 @@
+{
+  "summary": "Tested the DD/TD scanner end to end on live Kalshi data, backend and frontend. Backend: the new test_scanner_game_api.py passed 7 of 7 tests. It covers the response shape, combo kinds PR/PA/RA/PRA with live yes_price (all priced), legs fixed at 10+ reb/ast with a fallback for points, the Avdija 15+ points fallback, the Kalshi DD/TD singles, the built_dd formula (rebuilt from the combo prices and compared to the API value) and a 404 for an unknown game. Frontend: the scanner opens on MEM vs POR with 7 unique rows (Clingan, Boozer, Avdija, Edey, Coward, Morant, Jerome) and the 8 expected columns, all in American odds. Avdija shows '15+ pts' under Pts & Reb and Ty Jerome shows it under Pts & Ast. TD combo is '—' for every MEM vs POR player, as expected. Switching to CLE vs ATL reloads the table. Jalen Johnson shows all 4 combos and Built DD +117, which matches sum(pairs) - 2*PRA. The green 'below built' marker appears only for Jarrett Allen (+166 vs +165) and James Harden (+351 vs +268), where the Kalshi DD price really is lower. Switching tabs quickly (MEM then SAC) ended on SAC vs NOP data. Refresh changed the Updated time. At 390px the page has no overflow (scrollWidth 390). The table scrolls inside its container (980 vs 356). Player Props still loads. No page errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "DD/TD Scanner mobile", "issues": ["The Player column is not sticky. After scrolling the table sideways, the user can't see which player a row belongs to. Suggestion: make the first td/th sticky left-0 with a background."]},
+      {"screen": "DD/TD Scanner", "issues": ["When the points leg uses the fallback (for example 15+), Built DD is shown as exact with no hint. Example: Jalen Johnson Built +117 vs Kalshi DD -251. That number is a lower bound, not a like-for-like price. Consider adding '≥' or a '15+ pts' note on the Built DD cell too."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_scanner_game_api.py", "/app/test_reports/pytest/pytest_scanner_game.xml"],
+  "action_items": [
+    "Optional: make the Player column sticky in the scanner table on mobile.",
+    "Optional: when built_dd uses a points line other than 10, mark it as a lower bound (≥, or a note)."
+  ],
+  "critical_code_review_comments": [
+    "_built_dd with PRA: sum(pairs) - (k-1)*PRA is correct inclusion-exclusion (every pairwise overlap is the triple), including when points is 15+ in every points leg. But if one pair's RFQ fails while PRA succeeds, k shrinks and the result is still a valid union of the remaining paths. OK.",
+    "_built_dd marks exact=True even when the points leg isn't 10+. The flag is semantically misleading.",
+    "DDScanner load() has no stale-response guard (no abort or request id). A slow response for game A could overwrite game B. A quick-switch test did not reproduce it, but adding a guard is cheap.",
+    "scanner_game re-runs all RFQs on every call with no short cache. Repeated Refresh clicks send about 7 RFQs each. Consider a 15–30s cache."
+  ],
+  "updated_files": ["/app/backend/tests/test_scanner_game_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "On mobile the scanner tab testid is nav-tab-scanner-mobile; on desktop it is nav-tab-scanner. Rows are scanner-row-<key with dashes>. Cells are kalshi-dd-/built-dd-/combo-{PR,PA,RA,PRA}-/kalshi-td-<slug>. CLE vs ATL is the best game to check the PRA formula (Jalen Johnson) and the green 'below built' marker (Allen, Harden). A scanner call took about 1–10s.",
+  "test_credentials": "No auth in this app"
+}
