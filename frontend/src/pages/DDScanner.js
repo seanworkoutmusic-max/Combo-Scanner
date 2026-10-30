@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, ExternalLink } from "lucide-react";
 import { getPropsGames, getScannerGame, errMsg } from "../lib/api";
@@ -44,7 +44,7 @@ const Row = ({ p, format, i, odds, setOdds, settings, tdPts }) => {
   const tri = p.combos.find((c) => c.kind === "TD" || c.also_td)?.live?.yes_price;
   const tdKey = `td${tdPts}`;
   const dd = p.built_dd?.price;
-  const lowerBound = p.built_dd && (!p.built_dd.exact || p.combos.some((c) => c.legs.some((l) => l.market === "Points" && l.threshold !== 10)));
+  const lowerBound = p.built_dd && (!p.built_dd.exact || p.combos.some((c) => c.kind !== "TD" && c.legs.some((l) => l.market === "Points" && l.threshold !== 10)));
   const slug = p.key.replace(/\s/g, "-");
   const hasTd = valid(tri);
   const evDd = evPct(fairFrom(odds.dd, settings.singleHold), dd, settings.fees);
@@ -97,19 +97,22 @@ export default function DDScanner({ settings }) {
   useEffect(() => {
     getPropsGames().then((g) => {
       setGames(g);
-      setGame((g.find((x) => x.code.endsWith(PREFERRED_GAME)) || g[0])?.code || "");
+      setGame((prev) => prev || (g.find((x) => x.code.endsWith(PREFERRED_GAME)) || g[0])?.code || "");
     }).catch((e) => toast.error(errMsg(e)));
   }, []);
 
+  const reqId = useRef(0);
   const load = useCallback(async () => {
     if (!game) return;
+    const id = ++reqId.current;
     setLoading(true);
     try {
-      setData(await getScannerGame(game, tdPts));
+      const d = await getScannerGame(game, tdPts);
+      if (id === reqId.current) setData(d);
     } catch (e) {
-      toast.error(errMsg(e));
+      if (id === reqId.current) toast.error(errMsg(e));
     } finally {
-      setLoading(false);
+      if (id === reqId.current) setLoading(false);
     }
   }, [game, tdPts]);
 

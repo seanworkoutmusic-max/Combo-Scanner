@@ -1,0 +1,33 @@
+{
+  "summary": "Tested the TD points threshold feature (td_pts 10/15/20) on live Kalshi data, backend and frontend. Backend: new test_scanner_td_pts_api.py passed 10/10. Sabonis (SACNOP) has a TD combo at 15 and 20 with legs Points=td/Reb 10/Ast 10 and a live price: 0.146 at 10, 0.090 at 15, 0.044 at 20. Jalen Johnson (CLEATL) is a PRA flagged also_td at 15 and kind TD at 20. Every TD combo has Points equal to td_pts exactly. Non-TD combos are identical between 15 and 20. td_pts 9, 41 and 'abc' each return 422. Regression run of test_scanner_game_api.py and test_scanner_player_api.py: 10 passed, 3 skipped. Frontend: the td-points-select shows 10+/15+/20+. Changing it reloads the table and the header reads 'TD (N+ pts)'. Sabonis TD went +546 at 10, +945 at 15, +2030 at 20 (longer odds at 20, as expected). fd-td odds are stored per threshold (localStorage keys td15/td20): +900 typed at 20 did not show at 15, came back when switching to 20, and EV TD updated (+102.9% at 20, +148.7% at 15 with +300). Mobile 390: scrollWidth is 390, no page overflow. One UI bug found: the DD 'min.' label is wrongly shown when td_pts is not 10.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "DDScanner Row lowerBound", "issue": "When td_pts is 15 or 20, the DD column shows 'min.' under Sabonis (and anyone with a TD combo), even though built_dd uses the exact 10-pt pairs. Cause: lowerBound checks every combo for a Points leg != 10, and that includes the new kind 'TD' combo. So the DD column IS affected by td_pts. Fix: p.combos.some((c) => c.kind !== 'TD' && c.legs.some(...)).", "selector": "dd-domantas-sabonis (parent cell)", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [
+      {"flow": "Game tab click right after first load", "issue": "In dev, React StrictMode runs the getPropsGames effect twice. The second call resolves and setGame(PREFERRED) puts the selection back to MEM vs POR if the user already clicked another tab. load() also has no stale-response guard, so a slow earlier response (e.g. an older td_pts) can overwrite a newer one if the user switches the dropdown quickly. Add a request id or AbortController in load(), and only set the default game when game is null.", "affected_selectors": ["scanner-game-*", "td-points-select"]}
+    ],
+    "design_issues": [
+      {"screen": "DD/TD Scanner footer", "issues": ["The footer still says 'DD and TD are ... built from 10+ points'. It should mention the selected TD points threshold."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_scanner_td_pts_api.py", "/app/test_reports/pytest/pytest_td_pts.xml"],
+  "action_items": [
+    "In DDScanner.js Row, exclude kind 'TD' combos from the lowerBound ('min.') check.",
+    "Add a stale-response guard to load(), and don't reset the selected game when getPropsGames resolves a second time.",
+    "Update the footer text to reflect the selected TD points threshold."
+  ],
+  "critical_code_review_comments": [
+    "Backend _combos_for is correct: also_td is set only when the TD legs are the same tickers as PRA, otherwise a separate TD combo is added. _built_dd ignores kind TD.",
+    "At td_pts 15/20 each player gets one extra RFQ (a TD combo next to PRA), so scan time grows a little. That's acceptable.",
+    "scanner_player still calls _combos_for(p) with no td_pts, so it has no TD combo. That's fine unless the player view needs it."
+  ],
+  "updated_files": ["/app/backend/tests/test_scanner_td_pts_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "90% (1 UI bug: false 'min.' label)"},
+  "seed_data_creation": "None. The localStorage dd-book-odds was cleared.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Games: 26OCT29CLEATL, 26OCT29MEMPOR, 26OCT29SACNOP. Slug for Sabonis is domantas-sabonis. Odds are stored in localStorage 'dd-book-odds' as {playerKey: {dd, td10, td15, td20: {fd, dk}}}. Wait for the initial MEMPOR load before clicking another game tab (StrictMode race). pytest.ini uses xdist.",
+  "test_credentials": "No auth in this app"
+}
