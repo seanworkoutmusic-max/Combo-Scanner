@@ -191,7 +191,7 @@ async def _quote(c):
         return
     async with _rfq_sem:
         try:
-            c["live"] = await kalshi_auth.live_combo_quote([l["ticker"] for l in c["legs"]], target_dollars=100)
+            c["live"] = await kalshi_auth.live_combo_quote([l["ticker"] for l in c["legs"]], target_dollars=10)
         except (kalshi_auth.KalshiAuthError, httpx.HTTPError) as e:
             c["error"] = str(e)[:160]
 

@@ -14,6 +14,9 @@ const useStored = (key, init) => {
   return [v, setV];
 };
 
+// Quote size matches the Kalshi app's "$10 pays" view; makers quote worse prices for big orders.
+const QUOTE_SIZE = 10;
+
 const GameStrip = ({ games, game, setGame }) => (
   <div data-testid="game-strip" className="flex gap-2 overflow-x-auto pb-1">
     {games.map((g) => (
@@ -64,7 +67,6 @@ export default function Props({ settings, update, status }) {
   const [combo, setCombo] = useState(null);
   const [live, setLive] = useState(null);
   const [liveLoading, setLiveLoading] = useState(false);
-  const [quoteSize, setQuoteSize] = useStored("quote-size", 100);
   const [parlayOdds, setParlayOdds] = useState({});
   const [straightOdds, setStraightOdds] = useState({});
   const [allPlayers, setAllPlayers] = useState([]);
@@ -126,7 +128,7 @@ export default function Props({ settings, update, status }) {
     const sent = legs.map((l) => l.ticker);
     setLiveLoading(true);
     try {
-      const r = await postKalshiQuote(sent, quoteSize);
+      const r = await postKalshiQuote(sent, QUOTE_SIZE);
       const now = JSON.parse(localStorage.getItem("slip-legs") || "[]").map((l) => l.ticker);
       if (now.join(",") !== sent.join(",")) return;
       setLive(r);
@@ -164,7 +166,7 @@ export default function Props({ settings, update, status }) {
           straightOdds={straightOdds} setStraightOdds={(t, b, v) => setStraightOdds((o) => ({ ...o, [t]: { ...o[t], [b]: v } }))}
           settings={settings} update={update} format={format} remove={remove} clear={() => setLegs([])}
           live={live} onLiveQuote={getLiveQuote} liveLoading={liveLoading} kalshiKey={status?.kalshi_key}
-          quoteSize={quoteSize} setQuoteSize={setQuoteSize}
+          quoteSize={QUOTE_SIZE}
         />
       </div>
     </div>
