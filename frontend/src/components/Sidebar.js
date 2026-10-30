@@ -1,9 +1,10 @@
-import { BookOpen, Layers, Table2 } from "lucide-react";
+import { BookOpen, Eye, Layers, Table2 } from "lucide-react";
 import { HowItWorks } from "./HowItWorks";
 
 const TABS = [
   { id: "props", label: "Player Props", testid: "nav-tab-props", icon: Layers },
   { id: "scanner", label: "TD Scanner", testid: "nav-tab-scanner", icon: Table2 },
+  { id: "tdwatch", label: "TD Watch", testid: "nav-tab-tdwatch", icon: Eye },
 ];
 
 const Logo = ({ collapsible }) => (
@@ -17,7 +18,7 @@ const NavItem = ({ t, active, onClick, compact }) => {
   const Icon = t.icon;
   return (
     <button data-testid={compact ? `${t.testid}-mobile` : t.testid} onClick={onClick} title={t.label}
-      className={`flex items-center gap-2.5 rounded-lg text-sm transition-colors ${compact ? "px-3 py-1.5" : "w-full px-3 py-2 justify-center min-[1440px]:justify-start"} ${
+      className={`flex items-center gap-2.5 rounded-lg text-sm transition-colors ${compact ? "px-2.5 py-1.5 gap-1.5 whitespace-nowrap shrink-0" : "w-full px-3 py-2 justify-center min-[1440px]:justify-start"} ${
         active ? "bg-white/[0.08] text-white font-semibold" : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
       }`}>
       <Icon className="h-4 w-4 shrink-0" /> <span className={compact ? "" : "hidden min-[1440px]:inline whitespace-nowrap"}>{t.label}</span>
@@ -47,7 +48,7 @@ export const Sidebar = ({ tab, setTab, kalshiOk }) => (
     </aside>
     <header className="lg:hidden sticky top-0 z-30 border-b border-slate-800/80 bg-[#0E0E0E]/95 backdrop-blur-xl px-4 py-3 space-y-3">
       <Logo />
-      <nav className="flex gap-1">
+      <nav className="flex gap-1 overflow-x-auto">
         {TABS.map((t) => <NavItem key={t.id} t={t} compact active={tab === t.id} onClick={() => setTab(t.id)} />)}
       </nav>
     </header>

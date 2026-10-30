@@ -42,3 +42,50 @@ async def headshots(ttl=12 * 3600):
         except httpx.HTTPError as e:
             logger.warning("ESPN headshots failed: %s", e)
         return _cache["map"]
+
+
+
+STATS_URL = "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete"
+_stats = {"t": 0, "rows": [], "season": None}
+# ESPN team abbreviations -> the ones Kalshi uses
+_ABBR = {"GS": "GSW", "NO": "NOP", "NY": "NYK", "SA": "SAS", "UTAH": "UTA", "WSH": "WAS"}
+
+
+def _f(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+async def season_averages(ttl=3600):
+    """Per-player season averages (pts/reb/ast) plus double- and triple-double counts, from ESPN."""
+    if _stats["rows"] and time.time() - _stats["t"] < ttl:
+        return _stats
+    params = {"region": "us", "lang": "en", "contentorigin": "espn", "isqualified": "false", "limit": 600,
+              "sort": "offensive.avgPoints:desc", "seasontype": 2}
+    try:
+        async with httpx.AsyncClient(timeout=25) as client:
+            r = await client.get(STATS_URL, params=params)
+            r.raise_for_status()
+            d = r.json()
+    except httpx.HTTPError as e:
+        logger.warning("ESPN season stats failed: %s", e)
+        return _stats
+    names = {c["name"]: c["names"] for c in d.get("categories", [])}
+    rows = []
+    for a in d.get("athletes", []):
+        vals = {}
+        for c in a.get("categories", []):
+            vals.update(zip(names.get(c["name"], []), c.get("totals") or []))
+        ath = a["athlete"]
+        team = (ath.get("teamShortName") or "").upper()
+        rows.append({
+            "key": norm_name(ath.get("displayName")), "name": ath.get("displayName"), "team": _ABBR.get(team, team),
+            "headshot": (ath.get("headshot") or {}).get("href"), "gp": int(_f(vals.get("gamesPlayed"))),
+            "min": _f(vals.get("avgMinutes")), "pts": _f(vals.get("avgPoints")), "reb": _f(vals.get("avgRebounds")),
+            "ast": _f(vals.get("avgAssists")), "dd": int(_f(vals.get("doubleDouble"))), "td": int(_f(vals.get("tripleDouble"))),
+        })
+    if rows:
+        _stats.update(t=time.time(), rows=rows, season=(d.get("requestedSeason") or {}).get("displayName"))
+    return _stats

@@ -3,6 +3,7 @@ import "@/App.css";
 import { Toaster } from "./components/ui/sonner";
 import { Sidebar } from "./components/Sidebar";
 import DDScanner from "./pages/DDScanner";
+import TDWatch from "./pages/TDWatch";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
 
@@ -42,6 +43,8 @@ function App() {
         <div className="max-w-[1320px] mx-auto px-4 sm:px-6 2xl:px-10 py-6 lg:py-8 space-y-5">
           {tab === "props" ? (
             <Props settings={settings} update={update} status={status} />
+          ) : tab === "tdwatch" ? (
+            <TDWatch />
           ) : (
             <DDScanner settings={settings} />
           )}

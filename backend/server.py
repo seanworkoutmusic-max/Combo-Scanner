@@ -214,6 +214,20 @@ def _player_payload(p, photos, combos):
             "combos": combos, "built_dd": _built_dd(combos)}
 
 
+@api_router.get("/tdwatch")
+async def td_watch(limit: int = Query(40, ge=5, le=200)):
+    stats = await espn.season_averages()
+    games = await kalshi_props.load_props()
+    tonight = {}
+    for g in games.values():
+        away, home = g["code"][-6:-3], g["code"][-3:]
+        tonight[away], tonight[home] = home, away
+    rows = [dict(r, opp=tonight.get(r["team"]), score=round(min(r["pts"], r["reb"], r["ast"]), 1))
+            for r in stats["rows"] if r["gp"] > 0 and r["min"] >= 15]
+    rows.sort(key=lambda r: (-r["score"], -(r["pts"] + r["reb"] + r["ast"])))
+    return {"season": stats["season"], "players": rows[:limit], "updated_at": datetime.fromtimestamp(stats["t"], timezone.utc).isoformat() if stats["t"] else None}
+
+
 @api_router.get("/scanner/game/{code}")
 async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
     g = (await kalshi_props.load_props()).get(code)
