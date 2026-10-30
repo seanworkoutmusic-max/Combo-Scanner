@@ -111,7 +111,7 @@ export default function DDScanner({ settings }) {
         TD points
         <select data-testid="td-points-select" value={tdPts} onChange={(e) => setTdPts(Number(e.target.value))}
           className="h-8 pl-2.5 pr-7 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm font-semibold text-white outline-none focus:border-white/60 cursor-pointer">
-          {[10, 15, 20].map((n) => <option key={n} value={n}>{n}+ pts</option>)}
+          {[10, 15, 20, 25].map((n) => <option key={n} value={n}>{n}+ pts</option>)}
         </select>
       </label>
 
