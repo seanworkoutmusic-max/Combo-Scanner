@@ -24,7 +24,11 @@ def _private_key():
     pem = os.environ.get("KALSHI_PRIVATE_KEY", "").strip().replace("\\n", "\n")
     if _key["pem"] != pem:
         try:
-            _key.update(pem=pem, obj=serialization.load_pem_private_key(pem.encode(), password=None))
+            if "-----BEGIN" in pem:
+                obj = serialization.load_pem_private_key(pem.encode(), password=None)
+            else:  # bare base64 key body (no PEM header lines)
+                obj = serialization.load_der_private_key(base64.b64decode("".join(pem.split())), password=None)
+            _key.update(pem=pem, obj=obj)
         except ValueError as e:
             raise KalshiAuthError(f"Kalshi private key could not be read: {e}")
     return _key["obj"]

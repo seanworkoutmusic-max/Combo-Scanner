@@ -46,3 +46,5 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Auto grading: POST /api/bets/grade (run when Bet Tracker opens) grades pending bets whose ESPN game is final (espn.final_box): all legs hit -> won, else lost, player DNP/absent -> void; sets auto_graded=True (manual PATCH resets to False). Supports Points/Rebounds/Assists/3PM/Steals/Blocks/PRA/PR/PA/RA legs.
 - TD Scanner Min/Max odds inputs filter loaded rows by Kalshi combo American odds (fee-adjusted when fees on); not persisted.
 - Bet Tracker: Result column (manual Won/Lost/Void) removed per user; grading only from ESPN (on open + "Grade from ESPN" button bet-grade-btn). Profit cell shows status label. PATCH endpoint still exists but unused.
+- kalshi_auth._private_key accepts bare base64 (DER/PKCS8, e.g. Ed25519 "MC4CAQAw...") keys without PEM headers, in addition to PEM.
+- Odds API monthly credits hit 0 on Oct 30 (401 on odds calls) -> FD/DK TD columns empty until renewal; SGP (OddsBlaze) unaffected.
