@@ -40,3 +40,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Fanatics SGP added (oddsblaze BOOKS "fanatics"->"fan", column "Fanatics SGP", /fanatics.png). EV fair = average of all available SGP books.
 - Player Props builder: POST /api/props/sgp {tickers} returns OddsBlaze SGP prices (dk, fan) for the slip legs (same game only; markets: pts/reb/ast/3PM/PRA/PR/PA/RA/stl/blk/DD/TD). Frontend auto-fills DraftKings SGP input when slip changes; Kalshi live quote auto-runs as before.
 - Live Tracker page (tab "live", lucide Crosshair icon): GET /api/live-tracker (ESPN scoreboard+summary, 15s cache) lists players in games in progress, ranked by stats needed for 10/10/10; auto-refresh 30s. Test hook: ?date=YYYYMMDD&final=1 on frontend URL / include_final=true on API.
+- TD Scanner picker adds 2-leg combos: /api/scanner/board?ra=10|8 (Rebounds ra + Assists ra, SGP only, no Odds API).

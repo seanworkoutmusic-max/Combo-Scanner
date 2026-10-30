@@ -50,7 +50,7 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks }) => {
       </td>
       <td className="py-3 px-4 text-right">
         <span data-testid={`td-${slug}`} className="font-mono text-base font-bold text-white"><PriceTag p={r.price} format={format} /></span>
-        {legs[0].threshold !== tdPts && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{legs[0].threshold}+ pts (lowest Kalshi line)</div>}
+        {legs[0].market === "Points" && legs[0].threshold !== tdPts && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{legs[0].threshold}+ pts (lowest Kalshi line)</div>}
       </td>
       {tdBooks.map(([b]) => <Odds key={b} v={r.books[b]} testid={`${b}-td-${slug}`} />)}
       {sgpBooks.map(([b]) => <Odds key={b} v={r.sgp?.[b]} testid={`${b}-sgp-${slug}`} />)}
@@ -63,28 +63,30 @@ export default function DDScanner({ settings }) {
   const format = settings.fees ? "fee" : "raw";
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [tdPts, setTdPts] = useState(10);
+  const [pick, setPick] = useState("10");
+  const ra = pick.startsWith("ra") ? Number(pick.slice(2)) : null;
+  const tdPts = ra ? null : Number(pick);
   const reqId = useRef(0);
 
   const load = useCallback(async () => {
     const id = ++reqId.current;
     setLoading(true);
     try {
-      const d = await getScannerBoard(tdPts);
+      const d = await getScannerBoard(ra ? { ra } : { td_pts: tdPts });
       if (id === reqId.current) setData(d);
     } catch (e) {
       if (id === reqId.current) toast.error(errMsg(e));
     } finally {
       if (id === reqId.current) setLoading(false);
     }
-  }, [tdPts]);
+  }, [ra, tdPts]);
 
   useEffect(() => { setData(null); load(); }, [load]);
 
   const rows = useMemo(() => (data?.players || []).map((p) => {
     const price = p.combos[0].live.yes_price;
     const hasSgp = Object.keys(p.sgp || {}).length > 0;
-    const fair = hasSgp ? fairFrom(p.sgp, settings.singleHold) : p.combos[0].legs[0].threshold === 10 ? fairFrom(p.books, settings.singleHold) : null;
+    const fair = hasSgp ? fairFrom(p.sgp, settings.singleHold) : p.combos[0].legs[0].market === "Points" && p.combos[0].legs[0].threshold === 10 ? fairFrom(p.books, settings.singleHold) : null;
     return { ...p, price, ev: evPct(fair, price, settings.fees) };
   }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
   const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
@@ -108,10 +110,11 @@ export default function DDScanner({ settings }) {
       </div>
 
       <label className="flex items-center gap-2 text-sm text-slate-400">
-        TD points
-        <select data-testid="td-points-select" value={tdPts} onChange={(e) => setTdPts(Number(e.target.value))}
+        Combo
+        <select data-testid="td-points-select" value={pick} onChange={(e) => setPick(e.target.value)}
           className="h-8 pl-2.5 pr-7 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm font-semibold text-white outline-none focus:border-white/60 cursor-pointer">
-          {[10, 15, 20, 25].map((n) => <option key={n} value={n}>{n}+ pts</option>)}
+          {[10, 15, 20, 25].map((n) => <option key={n} value={String(n)}>{n}+ pts triple-double</option>)}
+          {[10, 8].map((n) => <option key={n} value={`ra${n}`}>{n}+ reb &amp; {n}+ ast</option>)}
         </select>
       </label>
 
@@ -141,12 +144,12 @@ export default function DDScanner({ settings }) {
         )}
         {data && !rows.length && (
           <div data-testid="scanner-empty" className="py-16 text-center text-sm text-slate-500">
-            No player has both a live Kalshi triple-double combo and a FanDuel/DraftKings price right now. Books usually post these on game day.
+            No player has both a live Kalshi combo and a FanDuel/DraftKings price right now. Books usually post these on game day.
           </div>
         )}
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
-        Kalshi TD is the live combo price for {tdPts}+ points, 10+ rebounds and 10+ assists{settings.fees ? " (fee included)" : ""}. When Kalshi has no {tdPts}+ points
+        Kalshi Combos is the live combo price for {ra ? `${ra}+ rebounds and ${ra}+ assists` : `${tdPts}+ points, 10+ rebounds and 10+ assists`}{settings.fees ? " (fee included)" : ""}. When Kalshi has no {tdPts}+ points
         line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings/Fanatics same-game-parlay price for the exact same legs as the Kalshi combo
         (FanDuel SGP isn't available from OddsBlaze).
         EV compares Kalshi to the SGP price with a {settings.singleHold}% hold removed (books averaged); without an SGP price it falls back to the regular
