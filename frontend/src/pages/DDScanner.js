@@ -3,6 +3,16 @@ import { toast } from "sonner";
 import { RefreshCw, ExternalLink, Plus, Check } from "lucide-react";
 import { getScannerBoard, getBets, addBet, errMsg } from "../lib/api";
 import { getStake } from "./BetTracker";
+import { probToAmerican } from "../lib/ev";
+
+const parseOdds = (v) => (v.trim() === "" || Number.isNaN(Number(v)) ? null : Number(v));
+const OddsInput = ({ label, value, onChange, testid }) => (
+  <label className="flex items-center gap-2 text-sm text-slate-400">
+    {label}
+    <input data-testid={testid} value={value} onChange={(e) => onChange(e.target.value)} placeholder={label === "Min odds" ? "+500" : "+3000"} inputMode="numeric"
+      className="h-8 w-24 px-2.5 rounded-lg border border-slate-700 bg-[#0E0E0E] font-mono text-sm font-semibold text-white outline-none focus:border-white/60 placeholder:text-slate-600" />
+  </label>
+);
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
@@ -71,6 +81,8 @@ export default function DDScanner({ settings }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pick, setPick] = useState("10");
+  const [minOdds, setMinOdds] = useState("");
+  const [maxOdds, setMaxOdds] = useState("");
   const [, ptsStr, raStr] = pick.match(/^(?:p?(\d+))?(?:ra(\d+))?$/);
   const tdPts = ptsStr ? Number(ptsStr) : null;
   const ra = raStr ? Number(raStr) : null;
@@ -119,6 +131,11 @@ export default function DDScanner({ settings }) {
     const fair = hasSgp ? fairFrom(p.sgp, settings.singleHold) : !ra && p.combos[0].legs[0].market === "Points" && p.combos[0].legs[0].threshold === 10 ? fairFrom(p.books, settings.singleHold) : null;
     return { ...p, price, ev: evPct(fair, price, settings.fees) };
   }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
+  const lo = parseOdds(minOdds), hi = parseOdds(maxOdds);
+  const shown = rows.filter((r) => {
+    const a = probToAmerican(settings.fees ? Math.min(r.price + 0.07 * r.price * (1 - r.price), 0.999) : r.price);
+    return a != null && (lo == null || a >= lo) && (hi == null || a <= hi);
+  });
   const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
   const tdBooks = tdPts === 10 && !ra ? BOOKS : [];
   const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => `${l} Manual`), "EV"];
@@ -130,7 +147,7 @@ export default function DDScanner({ settings }) {
           <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Triple-double scanner</h1>
           <p className="text-sm text-slate-400 mt-1">Every game on one board: live Kalshi triple-double combos, ranked by EV against devigged sportsbook odds.</p>
           <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
-            {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${rows.length} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
+            {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${shown.length === rows.length ? rows.length : `${shown.length} of ${rows.length}`} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
         </div>
         <button data-testid="scanner-refresh-btn" onClick={load} disabled={loading}
@@ -139,6 +156,7 @@ export default function DDScanner({ settings }) {
         </button>
       </div>
 
+      <div className="flex items-center gap-5 flex-wrap">
       <label className="flex items-center gap-2 text-sm text-slate-400">
         Combo
         <select data-testid="td-points-select" value={pick} onChange={(e) => setPick(e.target.value)}
@@ -148,6 +166,12 @@ export default function DDScanner({ settings }) {
           {[10, 8].map((n) => <option key={n} value={`ra${n}`}>{n}+ reb &amp; {n}+ ast</option>)}
         </select>
       </label>
+        <OddsInput label="Min odds" value={minOdds} onChange={setMinOdds} testid="odds-min-input" />
+        <OddsInput label="Max odds" value={maxOdds} onChange={setMaxOdds} testid="odds-max-input" />
+        {(minOdds || maxOdds) && (
+          <button data-testid="odds-clear-btn" onClick={() => { setMinOdds(""); setMaxOdds(""); }} className="text-xs text-slate-400 hover:text-white underline underline-offset-2">Clear</button>
+        )}
+      </div>
 
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
         <table data-testid="scanner-board" className="w-full min-w-[1000px]">
@@ -165,7 +189,7 @@ export default function DDScanner({ settings }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} tdPts={tdPts} sgpBooks={sgpBooks} tdBooks={tdBooks}
+            {shown.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} tdPts={tdPts} sgpBooks={sgpBooks} tdBooks={tdBooks}
               tracked={tracked.has(betKey(r.game.code, r.combos[0].legs))} onTrack={onTrack} />)}
           </tbody>
         </table>
@@ -173,6 +197,9 @@ export default function DDScanner({ settings }) {
           <div data-testid="scanner-loading" className="py-16 text-center text-sm text-slate-500">
             {loading ? "Asking Kalshi market makers for live combo odds across every game… (10–30 seconds)" : ""}
           </div>
+        )}
+        {data && rows.length > 0 && !shown.length && (
+          <div data-testid="scanner-odds-empty" className="py-16 text-center text-sm text-slate-500">No combos between those odds. Widen the range or clear it.</div>
         )}
         {data && !rows.length && (
           <div data-testid="scanner-empty" className="py-16 text-center text-sm text-slate-500">
