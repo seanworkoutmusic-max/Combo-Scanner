@@ -27,7 +27,7 @@ const Odds = ({ v, testid }) => (
   <td data-testid={testid} className={`py-3 px-4 text-right font-mono text-sm ${v != null ? "text-white font-semibold" : "text-slate-600"}`}>{fmt(v) || "—"}</td>
 );
 
-const Row = ({ r, format, i, tdPts, sgpBooks }) => {
+const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks }) => {
   const slug = r.key.replace(/\s/g, "-");
   const legs = r.combos[0].legs;
   return (
@@ -51,7 +51,7 @@ const Row = ({ r, format, i, tdPts, sgpBooks }) => {
         <span data-testid={`td-${slug}`} className="font-mono text-base font-bold text-white"><PriceTag p={r.price} format={format} /></span>
         {legs[0].threshold !== tdPts && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{legs[0].threshold}+ pts (lowest Kalshi line)</div>}
       </td>
-      {BOOKS.map(([b]) => <Odds key={b} v={r.books[b]} testid={`${b}-td-${slug}`} />)}
+      {tdBooks.map(([b]) => <Odds key={b} v={r.books[b]} testid={`${b}-td-${slug}`} />)}
       {sgpBooks.map(([b]) => <Odds key={b} v={r.sgp?.[b]} testid={`${b}-sgp-${slug}`} />)}
       <td className="py-3 px-4 text-right"><EvCell ev={r.ev} testid={`ev-td-${slug}`} /></td>
     </tr>
@@ -87,7 +87,8 @@ export default function DDScanner({ settings }) {
     return { ...p, price, ev: evPct(fair, price, settings.fees) };
   }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
   const sgpBooks = BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
-  const heads = ["Player", "Game", `Kalshi TD (${tdPts}+ pts)`, "FD TD", "DK TD", ...sgpBooks.map(([b]) => `${b.toUpperCase()} SGP`), "EV"];
+  const tdBooks = tdPts === 10 ? BOOKS : [];
+  const heads = ["Player", "Game", `Kalshi TD (${tdPts}+ pts)`, ...tdBooks.map(([b]) => `${b.toUpperCase()} TD`), ...sgpBooks.map(([b]) => `${b.toUpperCase()} SGP`), "EV"];
 
   return (
     <div className="space-y-6">
@@ -129,7 +130,7 @@ export default function DDScanner({ settings }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} tdPts={tdPts} sgpBooks={sgpBooks} />)}
+            {rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} tdPts={tdPts} sgpBooks={sgpBooks} tdBooks={tdBooks} />)}
           </tbody>
         </table>
         {!data && (
@@ -145,7 +146,8 @@ export default function DDScanner({ settings }) {
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
         Kalshi TD is the live combo price for {tdPts}+ points, 10+ rebounds and 10+ assists{settings.fees ? " (fee included)" : ""}. When Kalshi has no {tdPts}+ points
-        line, the player's next Kalshi points line is used (shown in amber). SGP is the sportsbook same-game-parlay price for the exact same legs as the Kalshi combo.
+        line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings same-game-parlay price for the exact same legs as the Kalshi combo
+        (FanDuel SGP isn't available from OddsBlaze).
         EV compares Kalshi to the SGP price with a {settings.singleHold}% hold removed (books averaged); without an SGP price it falls back to the regular
         "to record a triple-double" odds, only for 10+ point combos.
         {data?.books?.credits_left ? ` ${data.books.credits_left} Odds API credits left this month.` : ""}

@@ -254,7 +254,7 @@ async def scanner_board(td_pts: int = Query(10, ge=10, le=40)):
     """Every Kalshi game's triple-double combos, with FD/DK triple-double odds and exact-leg SGP prices, in one list."""
     games = await kalshi_props.load_props()
     photos = await espn.headshots()
-    books = await asyncio.gather(*[odds_api.triple_double_odds(c[-6:-3], c[-3:]) for c in games])
+    books = await asyncio.gather(*[odds_api.triple_double_odds(c[-6:-3], c[-3:]) for c in games]) if td_pts == 10 else [({}, None)] * len(games)
     todo = []
     for g, (bk, _) in zip(games.values(), books):
         for p in g["players"].values():
