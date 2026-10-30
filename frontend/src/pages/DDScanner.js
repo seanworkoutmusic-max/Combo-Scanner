@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { RefreshCw, ExternalLink } from "lucide-react";
 import { getPropsGames, getScannerGame, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
+import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
 
@@ -120,12 +121,12 @@ export default function DDScanner({ settings }) {
       </div>
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-4 flex-wrap">
-        <div data-testid="scanner-game-tabs" className="flex items-center gap-1 overflow-x-auto">
+        <div className="flex items-center gap-4 flex-wrap min-w-0 max-w-full">
+        <div data-testid="scanner-game-tabs" className="flex items-center gap-1 overflow-x-auto max-w-full">
           {games.map((g, i) => (
             <button key={g.code} data-testid={`scanner-game-${g.code}`} onClick={() => setGame(g.code)}
               className={`shrink-0 px-2.5 py-1 text-sm font-semibold transition-colors ${i ? "border-l border-slate-800" : ""} ${game === g.code ? "text-white" : "text-slate-500 hover:text-slate-200"}`}>
-              {g.label}
+              <GameLabel code={g.code} />
             </button>
           ))}
         </div>

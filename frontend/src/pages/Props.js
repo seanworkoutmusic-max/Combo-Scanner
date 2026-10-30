@@ -5,6 +5,7 @@ import { getPropsGames, getPropsGame, getPropsPlayers, postSlip, postKalshiQuote
 import { MarketList } from "../components/props/MarketList";
 import { BetSlip } from "../components/props/BetSlip";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
+import { GameLabel } from "../components/props/TeamLogo";
 
 const useStored = (key, init) => {
   const [v, setV] = useState(() => {
@@ -21,8 +22,8 @@ const GameStrip = ({ games, game, setGame }) => (
   <div data-testid="game-strip" className="flex gap-2 overflow-x-auto pb-1">
     {games.map((g) => (
       <button key={g.code} data-testid={`game-chip-${g.code}`} onClick={() => setGame(g.code)}
-        className={`shrink-0 px-3 py-1.5 rounded border font-mono text-xs transition-colors ${game === g.code ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-200" : "border-slate-800 text-slate-400 hover:text-slate-100"}`}>
-        {g.label} <span className="text-slate-500">· {g.date.slice(5)}</span>
+        className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono text-xs transition-colors ${game === g.code ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-200" : "border-slate-800 text-slate-400 hover:text-slate-100"}`}>
+        <GameLabel code={g.code} /> <span className="text-slate-500">· {g.date.slice(5)}</span>
       </button>
     ))}
   </div>
