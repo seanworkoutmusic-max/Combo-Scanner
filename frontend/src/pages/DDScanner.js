@@ -8,35 +8,38 @@ import { kalshiGameUrl } from "../lib/slip";
 
 const PREFERRED_GAME = "MEMPOR";
 const valid = (p) => p != null && p > 0 && p < 1;
-const COMBO_COLS = [["PR", "Pts & Reb"], ["PA", "Pts & Ast"], ["RA", "Reb & Ast"]];
-const HEADS = ["Player", "Kalshi DD", "Built DD", ...COMBO_COLS.map((c) => c[1]), "Kalshi TD", "TD combo"];
+const HEADS = ["Player", "Double Double", "Triple Double"];
 
 const Price = ({ p, format, className = "", testid }) => (
   <span data-testid={testid} className={`font-mono ${className}`}>{valid(p) ? <PriceTag p={p} format={format} /> : <span className="text-slate-600">—</span>}</span>
 );
 
-const ComboCell = ({ c, format, testid }) => {
-  if (!c) return <td className="py-3 px-3 text-right"><span className="text-slate-600 font-mono text-sm">—</span></td>;
-  const off = c.legs.find((l) => l.market === "Points" && l.threshold !== 10);
+// Main price = Kalshi's own market; falls back to the live combo price. Sub-line shows the combo price for comparison.
+const OddsCell = ({ market, combo, format, testid, minChance }) => {
+  const main = valid(market) ? market : combo;
+  const sub = valid(market) && valid(combo) ? "combo " : !valid(market) && valid(combo) ? "from combo" : null;
   return (
-    <td className="py-3 px-3 text-right" title={c.name}>
-      <Price p={c.live?.yes_price} format={format} className="text-sm text-white" testid={testid} />
-      {off && <div className="text-[10px] font-mono text-slate-500">{off.threshold}+ pts</div>}
+    <td className="py-3 px-4 text-right">
+      <Price p={main} format={format} className="text-base font-bold text-white" testid={testid} />
+      {sub && (
+        <div className="text-[11px] font-mono text-slate-500">
+          {sub}{valid(market) && <PriceTag p={combo} format={format} />}{minChance ? " · min." : ""}
+        </div>
+      )}
     </td>
   );
 };
 
 const Row = ({ p, format, i }) => {
-  const by = Object.fromEntries(p.combos.map((c) => [c.kind, c]));
   const dd = p.singles.find((s) => s.name === "Double Double")?.line;
   const td = p.singles.find((s) => s.name === "Triple Double")?.line;
+  const tri = p.combos.find((c) => c.kind === "PRA")?.live?.yes_price;
   const built = p.built_dd;
-  const cheap = dd && built && valid(dd.yes_ask) && dd.yes_ask < built.price;
   const lowerBound = built && (!built.exact || p.combos.some((c) => c.legs.some((l) => l.market === "Points" && l.threshold !== 10)));
   const slug = p.key.replace(/\s/g, "-");
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
-      <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
+      <td className="py-3 px-4">
         <div className="flex items-center gap-3">
           <PlayerPhoto src={p.headshot} name={p.name} size={34} />
           <div className="leading-tight">
@@ -45,17 +48,8 @@ const Row = ({ p, format, i }) => {
           </div>
         </div>
       </td>
-      <td className="py-3 px-3 text-right">
-        <Price p={dd?.yes_ask} format={format} className={`text-sm font-semibold ${cheap ? "text-emerald-400" : "text-white"}`} testid={`kalshi-dd-${slug}`} />
-        {cheap && <div className="text-[10px] font-mono text-emerald-400">below built</div>}
-      </td>
-      <td className="py-3 px-3 text-right bg-white/[0.02]" title={built ? `Built from ${built.paths} live combo path${built.paths > 1 ? "s" : ""}` : ""}>
-        <Price p={built?.price} format={format} className="text-sm font-bold text-white" testid={`built-dd-${slug}`} />
-        {lowerBound && <div className="text-[10px] font-mono text-slate-500">min. chance</div>}
-      </td>
-      {COMBO_COLS.map(([k]) => <ComboCell key={k} c={by[k]} format={format} testid={`combo-${k}-${slug}`} />)}
-      <td className="py-3 px-3 text-right"><Price p={td?.yes_ask} format={format} className="text-sm text-white" testid={`kalshi-td-${slug}`} /></td>
-      <ComboCell c={by.PRA} format={format} testid={`combo-PRA-${slug}`} />
+      <OddsCell market={dd?.yes_ask} combo={built?.price} format={format} testid={`dd-${slug}`} minChance={lowerBound} />
+      <OddsCell market={td?.yes_ask} combo={tri} format={format} testid={`td-${slug}`} />
     </tr>
   );
 };
@@ -121,12 +115,12 @@ export default function DDScanner({ settings }) {
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
-        <table className="w-full min-w-[980px]">
+      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto max-w-3xl">
+        <table className="w-full">
           <thead>
             <tr className="text-xs text-slate-400">
               {HEADS.map((h, i) => (
-                <th key={h} className={`py-3 font-semibold ${i ? "px-3 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#181818]"} ${h === "Built DD" ? "bg-white/[0.02] text-white" : ""}`}>{h}</th>
+                <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left"}`}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -142,9 +136,8 @@ export default function DDScanner({ settings }) {
         {data && !data.players.length && <div className="py-16 text-center text-sm text-slate-500">No double-double lines on Kalshi for this game.</div>}
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
-        Built DD = chance of any 10+/10+ combo hitting, from live Kalshi combo prices (pairs added up, minus the triple-double overlap).
-        It misses double-doubles that involve steals or blocks, so Kalshi's DD market should usually cost a bit more. Green means it's cheaper.
-        "min. chance" means Built DD is a floor, not a match: Kalshi had no 10+ points line, so a higher points line was used and the real DD chance is higher.
+        Big number = Kalshi's own DD/TD market. Small "combo" = the price built from live Kalshi 10+ combos (or used on its own when Kalshi has no DD/TD market).
+        "min." means Kalshi had no 10+ points line, so a higher points line was used.
       </p>
     </div>
   );
