@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
-import { getPropsGames, getPropsGame, getPropsPlayers, postSlip, postKalshiQuote, errMsg } from "../lib/api";
+import { getPropsGames, getPropsGame, getPropsPlayers, postSlip, postKalshiQuote, postSgp, errMsg } from "../lib/api";
 import { MarketList } from "../components/props/MarketList";
 import { BetSlip } from "../components/props/BetSlip";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
@@ -108,6 +108,14 @@ export default function Props({ settings, update, status }) {
     refreshSlip();
     setParlayOdds({});
     setLive(null);
+    if (legs.length >= 2) {
+      const sent = tickers;
+      postSgp(tickers.split(",")).then((r) => {
+        const dk = r.prices?.dk;
+        if (dk != null && sent === JSON.parse(localStorage.getItem("slip-legs") || "[]").map((l) => l.ticker).join(","))
+          setParlayOdds((o) => ({ ...o, DraftKings: { price: dk > 0 ? `+${dk}` : `${dk}` } }));
+      }).catch(() => {});
+    }
     const auto = status?.kalshi_key && legs.length >= 2 ? setTimeout(getLiveQuote, 800) : null;
     const t = setInterval(refreshSlip, 30000);
     return () => { clearInterval(t); clearTimeout(auto); };

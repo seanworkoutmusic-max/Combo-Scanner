@@ -10,7 +10,12 @@ from kalshi import TEAMS, norm_name
 logger = logging.getLogger(__name__)
 ODDS = "https://odds.oddsblaze.com/"
 BOOKS = {"fanduel": "fd", "draftkings": "dk", "fanatics": "fan"}
-MARKETS = {"Player Points": "Points", "Player Rebounds": "Rebounds", "Player Assists": "Assists"}
+MARKETS = {
+    "Player Points": "Points", "Player Rebounds": "Rebounds", "Player Assists": "Assists", "Player Threes Made": "Made Threes",
+    "Player Points + Rebounds + Assists": "PRA (Points + Rebounds + Assists)", "Player Points + Rebounds": "PR (Points + Rebounds)",
+    "Player Points + Assists": "PA (Points + Assists)", "Player Rebounds + Assists": "RA (Rebounds + Assists)",
+    "Player Steals": "Steals", "Player Blocks": "Blocks", "Player Triple Double": "Triple Double", "Player Double Double": "Double Double",
+}
 _props = {}
 _sgp = {}
 _lock = asyncio.Lock()
@@ -38,8 +43,8 @@ async def _book_props(client, book, ttl=120):
             g = games.setdefault(key, {})
             for o in e.get("odds", []):
                 sel = o.get("selection") or {}
-                if sel.get("side") == "Over" and o.get("sgp") and o["market"] in MARKETS:
-                    g.setdefault(norm_name(sel["name"]), {}).setdefault(MARKETS[o["market"]], {})[sel["line"]] = o["sgp"]
+                if sel.get("side") in ("Over", "Yes") and o.get("sgp") and o["market"] in MARKETS:
+                    g.setdefault(norm_name(sel["name"]), {}).setdefault(MARKETS[o["market"]], {})[sel.get("line")] = o["sgp"]
     else:
         logger.info("OddsBlaze %s NBA unavailable: %s", book, r.status_code)
     _props[book] = {"t": time.time(), "games": games}
@@ -61,7 +66,7 @@ async def _price(client, book, sgps, ttl=120):
 
 
 async def sgp_prices(requests):
-    """requests: [(away, home, player_key, [(market, threshold), ...])] -> list of {"fd": american, "dk": american}."""
+    """requests: [(away, home, [(player_key, market, threshold|None), ...])] -> list of {"dk": american, "fan": american, ...}."""
     out = [{} for _ in requests]
     if not configured() or not requests:
         return out
@@ -69,10 +74,10 @@ async def sgp_prices(requests):
         async with _lock:
             props = {b: await _book_props(client, b) for b in BOOKS}
         jobs = []
-        for i, (away, home, pk, legs) in enumerate(requests):
+        for i, (away, home, legs) in enumerate(requests):
             for book, short in BOOKS.items():
-                pl = props[book].get((away, home), {}).get(pk, {})
-                sgps = [pl.get(m, {}).get(t - 0.5) for m, t in legs]
+                g = props[book].get((away, home), {})
+                sgps = [g.get(pk, {}).get(m, {}).get(t - 0.5 if t is not None else None) for pk, m, t in legs]
                 if None not in sgps:
                     jobs.append((i, short, book, sgps))
         sem = asyncio.Semaphore(5)

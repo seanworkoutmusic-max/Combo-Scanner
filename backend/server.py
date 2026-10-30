@@ -265,7 +265,7 @@ async def scanner_board(td_pts: int = Query(10, ge=10, le=40)):
             if None not in legs:
                 c = {"kind": "TD", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}
                 todo.append((g, p, c, odds))
-    sgps = await oddsblaze.sgp_prices([(g["code"][-6:-3], g["code"][-3:], p["key"], [(l["market"], l["threshold"]) for l in c["legs"]])
+    sgps = await oddsblaze.sgp_prices([(g["code"][-6:-3], g["code"][-3:], [(p["key"], l["market"], l["threshold"]) for l in c["legs"]])
                                        for g, p, c, _ in todo])
     todo = [(g, p, c, odds, s) for (g, p, c, odds), s in zip(todo, sgps)
             if s or (odds and c["legs"][0]["threshold"] == 10)]
@@ -353,6 +353,20 @@ async def props_slip(req: SlipReq):
     legs = [by_ticker.get(t) for t in req.tickers]
     return {"legs": legs, "combo": kalshi_props.find_combo(req.tickers) if len(req.tickers) > 1 else None,
             "combo_index": kalshi_props.combo_index_info(), "updated_at": datetime.now(timezone.utc).isoformat()}
+
+
+@api_router.post("/props/sgp")
+async def props_sgp(req: SlipReq):
+    """Sportsbook SGP prices (OddsBlaze) for the exact legs on the slip; all legs must be from one game."""
+    games = await kalshi_props.load_props()
+    by_ticker = {l["ticker"]: (g["code"], p["key"], l["market"], l["threshold"])
+                 for g in games.values() for p in g["players"].values() for lines in p["markets"].values() for l in lines}
+    legs = [by_ticker.get(t) for t in req.tickers]
+    if len(legs) < 2 or None in legs or len({x[0] for x in legs}) > 1:
+        return {"prices": {}, "configured": oddsblaze.configured()}
+    code = legs[0][0]
+    prices = (await oddsblaze.sgp_prices([(code[-6:-3], code[-3:], [x[1:] for x in legs])]))[0]
+    return {"prices": prices, "configured": oddsblaze.configured(), "updated_at": datetime.now(timezone.utc).isoformat()}
 
 
 @app.on_event("startup")
