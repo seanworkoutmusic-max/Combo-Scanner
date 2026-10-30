@@ -11,9 +11,11 @@ const OddsInput = ({ value, onChange, testid, placeholder = "+000" }) => (
   />
 );
 
+const BOOK_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png" };
+
 const BookName = ({ b }) => (
   <span className="flex items-center gap-2 text-xs text-slate-300">
-    <span className="h-2 w-2 rounded-sm" style={{ background: BOOK_COLORS[b] }} />
+    {BOOK_LOGOS[b] ? <img src={BOOK_LOGOS[b]} alt="" className="h-4 w-4 rounded-[3px]" /> : <span className="h-2 w-2 rounded-sm mx-1" style={{ background: BOOK_COLORS[b] }} />}
     {b}
   </span>
 );

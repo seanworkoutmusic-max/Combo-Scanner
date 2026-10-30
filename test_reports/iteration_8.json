@@ -1,0 +1,30 @@
+{
+  "summary": "Frontend test of the DD/TD Scanner EV redesign on live Kalshi data, using Playwright at desktop 1920 and mobile 390. Everything requested passed. The scanner opens on MEM vs POR with columns Player/DD/TD/FanDuel/DraftKings/EV. The old kalshi-dd-* and built-dd-* cells are gone (count 0). It shows 7 rows. Every row has fd-dd-/dk-dd- inputs. TD is '—' for all of them and no td inputs are rendered. EV was checked against the raw combo price from the captured /api/scanner/game response (Clingan p=0.417; fees on; hold 5%): FD +300 alone gave -45.1% (red), expected -45.1. FD +110 with DK +120 gave +2.1% (green), expected +2.1. DK -200 alone gave +46.3%, expected +46.3. Odds persist in localStorage under 'dd-book-odds' after a reload and after Refresh (the Updated time changed). Clearing both boxes sets EV back to '—'. Input filtering strips letters. CLE vs ATL: only Jalen Johnson has a TD combo (+1895, raw 0.047). He gets fd-td/dk-td inputs. DK TD +400 gave +279.9%, matching the expected value, and DD EV was unaffected. Mobile 390: page scrollWidth is 390 and the table (820) scrolls inside its container (356, overflow-x auto). No page errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "DD/TD Scanner mobile", "issues": ["Still open from iteration 7: the Player column is not sticky. On mobile the FD/DK inputs and EV are off-screen, and after scrolling sideways the player name is not visible."]},
+      {"screen": "DD/TD Scanner", "issues": ["An invalid American value (e.g. '+50') is silently ignored. EV then uses only the other book, with no hint that the box is invalid. Consider a red border on invalid input."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: make the Player column sticky on mobile.",
+    "Optional: show a validation state for invalid odds (between -99 and +99) in the FD/DK boxes."
+  ],
+  "critical_code_review_comments": [
+    "The EV math matches the spec: devigOneSided(implied, singleHold), averaged across the books that have entries, then fair/(p+fee)-1 when fees are on.",
+    "The footer text says the prices are '(fee included)' no matter what. If the user turns fees off, both the displayed price and EV switch to raw, so the text becomes wrong.",
+    "Odds are keyed by player key only. That's fine for now, but odds entered for a player carry over to that player's next game until cleared.",
+    "Still no stale-response guard in load() (see iteration 7)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "seed_data_creation": "None. The localStorage odds were cleared at the end of the test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Testids: dd-/td-/fd-dd-/dk-dd-/fd-td-/dk-td-/ev-dd-/ev-td-<slug>, where slug is the player key with spaces replaced by dashes. CLE vs ATL (Jalen Johnson) is the only game with a TD combo. To verify EV, capture the /api/scanner/game response and use built_dd.price (raw) with fee 0.07p(1-p).",
+  "test_credentials": "No auth in this app"
+}

@@ -10,19 +10,23 @@ const PREFERRED_GAME = "MEMPOR";
 const valid = (p) => p != null && p > 0 && p < 1;
 const HEADS = ["Player", "DD", "TD", "FanDuel", "DraftKings", "EV"];
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
+const HEAD_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png" };
 
 const Price = ({ p, format, className = "", testid }) => (
   <span data-testid={testid} className={`font-mono ${className}`}>{valid(p) ? <PriceTag p={p} format={format} /> : <span className="text-slate-600">—</span>}</span>
 );
 
-const OddsBox = ({ value, onChange, testid, label }) => (
-  <label className="flex items-center justify-end gap-1.5">
-    {label && <span className="text-[10px] font-mono text-slate-500">{label}</span>}
-    <input data-testid={testid} value={value || ""} inputMode="numeric" placeholder="+000"
-      onChange={(e) => onChange(e.target.value.replace(/[^0-9+-]/g, ""))}
-      className="w-20 h-8 px-2 rounded-md border border-slate-700 bg-[#0E0E0E] font-mono text-sm text-white text-right placeholder:text-slate-700 focus:border-white/60 outline-none" />
-  </label>
-);
+const OddsBox = ({ value, onChange, testid, label }) => {
+  const bad = value && value.length > 1 && americanToProb(value) == null;
+  return (
+    <label className="flex items-center justify-end gap-1.5">
+      {label && <span className="text-[10px] font-mono text-slate-500">{label}</span>}
+      <input data-testid={testid} value={value || ""} inputMode="numeric" placeholder="+000" title={bad ? "Use American odds like +150 or -120" : ""}
+        onChange={(e) => onChange(e.target.value.replace(/[^0-9+-]/g, ""))}
+        className={`w-20 h-8 px-2 rounded-md border bg-[#0E0E0E] font-mono text-sm text-white text-right placeholder:text-slate-700 outline-none ${bad ? "border-red-500/70" : "border-slate-700 focus:border-white/60"}`} />
+    </label>
+  );
+};
 
 const fairFrom = (odds, hold) => {
   const ps = BOOKS.map(([b]) => americanToProb(odds?.[b])).filter((p) => p != null).map((p) => devigOneSided(p, hold));
@@ -46,7 +50,7 @@ const Row = ({ p, format, i, odds, setOdds, settings }) => {
   const evTd = hasTd ? evPct(fairFrom(odds.td, settings.singleHold), tri, settings.fees) : null;
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
-      <td className="py-3 px-4">
+      <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
         <div className="flex items-center gap-3">
           <PlayerPhoto src={p.headshot} name={p.name} size={34} />
           <div className="leading-tight">
@@ -147,7 +151,13 @@ export default function DDScanner({ settings }) {
           <thead>
             <tr className="text-xs text-slate-400">
               {HEADS.map((h, i) => (
-                <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left"}`}>{h}</th>
+                <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#181818]"}`}>
+                  {HEAD_LOGOS[h] ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <img data-testid={`logo-${h.toLowerCase()}`} src={HEAD_LOGOS[h]} alt="" className="h-4 w-4 rounded-[3px]" />{h}
+                    </span>
+                  ) : h}
+                </th>
               ))}
             </tr>
           </thead>
