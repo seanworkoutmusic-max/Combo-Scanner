@@ -20,8 +20,20 @@ const BookName = ({ b }) => (
   </span>
 );
 
-// Parlay: one SGP price per book. Straight: Over / Under per book.
-export const BookOdds = ({ mode, odds, setOdds, prefix }) => (
+// Parlay: DraftKings SGP price, filled automatically. Straight: Over / Under per book.
+export const BookOdds = ({ mode, odds, setOdds, prefix }) => mode !== "straight" ? (
+  <div data-testid={`${prefix}-book-odds`} className="space-y-1.5">
+    <div className="grid grid-cols-[1fr_auto] gap-2 text-[10px] uppercase tracking-widest font-mono text-slate-500 px-1">
+      <span>Book</span><span>SGP odds</span>
+    </div>
+    <div className="flex items-center justify-between rounded border border-slate-800/70 bg-[#0E0E0E] px-2 py-2.5">
+      <BookName b="DraftKings" />
+      <span data-testid={`${prefix}-sgp-DraftKings`} className={`font-mono text-sm font-semibold ${odds.DraftKings?.price ? "text-white" : "text-slate-600"}`}>
+        {odds.DraftKings?.price || "—"}
+      </span>
+    </div>
+  </div>
+) : (
   <div data-testid={`${prefix}-book-odds`} className="space-y-1.5">
     <div className="grid grid-cols-[1fr_90px] gap-2 text-[10px] uppercase tracking-widest font-mono text-slate-500 px-1"
       style={mode === "straight" ? { gridTemplateColumns: "1fr 80px 80px" } : undefined}>
