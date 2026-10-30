@@ -1,0 +1,29 @@
+{
+  "summary": "Frontend-only retest of the Player Props layout fix on live Kalshi data (CLE vs ATL, Evan Mobley). All 5 requested items pass. Markets column width: 372px at 1024, 448 at 1100, 568 at 1280, 654 at 1366, 568 at 1440 and 580 at 1920. At 1100px and wider, every market row is 44px tall with the label on one line. The player-name-heading ends well before the bet-slip starts (for example, 579px vs 756px at 1100). scrollWidth equals clientWidth at every width, so nothing overflows sideways. Below 1440px the sidebar is icon-only: site-title and the labels are display:none and nav-tab-props/nav-tab-scanner still work. At 1440 and 1920 the full sidebar shows. Line buttons at 1100px form a 3-column grid (~139px each) with no overflow. Two Rebounds lines replace each other, since one leg per market is the intended behaviour. Rebounds 6+ plus Assists 2+ gave a 2-leg slip with a live Kalshi price of -309 from 5 quotes. On mobile (390px) the header shows the logo and both mobile tabs, the layout is one column, and nothing overflows. The scanner shows 'Luka Dončić has no game on Kalshi today...'. No page errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Props at 1024px", "issues": ["The longest label, 'Evan Mobley PRA (Points + Rebounds + Assists)', wraps onto 2 lines (row 64px), but not word by word. Acceptable. Optional: shorten it to 'PRA' or truncate it."]},
+      {"screen": "DD/TD Scanner mobile", "issues": ["The Refresh button is indented about 12px from the heading's left edge. Small alignment issue."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: at 1024px, shorten or truncate long market labels such as PRA.",
+    "Optional: line up the scanner Refresh button with the heading on mobile.",
+    "Optional: when Luka has no game, the scanner has no player search, so the user cannot pick another player (the previous iteration had scanner-player-search). Confirm this is intended."
+  ],
+  "critical_code_review_comments": [
+    "Layout code looks correct: main has lg:pl-16 min-[1440px]:pl-56, matching aside w-16/w-56. The grid uses minmax(0,1fr) and the section has min-w-0. The heading truncates.",
+    "Markets column is narrower at 1440 (568px) than at 1366 (654px) because the sidebar expands at 1440. Fine, just worth knowing."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Layout checks are done with page.evaluate on getBoundingClientRect of market-list, market-row-*, player-name-heading and bet-slip, plus documentElement scrollWidth. Lines in the same market replace each other in the slip, so pick lines from 2 different markets (rebounds + assists) to get parlay-kalshi-price.",
+  "test_credentials": "No auth in this app"
+}
