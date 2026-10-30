@@ -243,10 +243,7 @@ async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
             todo.append((p, [{"kind": "TD", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}]))
     await asyncio.gather(*[_quote(c) for _, cs in todo for c in cs])
     players = [_player_payload(p, photos, cs) for p, cs in todo]
-    if td_pts == 10:
-        books, books_updated = await odds_api.triple_double_odds(code[-6:-3], code[-3:])
-    else:
-        books, books_updated = await odds_api.triple_double_plus(code[-6:-3], code[-3:], td_pts)
+    books, books_updated = await odds_api.triple_double_odds(code[-6:-3], code[-3:]) if td_pts == 10 else ({}, None)
     for pl in players:
         pl["books"] = (books.get(pl["key"]) or {}).get("odds") or {}
     players.sort(key=lambda x: -((x["combos"][0].get("live") or {}).get("yes_price") or 0))
@@ -259,7 +256,7 @@ async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
     extra.sort(key=lambda x: min((v for v in x["books"].values() if v is not None), default=float("inf")))
     players += extra
     return {"game": {k: g[k] for k in ("code", "date", "label")}, "players": players,
-            "books": {"enabled": odds_api.configured(), "updated": books_updated, "credits_left": odds_api.quota["remaining"], "estimated": td_pts != 10},
+            "books": {"enabled": odds_api.configured(), "updated": books_updated, "credits_left": odds_api.quota["remaining"]},
             "updated_at": datetime.now(timezone.utc).isoformat()}
 
 

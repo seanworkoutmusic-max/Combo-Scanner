@@ -16,10 +16,9 @@ const Price = ({ p, format, className = "", testid }) => (
   <span data-testid={testid} className={`font-mono ${className}`}>{valid(p) ? <PriceTag p={p} format={format} /> : <span className="text-slate-600">—</span>}</span>
 );
 
-const BookOdds = ({ value, testid, est }) => (
+const BookOdds = ({ value, testid }) => (
   <div data-testid={testid} className={`text-right font-mono text-sm ${value ? "text-white font-semibold" : "text-slate-600"}`}>
     {value || "—"}
-    {value && est && <div className="text-[10px] font-normal text-slate-500">est. parlay</div>}
   </div>
 );
 
@@ -35,7 +34,7 @@ const EvLine = ({ ev, label, testid }) => (
   </div>
 );
 
-const Row = ({ p, format, i, settings, est }) => {
+const Row = ({ p, format, i, settings }) => {
   const tri = p.combos.find((c) => c.kind === "TD" || c.also_td)?.live?.yes_price;
   const slug = p.key.replace(/\s/g, "-");
   const auto = Object.fromEntries(Object.entries(p.books || {}).filter(([, v]) => v != null).map(([b, v]) => [b, v > 0 ? `+${v}` : `${v}`]));
@@ -57,7 +56,7 @@ const Row = ({ p, format, i, settings, est }) => {
       </td>
       {BOOKS.map(([b]) => (
         <td key={b} className="py-3 px-4">
-          <BookOdds testid={`${b}-td-${slug}`} value={auto[b]} est={est} />
+          <BookOdds testid={`${b}-td-${slug}`} value={auto[b]} />
         </td>
       ))}
       <td className="py-3 px-4 text-right"><EvLine ev={evTd} testid={`ev-td-${slug}`} /></td>
@@ -157,7 +156,7 @@ export default function DDScanner({ settings }) {
           </thead>
           <tbody>
             {players.map((p, i) => (
-              <Row key={p.key} p={p} i={i} format={format} settings={settings} est={data?.books?.estimated} />
+              <Row key={p.key} p={p} i={i} format={format} settings={settings} />
             ))}
           </tbody>
         </table>
@@ -177,7 +176,7 @@ export default function DDScanner({ settings }) {
         price with a {settings.singleHold}% hold removed (books averaged).
         {data?.books?.enabled && (tdPts === 10
           ? ` FanDuel/DraftKings odds are live "to record a triple-double" prices, refreshed every 5 minutes${data.books.credits_left ? ` (${data.books.credits_left} Odds API credits left this month)` : ""}.`
-          : ` FanDuel/DraftKings ${tdPts}+ pts odds are estimated parlay prices: the book's triple-double chance × (its ${tdPts}+ points chance ÷ its 10+ points chance). Books don't publish this exact parlay, so treat it as a guide${data.books.credits_left ? ` (${data.books.credits_left} Odds API credits left this month)` : ""}.`)}
+          : " Live FanDuel/DraftKings odds fill in only at 10+ pts, because books price a regular triple-double.")}
       </p>
     </div>
   );
