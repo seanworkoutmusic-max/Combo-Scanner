@@ -1,0 +1,27 @@
+{
+  "summary": "Tested book-only FanDuel/DraftKings triple-double rows in the TD Scanner for MEM vs POR (26OCT29MEMPOR). Backend: 5/5 pytest passed. With td_pts=10 it returns 3 book-only rows (deni avdija fd+2500/dk+2400, cameron boozer fd+3000/dk+4000, ja morant dk+7800), each with combos=[]. books.enabled=true and credits_left='491'. With td_pts=15 it returns no rows and books={}. UI: all rows rendered with TD '—', 'no Kalshi combo', green prefilled FD/DK inputs and EV '—'. Typing +3000 kept the value and turned it white. Clearing left the box empty, and it stayed empty after switching 15->10. Switching to 15+ showed 0 rows plus the empty-state message. About 6 backend calls used.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/scanner/game/{code}", "issue": "Ja Morant shows team 'POR' in MEM vs POR (Kalshi/ESPN team_of lookup). Check whether this is real roster data or a team mix-up."},
+      {"endpoint": "/api/scanner/game/{code}", "issue": "extra.sort uses min(v for v in books.values() if v is not None). It raises ValueError (500) if a book-only player's prices are all None. Use min(..., default=inf)."},
+      {"endpoint": "/api/scanner/game/{code}", "issue": "books.credits_left is a string ('491'), not an int."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "TD Scanner", "issues": ["A cleared FD/DK box is saved as '' in localStorage, so it stays empty for good and the live green odds never come back. Consider a reset-to-live control, or treat '' as 'use auto'.", "When every row is book-only, 'Bet on Kalshi' falls back to the generic kalshi.com/combos/basketball/nba link (harmless)."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_book_only_rows_api.py", "/app/test_reports/pytest/pytest_book_only.xml"],
+  "action_items": ["Optional: guard against empty min() in the book-only extra.sort", "Optional: confirm Ja Morant's team attribution", "Optional: let users restore live book odds after clearing a box"],
+  "critical_code_review_comments": ["server.py scanner_game: min() without default can 500 if Odds API returns a null price", "DDScanner Row: user overrides are keyed per player+tdKey in localStorage with no way to reset them"],
+  "updated_files": ["/app/backend/tests/test_book_only_rows_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Live data. 26OCT29MEMPOR has no Kalshi TD combos, only book-only rows. Odds API is cached 5 min per game. ~490 credits left. Row slug = player key with spaces replaced by '-'."
+}

@@ -253,7 +253,7 @@ async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
     team_of.update({r["key"]: r["team"] for r in (await espn.season_averages())["rows"] if r["key"] not in team_of})
     extra = [{"key": k, "name": b["name"], "team": team_of.get(k, ""), "headshot": (photos.get(k) or {}).get("headshot"),
               "singles": [], "combos": [], "built_dd": None, "books": b["odds"]} for k, b in books.items() if k not in have]
-    extra.sort(key=lambda x: min(v for v in x["books"].values() if v is not None))
+    extra.sort(key=lambda x: min((v for v in x["books"].values() if v is not None), default=float("inf")))
     players += extra
     return {"game": {k: g[k] for k in ("code", "date", "label")}, "players": players,
             "books": {"enabled": odds_api.configured(), "updated": books_updated, "credits_left": odds_api.quota["remaining"]},

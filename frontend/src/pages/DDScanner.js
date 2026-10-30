@@ -46,7 +46,7 @@ const Row = ({ p, format, i, odds, setOdds, settings, tdPts }) => {
   const tdKey = `td${tdPts}`;
   const slug = p.key.replace(/\s/g, "-");
   const auto = Object.fromEntries(Object.entries(p.books || {}).map(([b, v]) => [b, v > 0 ? `+${v}` : `${v}`]));
-  const merged = Object.fromEntries(BOOKS.map(([b]) => [b, odds[tdKey]?.[b] ?? auto[b]]));
+  const merged = Object.fromEntries(BOOKS.map(([b]) => [b, odds[tdKey]?.[b] || auto[b]]));
   const evTd = evPct(fairFrom(merged, settings.singleHold), tri, settings.fees);
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
@@ -65,7 +65,7 @@ const Row = ({ p, format, i, odds, setOdds, settings, tdPts }) => {
       </td>
       {BOOKS.map(([b]) => (
         <td key={b} className="py-3 px-4">
-          <OddsBox testid={`${b}-td-${slug}`} value={merged[b]} auto={odds[tdKey]?.[b] == null && auto[b] != null} onChange={(v) => setOdds(tdKey, b, v)} />
+          <OddsBox testid={`${b}-td-${slug}`} value={merged[b]} auto={!odds[tdKey]?.[b] && auto[b] != null} onChange={(v) => setOdds(tdKey, b, v)} />
         </td>
       ))}
       <td className="py-3 px-4 text-right"><EvLine ev={evTd} testid={`ev-td-${slug}`} /></td>
