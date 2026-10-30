@@ -1,120 +1,97 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, ExternalLink } from "lucide-react";
-import { getScannerGames, getScannerGame, errMsg } from "../lib/api";
+import { getScannerBoard, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
 
-const when = (g) => {
-  const d = new Date(`${g.date}T12:00:00`);
-  const day = d.toDateString() === new Date().toDateString() ? "Today" : d.toLocaleDateString([], { weekday: "short" });
-  return g.start ? `${day} ${new Date(g.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : day;
-};
-
-const valid = (p) => p != null && p > 0 && p < 1;
-const HEADS = ["Player", "TD", "FanDuel", "DraftKings", "EV"];
+const HEADS = ["Player", "Game", "Kalshi TD", "FanDuel", "DraftKings", "EV"];
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
 const HEAD_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png" };
 
-const Price = ({ p, format, className = "", testid }) => (
-  <span data-testid={testid} className={`font-mono ${className}`}>{valid(p) ? <PriceTag p={p} format={format} /> : <span className="text-slate-600">—</span>}</span>
-);
+const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
 
-const BookOdds = ({ value, testid }) => (
-  <div data-testid={testid} className={`text-right font-mono text-sm ${value ? "text-white font-semibold" : "text-slate-600"}`}>
-    {value || "—"}
-  </div>
-);
-
-const fairFrom = (odds, hold) => {
-  const ps = BOOKS.map(([b]) => americanToProb(odds?.[b])).filter((p) => p != null).map((p) => devigOneSided(p, hold));
+const fairFrom = (books, hold) => {
+  const ps = BOOKS.map(([b]) => americanToProb(fmt(books?.[b]))).filter((p) => p != null).map((p) => devigOneSided(p, hold));
   return ps.length ? ps.reduce((a, x) => a + x, 0) / ps.length : null;
 };
 
-const EvLine = ({ ev, label, testid }) => (
-  <div data-testid={testid} className={`font-mono text-sm font-bold ${ev == null ? "text-slate-600" : ev > 0 ? "text-emerald-400" : "text-red-400"}`}>
-    {label && <span className="text-[10px] font-normal text-slate-500 mr-1.5">{label}</span>}
-    {ev == null ? "—" : `${ev > 0 ? "+" : ""}${(ev * 100).toFixed(1)}%`}
+const EvCell = ({ ev, approx, testid }) => (
+  <div data-testid={testid} className={`font-mono text-sm font-bold ${ev > 0 ? "text-emerald-400" : "text-red-400"}`}>
+    {approx && <span className="text-amber-400 mr-0.5">≈</span>}{`${ev > 0 ? "+" : ""}${(ev * 100).toFixed(1)}%`}
   </div>
 );
 
-const Row = ({ p, format, i, settings, tdPts }) => {
-  const td = p.combos.find((c) => c.kind === "TD" || c.also_td);
-  const tri = td?.live?.yes_price;
-  const ptsLeg = td?.legs[0]?.threshold;
-  const higher = ptsLeg && ptsLeg !== tdPts;
-  const slug = p.key.replace(/\s/g, "-");
-  const auto = Object.fromEntries(Object.entries(p.books || {}).filter(([, v]) => v != null).map(([b, v]) => [b, v > 0 ? `+${v}` : `${v}`]));
-  const evTd = higher || tdPts !== 10 ? null : evPct(fairFrom(auto, settings.singleHold), tri, settings.fees);
+const Row = ({ r, format, i }) => {
+  const slug = r.key.replace(/\s/g, "-");
+  const legs = r.combos[0].legs;
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
       <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
         <div className="flex items-center gap-3">
-          <PlayerPhoto src={p.headshot} name={p.name} size={34} />
+          <PlayerPhoto src={r.headshot} name={r.name} size={34} />
           <div className="leading-tight">
-            <div className="text-sm font-semibold text-white whitespace-nowrap">{p.name}</div>
-            <div className="text-[11px] font-mono text-slate-500">{p.team}</div>
+            <div className="text-sm font-semibold text-white whitespace-nowrap">{r.name}</div>
+            <div className="text-[11px] font-mono text-slate-500">{r.team}</div>
           </div>
         </div>
       </td>
+      <td className="py-3 px-4 text-right text-sm font-semibold text-slate-300 whitespace-nowrap">
+        <a data-testid={`game-link-${slug}`} href={kalshiGameUrl(legs[0].ticker)} target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 hover:text-white transition-colors">
+          <GameLabel code={r.game.code} size={16} /><ExternalLink className="h-3 w-3 text-slate-500" />
+        </a>
+      </td>
       <td className="py-3 px-4 text-right">
-        <Price p={tri} format={format} className="text-base font-bold text-white" testid={`td-${slug}`} />
-        {!p.combos.length && <div className="text-[10px] font-mono text-slate-500">no Kalshi combo</div>}
-        {higher && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{ptsLeg}+ pts (lowest Kalshi line)</div>}
+        <span data-testid={`td-${slug}`} className="font-mono text-base font-bold text-white"><PriceTag p={r.price} format={format} /></span>
+        {r.approx && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{legs[0].threshold}+ pts (lowest Kalshi line)</div>}
       </td>
       {BOOKS.map(([b]) => (
-        <td key={b} className="py-3 px-4">
-          <BookOdds testid={`${b}-td-${slug}`} value={auto[b]} />
+        <td key={b} data-testid={`${b}-td-${slug}`} className={`py-3 px-4 text-right font-mono text-sm ${r.books[b] != null ? "text-white font-semibold" : "text-slate-600"}`}>
+          {fmt(r.books[b]) || "—"}
         </td>
       ))}
-      <td className="py-3 px-4 text-right"><EvLine ev={evTd} testid={`ev-td-${slug}`} /></td>
+      <td className="py-3 px-4 text-right"><EvCell ev={r.ev} approx={r.approx} testid={`ev-td-${slug}`} /></td>
     </tr>
   );
 };
 
 export default function DDScanner({ settings }) {
   const format = settings.fees ? "fee" : "raw";
-  const [games, setGames] = useState([]);
-  const [game, setGame] = useState(null);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [tdPts, setTdPts] = useState(10);
-  const players = data?.players || [];
-
-  useEffect(() => {
-    getScannerGames().then((g) => {
-      setGames(g);
-      setGame((prev) => prev || g[0]?.code || "");
-    }).catch((e) => toast.error(errMsg(e)));
-  }, []);
-
   const reqId = useRef(0);
+
   const load = useCallback(async () => {
-    if (!game) return;
     const id = ++reqId.current;
     setLoading(true);
     try {
-      const d = await getScannerGame(game, tdPts);
+      const d = await getScannerBoard();
       if (id === reqId.current) setData(d);
     } catch (e) {
       if (id === reqId.current) toast.error(errMsg(e));
     } finally {
       if (id === reqId.current) setLoading(false);
     }
-  }, [game, tdPts]);
+  }, []);
 
-  useEffect(() => { setData(null); load(); }, [load]);
+  useEffect(() => { load(); }, [load]);
+
+  const rows = useMemo(() => (data?.players || []).map((p) => {
+    const price = p.combos[0].live.yes_price;
+    return { ...p, price, approx: p.combos[0].legs[0].threshold !== 10, ev: evPct(fairFrom(p.books, settings.singleHold), price, settings.fees) };
+  }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Triple-double scanner</h1>
-          <p className="text-sm text-slate-400 mt-1">Live Kalshi combo prices for triple-doubles, with FanDuel and DraftKings odds pulled in automatically.</p>
+          <p className="text-sm text-slate-400 mt-1">Every game on one board: live Kalshi triple-double combos, ranked by EV against devigged FanDuel/DraftKings odds.</p>
           <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
-            {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()}` : loading ? "Pricing combos with Kalshi market makers…" : ""}
+            {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${rows.length} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
         </div>
         <button data-testid="scanner-refresh-btn" onClick={load} disabled={loading}
@@ -123,38 +100,11 @@ export default function DDScanner({ settings }) {
         </button>
       </div>
 
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-4 flex-wrap min-w-0 max-w-full">
-        <div data-testid="scanner-game-tabs" className="flex items-center gap-1 overflow-x-auto max-w-full">
-          {games.map((g, i) => (
-            <button key={g.code} data-testid={`scanner-game-${g.code}`} onClick={() => setGame(g.code)}
-              className={`shrink-0 px-2.5 py-1 text-sm font-semibold transition-colors ${i ? "border-l border-slate-800" : ""} ${game === g.code ? "text-white" : "text-slate-500 hover:text-slate-200"}`}>
-              <GameLabel code={g.code} />
-              <span data-testid={`scanner-game-when-${g.code}`} className="ml-1.5 text-[10px] font-mono font-normal text-slate-500">{when(g)}</span>
-            </button>
-          ))}
-        </div>
-        <label className="flex items-center gap-2 text-sm text-slate-400">
-          TD points
-          <select data-testid="td-points-select" value={tdPts} onChange={(e) => setTdPts(Number(e.target.value))}
-            className="h-8 pl-2.5 pr-7 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm font-semibold text-white outline-none focus:border-white/60 cursor-pointer">
-            {[10, 15, 20].map((n) => <option key={n} value={n}>{n}+ pts</option>)}
-          </select>
-        </label>
-        </div>
-        {data?.players[0] && (
-          <a data-testid="scanner-bet-on-kalshi" href={kalshiGameUrl(data.players[0].combos[0]?.legs[0]?.ticker || data.players[0].singles[0]?.line.ticker)}
-            target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white">
-            Bet on Kalshi <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        )}
-      </div>
-
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
-        <table className="w-full min-w-[820px]">
+        <table data-testid="scanner-board" className="w-full min-w-[900px]">
           <thead>
             <tr className="text-xs text-slate-400">
-              {HEADS.map((h) => (h === "TD" ? `TD (${tdPts}+ pts)` : h)).map((h, i) => (
+              {HEADS.map((h, i) => (
                 <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#181818]"}`}>
                   {HEAD_LOGOS[h] ? (
                     <span className="inline-flex items-center gap-1.5">
@@ -166,30 +116,26 @@ export default function DDScanner({ settings }) {
             </tr>
           </thead>
           <tbody>
-            {players.map((p, i) => (
-              <Row key={p.key} p={p} i={i} format={format} settings={settings} tdPts={tdPts} />
-            ))}
+            {rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} />)}
           </tbody>
         </table>
         {!data && (
           <div data-testid="scanner-loading" className="py-16 text-center text-sm text-slate-500">
-            {loading ? "Asking Kalshi market makers for live combo odds… (about 10 seconds)" : "Pick a game."}
+            {loading ? "Asking Kalshi market makers for live combo odds across every game… (10–30 seconds)" : ""}
           </div>
         )}
-        {data && !players.length && (
-          <div className="py-16 text-center text-sm text-slate-500">
-            {games.find((g) => g.code === game)?.kalshi
-              ? `No player in this game has Kalshi ${tdPts}+ points, 10+ rebounds and 10+ assists lines, so there's no triple-double combo to price.`
-              : "Kalshi hasn't opened player props for this game yet and FanDuel/DraftKings haven't posted triple-double odds. Check back closer to tip-off."}
+        {data && !rows.length && (
+          <div data-testid="scanner-empty" className="py-16 text-center text-sm text-slate-500">
+            No player has both a Kalshi triple-double combo and FanDuel/DraftKings triple-double odds right now. Books usually post these on game day.
           </div>
         )}
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
-        TD is the live Kalshi combo price for {tdPts}+ points, 10+ rebounds and 10+ assists (fee included). EV compares it to the FanDuel/DraftKings
-        price with a {settings.singleHold}% hold removed (books averaged).
-        {data?.books?.enabled && (tdPts === 10
-          ? ` FanDuel/DraftKings odds are live "to record a triple-double" prices, refreshed every 5 minutes${data.books.credits_left ? ` (${data.books.credits_left} Odds API credits left this month)` : ""}.`
-          : " Live FanDuel/DraftKings odds fill in only at 10+ pts, because books price a regular triple-double.")}
+        Kalshi TD is the live combo price for 10+ points, 10+ rebounds and 10+ assists{settings.fees ? " (fee included)" : ""}. EV compares it to the FanDuel/DraftKings
+        "to record a triple-double" price with a {settings.singleHold}% hold removed (books averaged).
+        <span className="text-amber-400"> ≈</span> When Kalshi has no 10+ points line, the combo uses the player's lowest Kalshi points line, which is a harder bet than a
+        regular triple-double, so that EV is optimistic.
+        {data?.books?.credits_left ? ` ${data.books.credits_left} Odds API credits left this month.` : ""}
       </p>
     </div>
   );
