@@ -151,13 +151,12 @@ async def props_players():
 
 _rfq_sem = asyncio.Semaphore(2)
 
+# Double-double paths and the triple-double combo. Points falls back to Kalshi's lowest line if 10+ isn't offered.
 PAIRINGS = [
-    [("Rebounds", 10), ("Assists", 10)],
-    [("Points", None), ("Rebounds", 10)],
-    [("Points", None), ("Assists", 10)],
-    [("Points", None), ("Rebounds", 10), ("Assists", 10)],
-    [("Rebounds", 8), ("Assists", 8)],
-    [("Points", None), ("Rebounds", 8), ("Assists", 8)],
+    ("PR", [("Points", None), ("Rebounds", 10)]),
+    ("PA", [("Points", None), ("Assists", 10)]),
+    ("RA", [("Rebounds", 10), ("Assists", 10)]),
+    ("PRA", [("Points", None), ("Rebounds", 10), ("Assists", 10)]),
 ]
 
 
@@ -171,6 +170,58 @@ def _pick(markets, label, want):
     return next((l for l in lines if l["threshold"] == want), None)
 
 
+def _combos_for(p):
+    out = []
+    for kind, pairing in PAIRINGS:
+        legs = [_pick(p["markets"], lbl, want) for lbl, want in pairing]
+        if None not in legs:
+            out.append({"kind": kind, "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs})
+    return out
+
+
+async def _quote(c):
+    if not kalshi_auth.configured():
+        return
+    async with _rfq_sem:
+        try:
+            c["live"] = await kalshi_auth.live_combo_quote([l["ticker"] for l in c["legs"]], target_dollars=100)
+        except (kalshi_auth.KalshiAuthError, httpx.HTTPError) as e:
+            c["error"] = str(e)[:160]
+
+
+def _built_dd(combos):
+    """P(any of the pair DDs) = sum(pairs) - (k-1) * P(all three), since every pair overlap is the triple."""
+    price = lambda c: (c.get("live") or {}).get("yes_price")
+    pairs = [price(c) for c in combos if c["kind"] != "PRA" and price(c)]
+    tri = next((price(c) for c in combos if c["kind"] == "PRA" and price(c)), None)
+    if not pairs:
+        return None
+    if tri is not None:
+        return {"price": round(min(sum(pairs) - (len(pairs) - 1) * tri, 0.99), 4), "exact": True, "paths": len(pairs)}
+    return {"price": max(pairs), "exact": len(pairs) == 1, "paths": len(pairs)}
+
+
+def _player_payload(p, photos, combos):
+    return {"key": p["key"], "name": p["name"], "team": p["team"], "headshot": (photos.get(p["key"]) or {}).get("headshot"),
+            "singles": [{"name": lbl, "line": p["markets"][lbl][0]} for lbl in ("Double Double", "Triple Double") if lbl in p["markets"]],
+            "combos": combos, "built_dd": _built_dd(combos)}
+
+
+@api_router.get("/scanner/game/{code}")
+async def scanner_game(code: str):
+    g = (await kalshi_props.load_props()).get(code)
+    if not g:
+        raise HTTPException(404, "Game not found on Kalshi")
+    photos = await espn.headshots()
+    todo = [(p, _combos_for(p)) for p in g["players"].values()]
+    todo = [(p, c) for p, c in todo if c or "Double Double" in p["markets"] or "Triple Double" in p["markets"]]
+    await asyncio.gather(*[_quote(c) for _, cs in todo for c in cs])
+    players = [_player_payload(p, photos, cs) for p, cs in todo]
+    players.sort(key=lambda x: -((x["built_dd"] or {}).get("price") or (x["singles"][0]["line"]["yes_ask"] if x["singles"] else 0) or 0))
+    return {"game": {k: g[k] for k in ("code", "date", "label")}, "players": players,
+            "updated_at": datetime.now(timezone.utc).isoformat()}
+
+
 @api_router.get("/scanner/player")
 async def scanner_player(game: str, player: str):
     g = (await kalshi_props.load_props()).get(game)
@@ -178,28 +229,10 @@ async def scanner_player(game: str, player: str):
     if not p:
         raise HTTPException(404, "Player not found on Kalshi")
     photos = await espn.headshots()
-    singles = [{"name": lbl, "line": p["markets"][lbl][0]} for lbl in ("Double Double", "Triple Double") if lbl in p["markets"]]
-    combos, seen = [], set()
-    for pairing in PAIRINGS:
-        legs = [_pick(p["markets"], lbl, want) for lbl, want in pairing]
-        key = tuple(l["ticker"] for l in legs if l)
-        if None in legs or key in seen:
-            continue
-        seen.add(key)
-        combos.append({"name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs})
-
-    async def quote(c):
-        if not kalshi_auth.configured():
-            return
-        async with _rfq_sem:
-            try:
-                c["live"] = await kalshi_auth.live_combo_quote([l["ticker"] for l in c["legs"]], target_dollars=100)
-            except (kalshi_auth.KalshiAuthError, httpx.HTTPError) as e:
-                c["error"] = str(e)[:160]
-
-    await asyncio.gather(*[quote(c) for c in combos])
-    return {"game": {k: g[k] for k in ("code", "date", "label")}, "player": {"key": p["key"], "name": p["name"], "team": p["team"],
-            "headshot": (photos.get(p["key"]) or {}).get("headshot")}, "singles": singles, "combos": combos,
+    combos = _combos_for(p)
+    await asyncio.gather(*[_quote(c) for c in combos])
+    pl = _player_payload(p, photos, combos)
+    return {"game": {k: g[k] for k in ("code", "date", "label")}, "player": pl, "singles": pl["singles"], "combos": combos,
             "updated_at": datetime.now(timezone.utc).isoformat()}
 
 
