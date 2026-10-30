@@ -112,7 +112,7 @@ export default function DDScanner({ settings }) {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Triple-double scanner</h1>
-          <p className="text-sm text-slate-400 mt-1">Live Kalshi combo prices for triple-doubles. Add FanDuel or DraftKings odds to see EV.</p>
+          <p className="text-sm text-slate-400 mt-1">Live Kalshi combo prices for triple-doubles, with FanDuel and DraftKings odds pulled in automatically.</p>
           <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()}` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
@@ -183,10 +183,10 @@ export default function DDScanner({ settings }) {
         )}
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
-        TD is the live Kalshi combo price for {tdPts}+ points, 10+ rebounds and 10+ assists (fee included). Type FanDuel and/or DraftKings odds and EV
-        updates instantly: the book odds have a {settings.singleHold}% hold removed, the books are averaged, then compared to the Kalshi combo price.
+        TD is the live Kalshi combo price for {tdPts}+ points, 10+ rebounds and 10+ assists (fee included). EV compares it to the FanDuel/DraftKings
+        price with a {settings.singleHold}% hold removed (books averaged).
         {data?.books?.enabled && (tdPts === 10
-          ? ` Green odds are live FanDuel/DraftKings "to record a triple-double" prices (refreshed every 5 minutes; ${data.books.credits_left ?? "?"} Odds API credits left this month). Type over them to use your own.`
+          ? ` Green odds are live FanDuel/DraftKings "to record a triple-double" prices, refreshed every 5 minutes${data.books.credits_left ? ` (${data.books.credits_left} Odds API credits left this month)` : ""}. Type over them to use your own.`
           : " Live FanDuel/DraftKings odds fill in only at 10+ pts, because books price a regular triple-double.")}
       </p>
     </div>
