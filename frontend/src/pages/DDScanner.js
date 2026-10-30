@@ -9,7 +9,7 @@ import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip
 
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
 const SGP_BOOKS = [["fd", "FD"], ["dk", "DK"], ["fan", "Fanatics"]];
-const HEAD_LOGOS = { "FD TD": "/fd.png", "DK TD": "/dk.png", "FD SGP": "/fd.png", "DK SGP": "/dk.png", "Fanatics SGP": "/fanatics.png" };
+const HEAD_LOGOS = { FD: "/fd.png", DK: "/dk.png", "FD Manual": "/fd.png", "DK Manual": "/dk.png", "Fanatics Manual": "/fanatics.png" };
 
 const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
 
@@ -89,7 +89,7 @@ export default function DDScanner({ settings }) {
   }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
   const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
   const tdBooks = tdPts === 10 ? BOOKS : [];
-  const heads = ["Player", "Game", `Kalshi TD (${tdPts}+ pts)`, ...tdBooks.map(([b]) => `${b.toUpperCase()} TD`), ...sgpBooks.map(([, l]) => `${l} SGP`), "EV"];
+  const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => `${l} Manual`), "EV"];
 
   return (
     <div className="space-y-6">
