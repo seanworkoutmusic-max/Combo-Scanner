@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, Trash2 } from "lucide-react";
-import { getBets, gradeBets, setBetStatus, deleteBet, errMsg } from "../lib/api";
+import { ClipboardList, RefreshCw, Trash2 } from "lucide-react";
+import { getBets, gradeBets, deleteBet, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
@@ -11,7 +11,7 @@ export const getStake = () => Number(localStorage.getItem(STAKE_KEY)) || 10;
 
 const profit = (b) => (b.status === "won" ? (b.stake * (1 - b.price)) / b.price : b.status === "lost" ? -b.stake : 0);
 const money = (v) => `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(2)}`;
-const STATUS = [["won", "Won", "bg-emerald-500 text-black"], ["lost", "Lost", "bg-red-500 text-white"], ["void", "Void", "bg-slate-500 text-white"]];
+const STATUS_LABEL = { won: "Won", lost: "Lost", void: "Void" };
 
 const Stat = ({ label, value, testid, tone = "text-white" }) => (
   <div className="rounded-xl border border-slate-800 bg-[#181818] px-4 py-3">
@@ -20,7 +20,7 @@ const Stat = ({ label, value, testid, tone = "text-white" }) => (
   </div>
 );
 
-const BetRow = ({ b, onStatus, onDelete }) => {
+const BetRow = ({ b, onDelete }) => {
   const p = profit(b);
   return (
     <tr data-testid={`bet-row-${b.id}`} className="border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
@@ -39,17 +39,9 @@ const BetRow = ({ b, onStatus, onDelete }) => {
       <td className={`py-3 px-4 text-right font-mono text-sm font-bold ${b.ev > 0 ? "text-emerald-400" : "text-red-400"}`}>{b.ev == null ? "—" : `${b.ev > 0 ? "+" : ""}${(b.ev * 100).toFixed(1)}%`}</td>
       <td className="py-3 px-4 text-right font-mono text-sm text-slate-300">{money(b.stake)}</td>
       <td className="py-3 px-4 text-right font-mono text-sm text-slate-300">{money((b.stake * (1 - b.price)) / b.price)}</td>
-      <td className="py-3 px-4">
-        <div className="flex justify-end gap-1">
-          {STATUS.map(([s, l, on]) => (
-            <button key={s} data-testid={`bet-${s}-${b.id}`} onClick={() => onStatus(b, s)}
-              className={`h-7 px-2.5 rounded-md text-xs font-semibold transition-colors ${b.status === s ? on : "bg-white/[0.05] text-slate-400 hover:text-white hover:bg-white/[0.1]"}`}>{l}</button>
-          ))}
-        </div>
-      </td>
       <td data-testid={`bet-profit-${b.id}`} className={`py-3 px-4 text-right font-mono text-sm font-bold ${b.status === "pending" ? "text-slate-500" : p > 0 ? "text-emerald-400" : p < 0 ? "text-red-400" : "text-slate-300"}`}>
         {b.status === "pending" ? "Pending" : money(p)}
-        {b.auto_graded && <div data-testid={`bet-auto-${b.id}`} className="text-[10px] font-mono font-normal text-slate-500">auto · ESPN final</div>}
+        {b.status !== "pending" && <div data-testid={`bet-status-${b.id}`} className="text-[10px] font-mono font-normal text-slate-500">{STATUS_LABEL[b.status]} · ESPN final</div>}
       </td>
       <td className="py-3 pl-2 pr-4">
         <button data-testid={`bet-delete-${b.id}`} onClick={() => onDelete(b)} title="Delete bet" className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 className="h-4 w-4" /></button>
@@ -62,22 +54,21 @@ export default function BetTracker() {
   const [bets, setBets] = useState(null);
   const [stake, setStake] = useState(getStake());
 
-  const load = useCallback(async () => {
+  const [grading, setGrading] = useState(false);
+
+  const load = useCallback(async (manual = false) => {
+    setGrading(true);
     try {
       const g = await gradeBets().catch(() => null);
       setBets(await getBets());
       if (g?.graded) toast.success(`Graded ${g.graded} bet${g.graded > 1 ? "s" : ""} from ESPN final box scores`);
+      else if (manual) toast(g ? "No finished games to grade yet" : "ESPN unavailable, try again shortly");
     } catch (e) { toast.error(errMsg(e)); }
+    finally { setGrading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
 
   const onStake = (v) => { setStake(v); if (Number(v) > 0) localStorage.setItem(STAKE_KEY, String(Number(v))); };
-  const onStatus = async (b, s) => {
-    try {
-      const nb = await setBetStatus(b.id, b.status === s ? "pending" : s);
-      setBets((xs) => xs.map((x) => (x.id === nb.id ? nb : x)));
-    } catch (e) { toast.error(errMsg(e)); }
-  };
   const onDelete = async (b) => {
     try { await deleteBet(b.id); setBets((xs) => xs.filter((x) => x.id !== b.id)); toast.success("Bet deleted"); } catch (e) { toast.error(errMsg(e)); }
   };
@@ -104,6 +95,11 @@ export default function BetTracker() {
           </h1>
           <p className="text-sm text-slate-400 mt-1">Every combo you add with + on the TD Scanner, locked at the Kalshi price and EV from the moment you added it.</p>
         </div>
+        <div className="flex items-center gap-3">
+        <button data-testid="bet-grade-btn" onClick={() => load(true)} disabled={grading}
+          className="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
+          <RefreshCw className={`h-3.5 w-3.5 ${grading ? "animate-spin" : ""}`} /> Grade from ESPN
+        </button>
         <label className="flex items-center gap-2 text-sm text-slate-400">
           Stake per bet
           <span className="flex items-center h-9 rounded-lg border border-slate-700 bg-[#0E0E0E] px-2.5 focus-within:border-white/60">
@@ -112,6 +108,7 @@ export default function BetTracker() {
               className="w-20 bg-transparent outline-none font-mono text-sm font-semibold text-white pl-1" />
           </span>
         </label>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -126,20 +123,20 @@ export default function BetTracker() {
         <table data-testid="bet-table" className="w-full min-w-[1100px]">
           <thead>
             <tr className="text-xs text-slate-400">
-              {["Added", "Bet", "Game", "Kalshi", "EV", "Stake", "To win", "Result", "Profit", ""].map((h, i) => (
+              {["Added", "Bet", "Game", "Kalshi", "EV", "Stake", "To win", "Profit", ""].map((h, i) => (
                 <th key={i} className={`py-3 px-4 font-semibold ${i < 3 ? "text-left" : "text-right"}`}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {(bets || []).map((b) => <BetRow key={b.id} b={b} onStatus={onStatus} onDelete={onDelete} />)}
+            {(bets || []).map((b) => <BetRow key={b.id} b={b} onDelete={onDelete} />)}
           </tbody>
         </table>
         {bets && !bets.length && (
           <div data-testid="bet-empty" className="py-16 text-center text-sm text-slate-500">No bets tracked yet. Tap + next to a player on the TD Scanner to add one.</div>
         )}
       </div>
-      <p className="text-xs text-slate-500">Pending bets are graded automatically from ESPN final box scores each time you open this page (player didn't play = Void). Profit uses the locked Kalshi price before fees. Tap a result to change it, or tap it again to set the bet back to pending.</p>
+      <p className="text-xs text-slate-500">Pending bets are graded from ESPN final box scores when you open this page or press Grade from ESPN (every leg hit = Won, any miss = Lost, player didn't play = Void). Profit uses the locked Kalshi price before fees.</p>
     </div>
   );
 }
