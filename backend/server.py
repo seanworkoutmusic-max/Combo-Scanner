@@ -243,10 +243,18 @@ async def scanner_game(code: str, td_pts: int = Query(10, ge=10, le=40)):
             todo.append((p, [{"kind": "TD", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}]))
     await asyncio.gather(*[_quote(c) for _, cs in todo for c in cs])
     players = [_player_payload(p, photos, cs) for p, cs in todo]
-    books, books_updated = await odds_api.triple_double_odds(code[-6:-3], code[-3:]) if td_pts == 10 and players else ({}, None)
+    books, books_updated = await odds_api.triple_double_odds(code[-6:-3], code[-3:]) if td_pts == 10 else ({}, None)
     for pl in players:
-        pl["books"] = books.get(pl["key"]) or {}
+        pl["books"] = (books.get(pl["key"]) or {}).get("odds") or {}
     players.sort(key=lambda x: -((x["combos"][0].get("live") or {}).get("yes_price") or 0))
+    # Players with sportsbook triple-double odds but no Kalshi combo still get a row (no Kalshi price, no EV).
+    have = {pl["key"] for pl in players}
+    team_of = {k: p["team"] for k, p in g["players"].items()}
+    team_of.update({r["key"]: r["team"] for r in (await espn.season_averages())["rows"] if r["key"] not in team_of})
+    extra = [{"key": k, "name": b["name"], "team": team_of.get(k, ""), "headshot": (photos.get(k) or {}).get("headshot"),
+              "singles": [], "combos": [], "built_dd": None, "books": b["odds"]} for k, b in books.items() if k not in have]
+    extra.sort(key=lambda x: min(v for v in x["books"].values() if v is not None))
+    players += extra
     return {"game": {k: g[k] for k in ("code", "date", "label")}, "players": players,
             "books": {"enabled": odds_api.configured(), "updated": books_updated, "credits_left": odds_api.quota["remaining"]},
             "updated_at": datetime.now(timezone.utc).isoformat()}

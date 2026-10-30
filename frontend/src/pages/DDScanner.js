@@ -59,7 +59,10 @@ const Row = ({ p, format, i, odds, setOdds, settings, tdPts }) => {
           </div>
         </div>
       </td>
-      <td className="py-3 px-4 text-right"><Price p={tri} format={format} className="text-base font-bold text-white" testid={`td-${slug}`} /></td>
+      <td className="py-3 px-4 text-right">
+        <Price p={tri} format={format} className="text-base font-bold text-white" testid={`td-${slug}`} />
+        {!p.combos.length && <div className="text-[10px] font-mono text-slate-500">no Kalshi combo</div>}
+      </td>
       {BOOKS.map(([b]) => (
         <td key={b} className="py-3 px-4">
           <OddsBox testid={`${b}-td-${slug}`} value={merged[b]} auto={odds[tdKey]?.[b] == null && auto[b] != null} onChange={(v) => setOdds(tdKey, b, v)} />

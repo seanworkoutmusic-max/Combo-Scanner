@@ -42,7 +42,7 @@ async def _event_id(client, away, home):
 
 
 async def triple_double_odds(away, home, ttl=300):
-    """{norm_name: {"fd": american, "dk": american}} for one game's 'To record a triple-double: Yes' (1 credit per fresh fetch)."""
+    """{norm_name: {"name": str, "odds": {"fd": american, "dk": american}}} for one game's 'To record a triple-double: Yes' (1 credit per fresh fetch)."""
     if not configured():
         return {}, None
     key = (away, home)
@@ -68,6 +68,7 @@ async def triple_double_odds(away, home, ttl=300):
             updated = max(updated or "", m.get("last_update") or "")
             for o in m.get("outcomes", []):
                 if o.get("name") == "Yes" and o.get("description"):
-                    players.setdefault(norm_name(o["description"]), {})[short] = o.get("price")
+                    row = players.setdefault(norm_name(o["description"]), {"name": o["description"], "odds": {}})
+                    row["odds"][short] = o.get("price")
     _odds[key] = {"t": time.time(), "players": players, "updated": updated}
     return players, updated
