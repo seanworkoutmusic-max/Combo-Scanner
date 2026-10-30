@@ -1,3 +1,4 @@
+import asyncio
 import time
 import re
 import unicodedata
@@ -42,7 +43,11 @@ async def _fetch_series(client, series):
         params = {"series_ticker": series, "status": "open", "limit": 1000}
         if cursor:
             params["cursor"] = cursor
-        r = await client.get(f"{KALSHI_BASE}/markets", params=params)
+        for attempt in range(4):
+            r = await client.get(f"{KALSHI_BASE}/markets", params=params)
+            if r.status_code != 429:
+                break
+            await asyncio.sleep(1.5 * (attempt + 1))
         r.raise_for_status()
         d = r.json()
         out += d.get("markets", [])
