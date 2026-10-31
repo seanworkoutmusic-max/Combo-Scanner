@@ -22,6 +22,7 @@ import kalshi_auth  # noqa: E402
 import odds_api  # noqa: E402
 import oddsblaze  # noqa: E402
 import bets  # noqa: E402
+import nhl  # noqa: E402
 
 client = AsyncIOMotorClient(os.environ['MONGO_URL'])
 db = client[os.environ['DB_NAME']]
@@ -371,6 +372,12 @@ async def props_slip(req: SlipReq):
     legs = [by_ticker.get(t) for t in req.tickers]
     return {"legs": legs, "combo": kalshi_props.find_combo(req.tickers) if len(req.tickers) > 1 else None,
             "combo_index": kalshi_props.combo_index_info(), "updated_at": datetime.now(timezone.utc).isoformat()}
+
+
+@api_router.get("/hockey/board")
+async def hockey_board():
+    d = await nhl.board()
+    return {**d, "updated_at": datetime.now(timezone.utc).isoformat()}
 
 
 @api_router.post("/props/sgp")

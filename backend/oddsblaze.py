@@ -57,11 +57,15 @@ async def _price(client, book, sgps, ttl=120):
     hit = _sgp.get(key)
     if hit and time.time() - hit["t"] < ttl:
         return hit["price"]
-    r = await client.post(f"https://{book}.sgp.oddsblaze.com/", params={"key": os.environ["ODDSBLAZE_API_KEY"]}, json=list(sgps))
-    price = None
-    if r.status_code == 200:
-        p = r.json().get("price")
-        price = int(p) if p and p.lstrip("+-").isdigit() else None
+    for attempt in range(3):
+        r = await client.post(f"https://{book}.sgp.oddsblaze.com/", params={"key": os.environ["ODDSBLAZE_API_KEY"]}, json=list(sgps))
+        if r.status_code != 429:
+            break
+        await asyncio.sleep(1.0 * (attempt + 1))
+    if r.status_code != 200:
+        return None
+    p = r.json().get("price")
+    price = int(p) if p and p.lstrip("+-").isdigit() else None
     _sgp[key] = {"t": time.time(), "price": price}
     return price
 

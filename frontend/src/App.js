@@ -5,6 +5,7 @@ import { Sidebar } from "./components/Sidebar";
 import DDScanner from "./pages/DDScanner";
 import TDWatch from "./pages/TDWatch";
 import LiveTracker from "./pages/LiveTracker";
+import HockeyScanner from "./pages/HockeyScanner";
 import BetTracker from "./pages/BetTracker";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
@@ -47,6 +48,8 @@ function App() {
             <Props settings={settings} update={update} status={status} />
           ) : tab === "tdwatch" ? (
             <TDWatch />
+          ) : tab === "hockey" ? (
+            <HockeyScanner settings={settings} />
           ) : tab === "live" ? (
             <LiveTracker />
           ) : tab === "bets" ? (
