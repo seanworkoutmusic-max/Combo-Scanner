@@ -8,6 +8,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 import os
 import asyncio
+import time
 import logging
 import httpx
 
@@ -280,13 +281,14 @@ async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Op
             if None not in legs:
                 c = {"kind": "TD" if td_pts else "RA", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}
                 todo.append((g, p, c, odds))
+    t0 = time.monotonic()
     sgps = await oddsblaze.sgp_prices([(g["code"][-6:-3], g["code"][-3:], [(p["key"], l["market"], l["threshold"]) for l in c["legs"]])
-                                       for g, p, c, _ in todo])
+                                       for g, p, c, _ in todo], timeout=25)
     todo = [(g, p, c, odds, s) for (g, p, c, odds), s in zip(todo, sgps)
             if s or (odds and td_pts == 10 and reb_ast == 10 and c["legs"][0]["threshold"] == 10)]
     tasks = [asyncio.create_task(_quote(c)) for _, _, c, _, _ in todo]
     if tasks:  # stay under the 60s proxy limit; combos still quoting are left off this refresh
-        _, late = await asyncio.wait(tasks, timeout=45)
+        _, late = await asyncio.wait(tasks, timeout=max(8, 50 - (time.monotonic() - t0)))
         for t in late:
             t.cancel()
     players = [{**_player_payload(p, photos, [c]), "books": odds, "sgp": s, "game": {k: g[k] for k in ("code", "date", "label")}}
@@ -390,7 +392,7 @@ async def props_sgp(req: SlipReq):
     if len(legs) < 2 or None in legs or len({x[0] for x in legs}) > 1:
         return {"prices": {}, "configured": oddsblaze.configured()}
     code = legs[0][0]
-    prices = (await oddsblaze.sgp_prices([(code[-6:-3], code[-3:], [x[1:] for x in legs])]))[0]
+    prices = (await oddsblaze.sgp_prices([(code[-6:-3], code[-3:], [x[1:] for x in legs])], books={"dk", "fan"}))[0]
     return {"prices": prices, "configured": oddsblaze.configured(), "updated_at": datetime.now(timezone.utc).isoformat()}
 
 

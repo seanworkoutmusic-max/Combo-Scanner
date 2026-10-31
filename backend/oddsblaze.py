@@ -9,7 +9,7 @@ from kalshi import TEAMS, norm_name
 
 logger = logging.getLogger(__name__)
 ODDS = "https://odds.oddsblaze.com/"
-BOOKS = {"fanduel": "fd", "draftkings": "dk", "fanatics": "fan"}
+BOOKS = {"fanduel": "fd", "draftkings": "dk", "fanatics": "fan", "betmgm": "mgm", "hard-rock": "hr"}
 MARKETS = {
     "Player Points": "Points", "Player Rebounds": "Rebounds", "Player Assists": "Assists", "Player Threes Made": "Made Threes",
     "Player Points + Rebounds + Assists": "PRA (Points + Rebounds + Assists)", "Player Points + Rebounds": "PR (Points + Rebounds)",
@@ -70,15 +70,16 @@ async def _price(client, book, sgps, ttl=120):
     return price
 
 
-async def sgp_prices(requests):
+async def sgp_prices(requests, books=None, timeout=None):
     """requests: [(away, home, [(player_key, market, threshold|None), ...])] -> list of {"dk": american, "fan": american, ...}."""
     out = [{} for _ in requests]
+    books = {b: s for b, s in BOOKS.items() if books is None or s in books}
     if not configured() or not requests:
         return out
     async with httpx.AsyncClient(timeout=30) as client:
         async with _lock:
             props = {}
-            for b in BOOKS:
+            for b in books:
                 try:
                     props[b] = await _book_props(client, b)
                 except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
@@ -86,18 +87,23 @@ async def sgp_prices(requests):
                     props[b] = {}
         jobs = []
         for i, (away, home, legs) in enumerate(requests):
-            for book, short in BOOKS.items():
+            for book, short in books.items():
                 g = props[book].get((away, home), {})
                 sgps = [g.get(pk, {}).get(m, {}).get(t - 0.5 if t is not None else None) for pk, m, t in legs]
                 if None not in sgps:
                     jobs.append((i, short, book, sgps))
-        sem = asyncio.Semaphore(5)
+        sems = {b: asyncio.Semaphore(3) for b in books}
 
         async def run(i, short, book, sgps):
-            async with sem:
+            async with sems[book]:
                 try:
                     out[i][short] = await _price(client, book, sgps)
                 except httpx.HTTPError as e:
                     logger.warning("OddsBlaze SGP failed: %s", e)
-        await asyncio.gather(*[run(*j) for j in jobs])
+        tasks = [asyncio.create_task(run(*j)) for j in jobs]
+        if tasks:  # prices still pending at the deadline are left out of this refresh
+            _, late = await asyncio.wait(tasks, timeout=timeout)
+            for t in late:
+                t.cancel()
+            await asyncio.gather(*late, return_exceptions=True)
     return [{k: v for k, v in o.items() if v is not None} for o in out]

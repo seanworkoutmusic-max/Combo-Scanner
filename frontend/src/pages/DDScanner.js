@@ -19,8 +19,8 @@ import { PriceTag } from "../components/props/MarketList";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
 
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
-const SGP_BOOKS = [["fd", "FD"], ["dk", "DK"], ["fan", "Fanatics"]];
-const HEAD_LOGOS = { FD: "/fd.png", DK: "/dk.png", "FD Manual": "/fd.png", "DK Manual": "/dk.png", "Fanatics Manual": "/fanatics.png" };
+const SGP_BOOKS = [["fd", "FD"], ["dk", "DK"], ["fan", "Fanatics"], ["mgm", "BetMGM"], ["hr", "Hard Rock"]];
+const HEAD_LOGOS = { FD: "/fd.png", DK: "/dk.png", "FD Manual": "/fd.png", "DK Manual": "/dk.png", "Fanatics Manual": "/fanatics.png", "BetMGM Manual": "/betmgm.png", "Hard Rock Manual": "/hardrock.png" };
 
 const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
 
@@ -209,7 +209,7 @@ export default function DDScanner({ settings }) {
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
         Kalshi Combos is the live combo price for {`${tdPts ? `${tdPts}+ points, ` : ""}${ra || 10}+ rebounds and ${ra || 10}+ assists`}{settings.fees ? " (fee included)" : ""}. When Kalshi has no {tdPts}+ points
-        line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings/Fanatics same-game-parlay price for the exact same legs as the Kalshi combo
+        line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings/Fanatics/BetMGM/Hard Rock same-game-parlay price for the exact same legs as the Kalshi combo
         (FanDuel SGP isn't available from OddsBlaze).
         EV compares Kalshi to the SGP price with a {settings.singleHold}% hold removed (books averaged); without an SGP price it falls back to the regular
         "to record a triple-double" odds, only for 10+ point combos.
