@@ -15,11 +15,37 @@ logger = logging.getLogger(__name__)
 ET = ZoneInfo("America/New_York")
 SERIES = ("KXNHLGAME", "KXNHLGOAL", "KXNHLPTS", "KXNHLTOTAL")
 ALIAS = {"NAS": "NSH", "MON": "MTL", "WAS": "WSH", "VEG": "VGK", "NJD": "NJ", "LAK": "LA", "SJS": "SJ", "TBL": "TB", "UTAH": "UTA"}
-SGP_BOOKS = {"draftkings": "dk", "fanatics": "fan"}
+SGP_BOOKS = {"draftkings": "dk", "fanatics": "fan", "caesars": "czr"}
+ESPN_NHL = "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl"
+_photos = {"t": 0, "map": {}}
+
+
+async def headshots(ttl=12 * 3600):
+    """norm_name -> ESPN NHL headshot URL for every roster player."""
+    if _photos["map"] and time.time() - _photos["t"] < ttl:
+        return _photos["map"]
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await client.get(f"{ESPN_NHL}/teams")
+            r.raise_for_status()
+            ids = [t["team"]["id"] for t in r.json()["sports"][0]["leagues"][0]["teams"]]
+            res = await asyncio.gather(*[client.get(f"{ESPN_NHL}/teams/{i}/roster") for i in ids], return_exceptions=True)
+        out = {}
+        for x in res:
+            if isinstance(x, Exception) or x.status_code != 200:
+                continue
+            for grp in x.json().get("athletes", []):
+                for a in grp.get("items", []):
+                    out[norm_name(a.get("fullName"))] = (a.get("headshot") or {}).get("href") or f"https://a.espncdn.com/i/headshots/nhl/players/full/{a['id']}.png"
+        if out:
+            _photos.update(t=time.time(), map=out)
+    except httpx.HTTPError as e:
+        logger.warning("ESPN NHL headshots failed: %s", e)
+    return _photos["map"]
 _cache = {"t": 0, "data": None}
 _books = {}
 _sem = asyncio.Semaphore(6)
-_sgp_sem = asyncio.Semaphore(4)
+_sgp_sem = {b: asyncio.Semaphore(3) for b in ("draftkings", "fanatics", "caesars")}
 
 
 def _mid(m):
@@ -102,27 +128,27 @@ async def _book_lines(client, book, ttl=120):
     return games
 
 
+async def _sgp_book(client, g, p, book):
+    try:
+        bg = (await _book_lines(client, book)).get((g["date"], g["away"], g["home"])) or {}
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
+        logger.warning("OddsBlaze %s NHL failed: %s", book, e)
+        return None
+    pl = bg.get("players", {}).get(p["key"], {})
+    legs = [bg.get("ml", {}).get(p["team"]), pl.get("goal"), pl.get("pts"), bg.get("total", {}).get(g["total"]["line"])]
+    if None in legs:
+        return None
+    try:
+        async with _sgp_sem[book]:
+            return await oddsblaze._price(client, book, legs)
+    except httpx.HTTPError as e:
+        logger.warning("OddsBlaze NHL SGP failed: %s", e)
+        return None
+
+
 async def _sgp(client, g, p):
-    out = {}
-    for book, short in SGP_BOOKS.items():
-        try:
-            bg = (await _book_lines(client, book)).get((g["date"], g["away"], g["home"]))
-        except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
-            logger.warning("OddsBlaze %s NHL failed: %s", book, e)
-            continue
-        pl = (bg or {}).get("players", {}).get(p["key"], {})
-        legs = [(bg or {}).get("ml", {}).get(p["team"]), pl.get("goal"), pl.get("pts"), (bg or {}).get("total", {}).get(g["total"]["line"])]
-        if None in legs:
-            continue
-        try:
-            async with _sgp_sem:
-                price = await oddsblaze._price(client, book, legs)
-        except httpx.HTTPError as e:
-            logger.warning("OddsBlaze NHL SGP failed: %s", e)
-            continue
-        if price is not None:
-            out[short] = price
-    return out
+    prices = await asyncio.gather(*[_sgp_book(client, g, p, b) for b in SGP_BOOKS])
+    return {short: v for short, v in zip(SGP_BOOKS.values(), prices) if v is not None}
 
 
 async def _quote(row):
@@ -142,6 +168,7 @@ async def _row(client, r):
 async def board(budget=40):
     """Kalshi 4-leg combo per player (own team wins, 1+ goal, 2+ points, game over the main total) vs DK/Fanatics SGP."""
     games = await load_games()
+    photos = await headshots()
     rows = []
     async with httpx.AsyncClient(timeout=30) as client:
         if oddsblaze.configured():
@@ -153,7 +180,8 @@ async def board(budget=40):
         for g in games.values():
             for p in g["players"].values():
                 if "goal" in p and "pts" in p:
-                    rows.append({"key": p["key"], "name": p["name"], "team": p["team"], "opp": g["home"] if p["team"] == g["away"] else g["away"],
+                    rows.append({"key": p["key"], "name": p["name"], "team": p["team"], "headshot": photos.get(p["key"]),
+                                 "opp": g["home"] if p["team"] == g["away"] else g["away"],
                                  "game": {"code": g["code"], "date": g["date"], "label": g["label"]}, "total": g["total"]["line"],
                                  "tickers": [g["ml"][p["team"]], p["goal"], p["pts"], g["total"]["ticker"]], "_g": g, "_p": p})
         rows.sort(key=lambda r: -r["_p"].get("gmid", 0))  # likeliest scorers first, in case the time budget runs out

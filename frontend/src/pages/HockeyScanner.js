@@ -3,9 +3,10 @@ import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
 import { getHockeyBoard, errMsg } from "../lib/api";
 import { PriceTag } from "../components/props/MarketList";
+import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { americanToProb, devigOneSided, evPct } from "../lib/slip";
 
-const SGP_BOOKS = [["dk", "DK Manual", "/dk.png"], ["fan", "Fanatics Manual", "/fanatics.png"]];
+const SGP_BOOKS = [["dk", "DK Manual", "/dk.png"], ["fan", "Fanatics Manual", "/fanatics.png"], ["czr", "Caesars Manual", "/caesars.png"]];
 const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
 const fairFrom = (books, hold) => {
   const ps = Object.values(books || {}).map((v) => americanToProb(fmt(v))).filter((p) => p != null).map((p) => devigOneSided(p, hold));
@@ -16,13 +17,18 @@ const Legs = ({ r }) => (
   <div className="text-[11px] font-mono text-slate-400 whitespace-nowrap">{r.team} ML · 1+ goal · 2+ pts · O{r.total}</div>
 );
 
-const Row = ({ r, i, format }) => {
+const Row = ({ r, i, format, books }) => {
   const slug = `${r.game.code}-${r.key.replace(/\s/g, "-")}`;
   return (
     <tr data-testid={`hockey-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
       <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
-        <div className="text-sm font-semibold text-white whitespace-nowrap">{r.name}</div>
-        <Legs r={r} />
+        <div className="flex items-center gap-3">
+          <PlayerPhoto src={r.headshot} name={r.name} size={34} />
+          <div className="leading-tight">
+            <div className="text-sm font-semibold text-white whitespace-nowrap">{r.name}</div>
+            <Legs r={r} />
+          </div>
+        </div>
       </td>
       <td className="py-3 px-4 text-right text-sm font-semibold text-slate-300 whitespace-nowrap">
         {r.team} <span className="text-slate-500">vs</span> {r.opp}
@@ -30,7 +36,7 @@ const Row = ({ r, i, format }) => {
       <td className="py-3 px-4 text-right">
         <span data-testid={`hockey-kalshi-${slug}`} className="font-mono text-base font-bold text-white"><PriceTag p={r.price} format={format} /></span>
       </td>
-      {SGP_BOOKS.map(([b]) => (
+      {books.map(([b]) => (
         <td key={b} data-testid={`hockey-${b}-${slug}`} className={`py-3 px-4 text-right font-mono text-sm ${r.sgp?.[b] != null ? "text-white font-semibold" : "text-slate-600"}`}>{fmt(r.sgp?.[b]) || "—"}</td>
       ))}
       <td className="py-3 px-4 text-right">
@@ -64,7 +70,8 @@ export default function HockeyScanner({ settings }) {
     const price = p.live.yes_price;
     return { ...p, price, ev: evPct(fairFrom(p.sgp, settings.singleHold), price, settings.fees) };
   }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
-  const heads = ["Player", "Game", "Kalshi Combos", ...SGP_BOOKS.map(([, l]) => l), "EV"];
+  const books = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
+  const heads = ["Player", "Game", "Kalshi Combos", ...books.map(([, l]) => l), "EV"];
   const logos = Object.fromEntries(SGP_BOOKS.map(([, l, src]) => [l, src]));
 
   return (
@@ -94,16 +101,16 @@ export default function HockeyScanner({ settings }) {
               ))}
             </tr>
           </thead>
-          <tbody>{rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} />)}</tbody>
+          <tbody>{rows.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} books={books} />)}</tbody>
         </table>
         {!data && <div data-testid="hockey-loading" className="py-16 text-center text-sm text-slate-500">{loading ? "Asking Kalshi market makers for live combo odds across every game… (up to 50 seconds)" : ""}</div>}
         {data && !rows.length && (
-          <div data-testid="hockey-empty" className="py-16 text-center text-sm text-slate-500">No player has both a live Kalshi combo and a DraftKings/Fanatics SGP price right now.</div>
+          <div data-testid="hockey-empty" className="py-16 text-center text-sm text-slate-500">No player has both a live Kalshi combo and a DraftKings/Fanatics/Caesars SGP price right now.</div>
         )}
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
         Each combo is 4 legs: the player's team moneyline, 1+ goal, 2+ points, and Over the game's main Kalshi total (the line closest to 50%){settings.fees ? ", Kalshi price fee included" : ""}.
-        DK/Fanatics Manual is the same 4-leg same-game parlay from OddsBlaze (pregame only). EV compares Kalshi to the SGP price with a {settings.singleHold}% hold removed (books averaged).
+        DK/Fanatics/Caesars Manual is the same 4-leg same-game parlay from OddsBlaze (pregame only). EV compares Kalshi to the SGP price with a {settings.singleHold}% hold removed (books averaged).
         Combos still waiting on a Kalshi quote after ~50 seconds are left off; press Refresh to fill in more.
       </p>
     </div>
