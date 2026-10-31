@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from typing import Annotated, Dict, List, Literal, Optional
 from bson import ObjectId
 import logging
@@ -10,6 +11,8 @@ from kalshi import norm_name
 
 logger = logging.getLogger(__name__)
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+
+ET = ZoneInfo("America/New_York")
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
 Status = Literal["pending", "won", "lost", "void"]
@@ -66,7 +69,10 @@ def make_router(db):
 
     @r.get("")
     async def list_bets():
-        return [Bet.from_mongo(d).model_dump() for d in await col.find().sort("created_at", -1).to_list(2000)]
+        """Today's bets only (ET slate date; the day rolls over at 6am ET so late games stay visible)."""
+        day = (datetime.now(ET) - timedelta(hours=6)).strftime("%y%b%d").upper()
+        docs = await col.find({"game_code": {"$regex": f"^{day}"}}).sort("created_at", -1).to_list(2000)
+        return [Bet.from_mongo(d).model_dump() for d in docs]
 
     @r.post("/grade")
     async def grade_bets():

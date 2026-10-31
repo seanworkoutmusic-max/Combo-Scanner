@@ -102,7 +102,7 @@ export default function BetTracker() {
           <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
             <ClipboardList className="h-8 w-8 text-emerald-400" /> Bet Tracker
           </h1>
-          <p className="text-sm text-slate-400 mt-1">Every combo you add with + on the TD Scanner, locked at the Kalshi price and EV from the moment you added it.</p>
+          <p className="text-sm text-slate-400 mt-1">Today's combos you added with + on the TD Scanner, locked at the Kalshi price and EV from the moment you added it. Resets each day at 6am ET.</p>
         </div>
         <div className="flex items-center gap-3">
         <button data-testid="bet-grade-btn" onClick={() => load(true)} disabled={grading}
