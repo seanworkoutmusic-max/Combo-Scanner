@@ -48,3 +48,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Bet Tracker: Result column (manual Won/Lost/Void) removed per user; grading only from ESPN (on open + "Grade from ESPN" button bet-grade-btn). Profit cell shows status label. PATCH endpoint still exists but unused.
 - kalshi_auth._private_key accepts bare base64 (DER/PKCS8, e.g. Ed25519 "MC4CAQAw...") keys without PEM headers, in addition to PEM.
 - Odds API monthly credits hit 0 on Oct 30 (401 on odds calls) -> FD/DK TD columns empty until renewal; SGP (OddsBlaze) unaffected.
+- Live Tracker "Need (RA)" = rebounds + assists still needed to reach 10/10 (points ignored); shows "10/10" when hit.

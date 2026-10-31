@@ -46,7 +46,7 @@ const Row = ({ p, i, game }) => {
         <td key={k} data-testid={`live-${k}-${slug}`} className={`py-2.5 px-4 text-right font-mono text-sm ${p[k] >= 10 ? "text-emerald-400 font-bold" : "text-slate-200"}`}>{p[k]}</td>
       ))}
       <td data-testid={`live-need-${slug}`} style={{ background: heat(p.need) }} className="py-2.5 px-4 text-center font-mono text-sm font-bold text-white">
-        {p.need === 0 ? "TD" : p.need}
+        {p.need === 0 ? "10/10" : p.need}
       </td>
     </tr>
   );
@@ -83,7 +83,7 @@ export default function LiveTracker() {
           <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
             <Crosshair data-testid="live-tracker-logo" className="h-8 w-8 text-emerald-400" /> Live Tracker
           </h1>
-          <p className="text-sm text-slate-400 mt-1">Every player in games in progress, ranked by how few points, rebounds and assists they still need for a triple-double.</p>
+          <p className="text-sm text-slate-400 mt-1">Every player in games in progress, ranked by how many rebounds and assists they still need to reach 10 of each (points ignored).</p>
           <p data-testid="live-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · refreshes every 30 seconds` : "Loading live box scores…"}
           </p>
@@ -107,7 +107,7 @@ export default function LiveTracker() {
               <th className="py-3 px-4 text-right font-semibold">Game</th>
               <th className="py-3 px-4 text-right font-semibold">MIN</th>
               {STATS.map(([k, l]) => <th key={k} className="py-3 px-4 text-right font-semibold">{l}</th>)}
-              <th className="py-3 px-4 text-center font-semibold text-white border-b-2 border-slate-300" title="Points + rebounds + assists still needed to reach 10/10/10">Need</th>
+              <th className="py-3 px-4 text-center font-semibold text-white border-b-2 border-slate-300" title="Rebounds + assists still needed to reach 10/10">Need (RA)</th>
             </tr>
           </thead>
           <tbody>

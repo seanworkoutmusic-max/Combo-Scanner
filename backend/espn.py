@@ -167,8 +167,8 @@ async def live_tracker(date=None, include_final=False, ttl=15):
                              "opp": g["home"] if team == g["away"] else g["away"], "game": g["id"],
                              "headshot": (ath.get("headshot") or {}).get("href"), "on_court": bool(a.get("active")),
                              "min": val("minutes"), "pts": pts, "reb": reb, "ast": ast, "pf": val("fouls"),
-                             "need": sum(max(0, 10 - x) for x in (pts, reb, ast))})
-    rows.sort(key=lambda x: (x["need"], -(x["pts"] + x["reb"] + x["ast"])))
+                             "need": sum(max(0, 10 - x) for x in (reb, ast))})
+    rows.sort(key=lambda x: (x["need"], -(x["reb"] + x["ast"])))
     upcoming = [e["date"] for e in events if e["status"]["type"]["state"] == "pre"]
     data = {"games": games, "players": rows, "next_tip": min(upcoming) if upcoming else None}
     _live[key] = {"t": time.time(), "data": data}
