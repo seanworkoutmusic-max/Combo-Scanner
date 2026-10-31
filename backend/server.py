@@ -152,7 +152,7 @@ async def props_players():
             for g in games.values() for p in g["players"].values()]
 
 
-_rfq_sem = asyncio.Semaphore(2)
+_rfq_sem = asyncio.Semaphore(6)
 
 # Double-double paths and the triple-double combo. Points falls back to Kalshi's lowest line if 10+ isn't offered.
 PAIRINGS = [
@@ -260,7 +260,7 @@ async def live_tracker(date: Optional[str] = Query(None, pattern=r"^\d{8}$"), in
 
 
 @api_router.get("/scanner/board")
-async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Optional[int] = Query(None, ge=5, le=15)):
+async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Optional[int] = Query(None, ge=3, le=15)):
     """Every Kalshi game's triple-double combos (or reb+ast combos when ra is set), with book odds and exact-leg SGP prices."""
     if not td_pts and not ra:
         td_pts = 10
@@ -283,7 +283,11 @@ async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Op
                                        for g, p, c, _ in todo])
     todo = [(g, p, c, odds, s) for (g, p, c, odds), s in zip(todo, sgps)
             if s or (odds and td_pts == 10 and reb_ast == 10 and c["legs"][0]["threshold"] == 10)]
-    await asyncio.gather(*[_quote(c) for _, _, c, _, _ in todo])
+    tasks = [asyncio.create_task(_quote(c)) for _, _, c, _, _ in todo]
+    if tasks:  # stay under the 60s proxy limit; combos still quoting are left off this refresh
+        _, late = await asyncio.wait(tasks, timeout=45)
+        for t in late:
+            t.cancel()
     players = [{**_player_payload(p, photos, [c]), "books": odds, "sgp": s, "game": {k: g[k] for k in ("code", "date", "label")}}
                for g, p, c, odds, s in todo if (c.get("live") or {}).get("yes_price")]
     return {"players": players, "games": len(games),

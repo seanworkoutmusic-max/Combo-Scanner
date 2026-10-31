@@ -163,7 +163,7 @@ export default function DDScanner({ settings }) {
           className="h-8 pl-2.5 pr-7 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm font-semibold text-white outline-none focus:border-white/60 cursor-pointer">
           {[10, 15, 20, 25].map((n) => <option key={n} value={String(n)}>{n}+ pts triple-double</option>)}
           {[10, 15].map((n) => <option key={`p${n}`} value={`p${n}ra8`}>{n}+ pts &amp; 8+ reb &amp; 8+ ast</option>)}
-          {[10, 8, 6].map((n) => <option key={n} value={`ra${n}`}>{n}+ reb &amp; {n}+ ast</option>)}
+          {[10, 8, 6, 4].map((n) => <option key={n} value={`ra${n}`}>{n}+ reb &amp; {n}+ ast</option>)}
         </select>
       </label>
         <OddsInput label="Min odds" value={minOdds} onChange={setMinOdds} testid="odds-min-input" />
