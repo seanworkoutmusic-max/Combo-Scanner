@@ -175,14 +175,14 @@ async def live_tracker(date=None, include_final=False, ttl=15):
     return data
 
 
-async def final_box(date, away, home):
-    """Final ESPN box score for one game: {player_key: {"Points": n, ...} or None if DNP}; None if the game isn't final."""
+async def game_box(date, away, home):
+    """ESPN box score for one game: {"state", "clock", "players": {player_key: {"Points": n, ...} or None if DNP}}; None before tip-off."""
     async with httpx.AsyncClient(timeout=20) as client:
         r = await client.get(SCOREBOARD, params={"dates": date})
         r.raise_for_status()
         ev = next((e for e in r.json().get("events", [])
                    if {_ABBR.get(c["team"]["abbreviation"], c["team"]["abbreviation"]) for c in e["competitions"][0]["competitors"]} == {away, home}), None)
-        if not ev or ev["status"]["type"]["state"] != "post":
+        if not ev or ev["status"]["type"]["state"] not in ("in", "post"):
             return None
         box = await _box(client, ev["id"])
     out = {}
@@ -200,4 +200,4 @@ async def final_box(date, away, home):
             out[key] = {"Points": p, "Rebounds": r_, "Assists": a_, "Made Threes": val("threePointFieldGoalsMade-threePointFieldGoalsAttempted"),
                         "Steals": val("steals"), "Blocks": val("blocks"), "PRA (Points + Rebounds + Assists)": p + r_ + a_,
                         "PR (Points + Rebounds)": p + r_, "PA (Points + Assists)": p + a_, "RA (Rebounds + Assists)": r_ + a_}
-    return out
+    return {"state": ev["status"]["type"]["state"], "clock": ev["status"]["type"].get("shortDetail", ""), "players": out}

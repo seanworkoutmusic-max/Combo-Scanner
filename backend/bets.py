@@ -52,6 +52,7 @@ class BetIn(BaseModel):
 class Bet(BaseDocument, BetIn):
     status: Status = "pending"
     auto_graded: bool = False
+    result_stats: Optional[Dict[str, float]] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -69,32 +70,38 @@ def make_router(db):
 
     @r.post("/grade")
     async def grade_bets():
-        """Grade pending bets whose game is final on ESPN: every leg hit -> won, any miss -> lost, player DNP -> void."""
+        """Live/final ESPN grading: all legs hit -> won (even mid-game); final with a miss -> lost; final with player DNP -> void."""
         pending = [Bet.from_mongo(d) for d in await col.find({"status": "pending"}).to_list(2000)]
-        boxes, graded = {}, 0
+        boxes, graded, live = {}, 0, {}
         for b in pending:
             info = kalshi.parse_game_code(b.game_code)
             if not info:
                 continue
             if b.game_code not in boxes:
                 try:
-                    boxes[b.game_code] = await espn.final_box(info["date"].replace("-", ""), b.game_code[-6:-3], b.game_code[-3:])
+                    boxes[b.game_code] = await espn.game_box(info["date"].replace("-", ""), b.game_code[-6:-3], b.game_code[-3:])
                 except httpx.HTTPError as e:
                     logger.warning("ESPN grading %s failed: %s", b.game_code, e)
                     boxes[b.game_code] = None
             box = boxes[b.game_code]
             if box is None:
                 continue
-            line = box.get(norm_name(b.player))
-            if line is None:
-                status = "void"
-            elif any(l.market not in line for l in b.legs):
+            final = box["state"] == "post"
+            line = box["players"].get(norm_name(b.player))
+            if line is None or any(l.market not in line for l in b.legs):
+                if final and line is None:
+                    await col.update_one({"_id": ObjectId(b.id), "status": "pending"}, {"$set": {"status": "void", "auto_graded": True}})
+                    graded += 1
                 continue
+            stats = {l.market: line[l.market] for l in b.legs}
+            hit = all(line[l.market] >= (l.threshold or 0) for l in b.legs)
+            if hit or final:
+                await col.update_one({"_id": ObjectId(b.id), "status": "pending"},
+                                     {"$set": {"status": "won" if hit else "lost", "auto_graded": True, "result_stats": stats}})
+                graded += 1
             else:
-                status = "won" if all(line[l.market] >= (l.threshold or 0) for l in b.legs) else "lost"
-            await col.update_one({"_id": ObjectId(b.id), "status": "pending"}, {"$set": {"status": status, "auto_graded": True}})
-            graded += 1
-        return {"graded": graded}
+                live[b.id] = {"clock": box["clock"], "stats": stats}
+        return {"graded": graded, "live": live}
 
     @r.post("")
     async def add_bet(b: BetIn):

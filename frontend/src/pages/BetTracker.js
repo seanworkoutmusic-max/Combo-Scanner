@@ -13,6 +13,12 @@ const profit = (b) => (b.status === "won" ? (b.stake * (1 - b.price)) / b.price 
 const money = (v) => `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(2)}`;
 const STATUS_LABEL = { won: "Won", lost: "Lost", void: "Void" };
 
+const LegProgress = ({ b, live }) => live ? (
+  <div data-testid={`bet-live-${b.id}`} className="mt-1 flex items-center gap-1 text-[10px] font-mono text-red-400">
+    <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />{live.clock}
+  </div>
+) : null;
+
 const Stat = ({ label, value, testid, tone = "text-white" }) => (
   <div className="rounded-xl border border-slate-800 bg-[#181818] px-4 py-3">
     <div className="text-[11px] uppercase tracking-widest font-mono text-slate-500">{label}</div>
@@ -20,7 +26,7 @@ const Stat = ({ label, value, testid, tone = "text-white" }) => (
   </div>
 );
 
-const BetRow = ({ b, onDelete }) => {
+const BetRow = ({ b, live, onDelete }) => {
   const p = profit(b);
   return (
     <tr data-testid={`bet-row-${b.id}`} className="border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
@@ -31,6 +37,7 @@ const BetRow = ({ b, onDelete }) => {
           <div className="leading-tight">
             <div className="text-sm font-semibold text-white whitespace-nowrap">{b.player}</div>
             <div className="text-[11px] font-mono text-slate-400">{b.combo}</div>
+            <LegProgress b={b} live={live} />
           </div>
         </div>
       </td>
@@ -41,7 +48,7 @@ const BetRow = ({ b, onDelete }) => {
       <td className="py-3 px-4 text-right font-mono text-sm text-slate-300">{money((b.stake * (1 - b.price)) / b.price)}</td>
       <td data-testid={`bet-profit-${b.id}`} className={`py-3 px-4 text-right font-mono text-sm font-bold ${b.status === "pending" ? "text-slate-500" : p > 0 ? "text-emerald-400" : p < 0 ? "text-red-400" : "text-slate-300"}`}>
         {b.status === "pending" ? "Pending" : money(p)}
-        {b.status !== "pending" && <div data-testid={`bet-status-${b.id}`} className="text-[10px] font-mono font-normal text-slate-500">{STATUS_LABEL[b.status]} · ESPN final</div>}
+        {b.status !== "pending" && <div data-testid={`bet-status-${b.id}`} className="text-[10px] font-mono font-normal text-slate-500">{STATUS_LABEL[b.status]} · ESPN</div>}
       </td>
       <td className="py-3 pl-2 pr-4">
         <button data-testid={`bet-delete-${b.id}`} onClick={() => onDelete(b)} title="Delete bet" className="text-slate-600 hover:text-red-400 transition-colors"><Trash2 className="h-4 w-4" /></button>
@@ -55,14 +62,16 @@ export default function BetTracker() {
   const [stake, setStake] = useState(getStake());
 
   const [grading, setGrading] = useState(false);
+  const [live, setLive] = useState({});
 
   const load = useCallback(async (manual = false) => {
     setGrading(true);
     try {
       const g = await gradeBets().catch(() => null);
+      setLive(g?.live || {});
       setBets(await getBets());
-      if (g?.graded) toast.success(`Graded ${g.graded} bet${g.graded > 1 ? "s" : ""} from ESPN final box scores`);
-      else if (manual) toast(g ? "No finished games to grade yet" : "ESPN unavailable, try again shortly");
+      if (g?.graded) toast.success(`Graded ${g.graded} bet${g.graded > 1 ? "s" : ""} from ESPN box scores`);
+      else if (manual) toast(g ? (Object.keys(g.live || {}).length ? "Live stats updated" : "No live or finished games yet") : "ESPN unavailable, try again shortly");
     } catch (e) { toast.error(errMsg(e)); }
     finally { setGrading(false); }
   }, []);
@@ -129,14 +138,14 @@ export default function BetTracker() {
             </tr>
           </thead>
           <tbody>
-            {(bets || []).map((b) => <BetRow key={b.id} b={b} onDelete={onDelete} />)}
+            {(bets || []).map((b) => <BetRow key={b.id} b={b} live={live[b.id]} onDelete={onDelete} />)}
           </tbody>
         </table>
         {bets && !bets.length && (
           <div data-testid="bet-empty" className="py-16 text-center text-sm text-slate-500">No bets tracked yet. Tap + next to a player on the TD Scanner to add one.</div>
         )}
       </div>
-      <p className="text-xs text-slate-500">Pending bets are graded from ESPN final box scores when you open this page or press Grade from ESPN (every leg hit = Won, any miss = Lost, player didn't play = Void). Profit uses the locked Kalshi price before fees.</p>
+      <p className="text-xs text-slate-500">Pending bets update from live ESPN box scores when you open this page or press Grade from ESPN. A bet is Won as soon as every leg hits (even mid-game), Lost if a leg misses at the final, and Void if the player didn't play. Profit uses the locked Kalshi price before fees.</p>
     </div>
   );
 }

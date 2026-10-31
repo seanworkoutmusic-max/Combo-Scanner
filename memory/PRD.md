@@ -49,3 +49,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - kalshi_auth._private_key accepts bare base64 (DER/PKCS8, e.g. Ed25519 "MC4CAQAw...") keys without PEM headers, in addition to PEM.
 - Odds API monthly credits hit 0 on Oct 30 (401 on odds calls) -> FD/DK TD columns empty until renewal; SGP (OddsBlaze) unaffected.
 - Live Tracker "Need (RA)" = rebounds + assists still needed to reach 10/10 (points ignored); shows "10/10" when hit.
+- Bet Tracker live grading: POST /api/bets/grade uses espn.game_box (in/post games); all legs hit -> won immediately (even mid-game), final miss -> lost, final DNP -> void; stores result_stats; returns live {bet_id: {clock, stats}}. UI shows only live game clock under combo (leg stat chips removed per user). Updates only on page open / Grade from ESPN button.
