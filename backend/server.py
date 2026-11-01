@@ -262,14 +262,20 @@ async def live_tracker(date: Optional[str] = Query(None, pattern=r"^\d{8}$"), in
 
 
 @api_router.get("/scanner/board")
-async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Optional[int] = Query(None, ge=3, le=15)):
-    """Every Kalshi game's triple-double combos (or reb+ast combos when ra is set), with book odds and exact-leg SGP prices."""
+async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Optional[int] = Query(None, ge=3, le=15), live: bool = False):
+    """Every Kalshi game's triple-double combos (or reb+ast combos when ra is set), with book odds and exact-leg SGP prices.
+    live=true: only games in progress, live SGP prices, current box-score stats, combos already hit hidden."""
     if not td_pts and not ra:
         td_pts = 10
     reb_ast = ra or 10
     games = await kalshi_props.load_props()
+    boxes = {}
+    if live:
+        res = await asyncio.gather(*[espn.game_box(g["date"].replace("-", ""), c[-6:-3], c[-3:]) for c, g in games.items()], return_exceptions=True)
+        boxes = {c: b for c, b in zip(games, res) if isinstance(b, dict) and b["state"] == "in"}
+        games = {c: g for c, g in games.items() if c in boxes}
     photos = await espn.headshots()
-    books = await asyncio.gather(*[odds_api.triple_double_odds(c[-6:-3], c[-3:]) for c in games]) if td_pts == 10 and reb_ast == 10 else [({}, None)] * len(games)
+    books = await asyncio.gather(*[odds_api.triple_double_odds(c[-6:-3], c[-3:]) for c in games]) if td_pts == 10 and reb_ast == 10 and not live else [({}, None)] * len(games)
     todo = []
     for g, (bk, _) in zip(games.values(), books):
         for p in g["players"].values():
@@ -278,12 +284,18 @@ async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Op
             if td_pts:
                 legs.insert(0, _pick(p["markets"], "Points", td_pts) or min(
                     (l for l in p["markets"].get("Points", []) if (l["threshold"] or 0) > td_pts), key=lambda l: l["threshold"], default=None))
-            if None not in legs:
-                c = {"kind": "TD" if td_pts else "RA", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}
-                todo.append((g, p, c, odds))
+            if None in legs:
+                continue
+            c = {"kind": "TD" if td_pts else "RA", "name": " & ".join(f"{l['threshold']}+ {l['market']}" for l in legs), "legs": legs}
+            if live:
+                stats = boxes[g["code"]]["players"].get(p["key"])
+                if not stats or all(stats[l["market"]] >= l["threshold"] for l in legs):
+                    continue
+                c["now"] = {"clock": boxes[g["code"]]["clock"], **{k: stats[k] for k in ("Points", "Rebounds", "Assists")}}
+            todo.append((g, p, c, odds))
     t0 = time.monotonic()
     sgps = await oddsblaze.sgp_prices([(g["code"][-6:-3], g["code"][-3:], [(p["key"], l["market"], l["threshold"]) for l in c["legs"]])
-                                       for g, p, c, _ in todo], timeout=25)
+                                       for g, p, c, _ in todo], timeout=25, live=live)
     todo = [(g, p, c, odds, s) for (g, p, c, odds), s in zip(todo, sgps)
             if s or (odds and td_pts == 10 and reb_ast == 10 and c["legs"][0]["threshold"] == 10)]
     tasks = [asyncio.create_task(_quote(c)) for _, _, c, _, _ in todo]

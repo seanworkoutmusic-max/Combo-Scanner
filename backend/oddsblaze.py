@@ -29,16 +29,21 @@ def _abbr(full):
     return next((a for a, n in TEAMS.items() if a != "BRK" and full.endswith(n)), None)
 
 
-async def _book_props(client, book, ttl=120):
-    """{(away, home): {norm_name: {"Points": {19.5: sgp}, ...}}} of Over lines for one book."""
-    hit = _props.get(book)
-    if hit and time.time() - hit["t"] < ttl:
+async def _book_props(client, book, ttl=120, live=False):
+    """{(away, home): {norm_name: {"Points": {19.5: sgp}, ...}}} of Over lines for one book (pregame, or in-progress games when live)."""
+    ck = (book, live)
+    hit = _props.get(ck)
+    if hit and time.time() - hit["t"] < (20 if live else ttl):
         return hit["games"]
-    r = await client.get(ODDS, params={"key": os.environ["ODDSBLAZE_API_KEY"], "sportsbook": book, "league": "nba",
-                                       "market": ",".join(MARKETS), "live": "false"})
+    params = {"key": os.environ["ODDSBLAZE_API_KEY"], "sportsbook": book, "league": "nba", "market": ",".join(MARKETS)}
+    if not live:
+        params["live"] = "false"
+    r = await client.get(ODDS, params=params)
     games = {}
     if r.status_code == 200:
         for e in r.json().get("events", []):
+            if live and not e.get("live"):
+                continue
             key = (_abbr(e["teams"]["away"]["name"]), _abbr(e["teams"]["home"]["name"]))
             g = games.setdefault(key, {})
             for o in e.get("odds", []):
@@ -48,7 +53,7 @@ async def _book_props(client, book, ttl=120):
                     g.setdefault(norm_name(name), {}).setdefault(MARKETS[o["market"]], {})[sel.get("line")] = o["sgp"]
     else:
         logger.info("OddsBlaze %s NBA unavailable: %s", book, r.status_code)
-    _props[book] = {"t": time.time(), "games": games}
+    _props[ck] = {"t": time.time(), "games": games}
     return games
 
 
@@ -70,7 +75,7 @@ async def _price(client, book, sgps, ttl=120):
     return price
 
 
-async def sgp_prices(requests, books=None, timeout=None):
+async def sgp_prices(requests, books=None, timeout=None, live=False):
     """requests: [(away, home, [(player_key, market, threshold|None), ...])] -> list of {"dk": american, "fan": american, ...}."""
     out = [{} for _ in requests]
     books = {b: s for b, s in BOOKS.items() if books is None or s in books}
@@ -81,7 +86,7 @@ async def sgp_prices(requests, books=None, timeout=None):
             props = {}
             for b in books:
                 try:
-                    props[b] = await _book_props(client, b)
+                    props[b] = await _book_props(client, b, live=live)
                 except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
                     logger.warning("OddsBlaze %s props failed: %s", b, e)
                     props[b] = {}
@@ -97,7 +102,7 @@ async def sgp_prices(requests, books=None, timeout=None):
         async def run(i, short, book, sgps):
             async with sems[book]:
                 try:
-                    out[i][short] = await _price(client, book, sgps)
+                    out[i][short] = await _price(client, book, sgps, ttl=20 if live else 120)
                 except httpx.HTTPError as e:
                     logger.warning("OddsBlaze SGP failed: %s", e)
         tasks = [asyncio.create_task(run(*j)) for j in jobs]

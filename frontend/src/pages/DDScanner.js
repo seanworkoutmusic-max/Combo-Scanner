@@ -55,7 +55,11 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
           <PlayerPhoto src={r.headshot} name={r.name} size={34} />
           <div className="leading-tight">
             <div className="text-sm font-semibold text-white whitespace-nowrap">{r.name}</div>
-            <div className="text-[11px] font-mono text-slate-500">{r.team}</div>
+            {r.combos[0].now ? (
+              <div data-testid={`live-now-${slug}`} className="text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                <span className="text-slate-500">{r.team}</span> · {r.combos[0].now.Points} PTS · {r.combos[0].now.Rebounds} REB · {r.combos[0].now.Assists} AST
+              </div>
+            ) : <div className="text-[11px] font-mono text-slate-500">{r.team}</div>}
           </div>
         </div>
       </td>
@@ -64,6 +68,9 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
           className="inline-flex items-center gap-1.5 hover:text-white transition-colors">
           <GameLabel code={r.game.code} size={16} /><ExternalLink className="h-3 w-3 text-slate-500" />
         </a>
+        {r.combos[0].now && (
+          <div className="flex items-center justify-end gap-1 text-[10px] font-mono text-red-400"><span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />{r.combos[0].now.clock}</div>
+        )}
       </td>
       <td className="py-3 px-4 text-right">
         <span data-testid={`td-${slug}`} className="font-mono text-base font-bold text-white"><PriceTag p={r.price} format={format} /></span>
@@ -81,6 +88,7 @@ export default function DDScanner({ settings }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pick, setPick] = useState("10");
+  const [live, setLive] = useState(false);
   const [minOdds, setMinOdds] = useState("");
   const [maxOdds, setMaxOdds] = useState("");
   const [, ptsStr, raStr] = pick.match(/^(?:p?(\d+))?(?:ra(\d+))?$/);
@@ -92,14 +100,14 @@ export default function DDScanner({ settings }) {
     const id = ++reqId.current;
     setLoading(true);
     try {
-      const d = await getScannerBoard({ td_pts: tdPts || undefined, ra: ra || undefined });
+      const d = await getScannerBoard({ td_pts: tdPts || undefined, ra: ra || undefined, live: live || undefined });
       if (id === reqId.current) setData(d);
     } catch (e) {
       if (id === reqId.current) toast.error(errMsg(e));
     } finally {
       if (id === reqId.current) setLoading(false);
     }
-  }, [ra, tdPts]);
+  }, [ra, tdPts, live]);
 
   useEffect(() => { setData(null); load(); }, [load]);
 
@@ -137,7 +145,7 @@ export default function DDScanner({ settings }) {
     return a != null && (lo == null || a >= lo) && (hi == null || a <= hi);
   });
   const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
-  const tdBooks = tdPts === 10 && !ra ? BOOKS : [];
+  const tdBooks = tdPts === 10 && !ra && !live ? BOOKS : [];
   const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => `${l} Manual`), "EV"];
 
   return (
@@ -157,6 +165,14 @@ export default function DDScanner({ settings }) {
       </div>
 
       <div className="flex items-center gap-5 flex-wrap">
+      <div data-testid="scanner-mode" className="flex rounded-lg border border-slate-700 bg-[#0E0E0E] p-0.5">
+        {[["pregame", "Pregame"], ["live", "Live"]].map(([k, l]) => (
+          <button key={k} data-testid={`scanner-mode-${k}`} onClick={() => setLive(k === "live")}
+            className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"}`}>
+            {k === "live" && <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-red-500 animate-pulse" : "bg-red-500/60"}`} />}{l}
+          </button>
+        ))}
+      </div>
       <label className="flex items-center gap-2 text-sm text-slate-400">
         Combo
         <select data-testid="td-points-select" value={pick} onChange={(e) => setPick(e.target.value)}
@@ -203,11 +219,13 @@ export default function DDScanner({ settings }) {
         )}
         {data && !rows.length && (
           <div data-testid="scanner-empty" className="py-16 text-center text-sm text-slate-500">
-            No player has both a live Kalshi combo and a FanDuel/DraftKings price right now. Books usually post these on game day.
+            {live ? "No games in progress with live Kalshi combos and live sportsbook SGP prices right now."
+              : "No player has both a live Kalshi combo and a FanDuel/DraftKings price right now. Books usually post these on game day."}
           </div>
         )}
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
+        {live && "Live mode: only games in progress, with in-game Kalshi and SGP prices and each player's current box score; combos already hit are hidden. "}
         Kalshi Combos is the live combo price for {`${tdPts ? `${tdPts}+ points, ` : ""}${ra || 10}+ rebounds and ${ra || 10}+ assists`}{settings.fees ? " (fee included)" : ""}. When Kalshi has no {tdPts}+ points
         line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings/Fanatics/BetMGM/Hard Rock same-game-parlay price for the exact same legs as the Kalshi combo
         (FanDuel SGP isn't available from OddsBlaze).
