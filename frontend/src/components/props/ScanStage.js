@@ -34,7 +34,7 @@ export const ScanLoader = ({ progress }) => {
         <div className="relative font-display text-xl font-extrabold tracking-[0.18em] text-white">
           PROP<span className="text-emerald-400">OUTLIERS</span>
         </div>
-        <div className="relative mt-2 text-[10px] tracking-[0.4em] text-slate-400">TD SCANNER</div>
+        <div className="relative mt-2 text-[10px] tracking-[0.4em] text-slate-400">SGP SCANNER</div>
         <div key={step} data-testid="scanner-loading-step"
           className="relative mt-6 mx-4 px-3 py-1.5 rounded-full border border-white/10 bg-black/30 text-[11px] text-slate-300 text-center scan-fade-in">
           {STEPS[step]}
