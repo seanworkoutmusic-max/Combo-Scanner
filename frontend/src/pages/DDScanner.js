@@ -151,7 +151,7 @@ export default function DDScanner({ settings }) {
     }
   }, [all, ra, tdPts, live, selKey]);
 
-  useEffect(() => { setData(null); load(); }, [load]);
+  useEffect(() => { reqId.current++; setData(null); setLoading(false); setProgress(null); }, [load]);
 
   const [tracked, setTracked] = useState(new Set());
   useEffect(() => {
@@ -254,7 +254,7 @@ export default function DDScanner({ settings }) {
         </table>
         {!data && (
           <div data-testid="scanner-loading" className="py-16 text-center text-sm text-slate-500">
-            {loading ? "Asking Kalshi market makers for live combo odds across every game… (10–30 seconds)" : ""}
+            {loading ? "Asking Kalshi market makers for live combo odds across every game… (10–30 seconds)" : "Choose your filter, then press Refresh to scan."}
           </div>
         )}
         {data && rows.length > 0 && !shown.length && (
