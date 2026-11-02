@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, ExternalLink, Plus, Check } from "lucide-react";
 import { ComboFilter } from "../components/props/ComboFilter";
+import { ScanLoader, ScanReady } from "../components/props/ScanStage";
 import { getScannerBoard, getBets, addBet, errMsg } from "../lib/api";
 import { getStake } from "./BetTracker";
 import { probToAmerican } from "../lib/ev";
@@ -186,6 +187,8 @@ export default function DDScanner({ settings }) {
     .filter((r, i, arr) => !all || arr.findIndex((x) => x.key === r.key && x.game.code === r.game.code) === i),
   [data, settings.singleHold, settings.fees, all]);
   const lo = parseOdds(minOdds), hi = parseOdds(maxOdds);
+  const ready = !data && !loading;
+  const showLoader = loading && !rows.length;
   const shown = rows.filter((r) => {
     if (tracked.has(betKey(r.game.code, r.combos[0].legs))) return false;  // tracked plays leave the board
     const a = probToAmerican(settings.fees ? Math.min(r.price + 0.07 * r.price * (1 - r.price), 0.999) : r.price);
@@ -233,6 +236,7 @@ export default function DDScanner({ settings }) {
       </div>
 
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
+        {ready ? <ScanReady onScan={load} /> : showLoader ? <ScanLoader progress={progress} /> : (
         <table data-testid="scanner-board" className="w-full min-w-[1000px]">
           <thead>
             <tr className="text-xs text-slate-400">
@@ -252,15 +256,11 @@ export default function DDScanner({ settings }) {
               tracked={tracked.has(betKey(r.game.code, r.combos[0].legs))} onTrack={onTrack} />)}
           </tbody>
         </table>
-        {!data && (
-          <div data-testid="scanner-loading" className="py-16 text-center text-sm text-slate-500">
-            {loading ? "Asking Kalshi market makers for live combo odds across every game… (10–30 seconds)" : "Choose your filter, then press Refresh to scan."}
-          </div>
         )}
-        {data && rows.length > 0 && !shown.length && (
+        {data && !loading && rows.length > 0 && !shown.length && (
           <div data-testid="scanner-odds-empty" className="py-16 text-center text-sm text-slate-500">No combos between those odds. Widen the range or clear it.</div>
         )}
-        {data && !rows.length && (
+        {data && !loading && !rows.length && (
           <div data-testid="scanner-empty" className="py-16 text-center text-sm text-slate-500">
             {live ? "No games in progress with live Kalshi combos and live sportsbook SGP prices right now."
               : "No player has both a live Kalshi combo and a FanDuel/DraftKings price right now. Books usually post these on game day."}

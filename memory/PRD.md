@@ -66,3 +66,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Live Tracker renamed "In-Game Tracker" (sidebar+heading). My Bets column (live-mybets-{slug}) shows today tracked bets matched by normalized player name with leg progress (green when hit) and status; "Only my bets" toggle (live-mine-toggle).
 - In-Game Tracker: "Only my bets" toggle replaced by tabs All Players | My Bets (live-tab-all, live-tab-mine with count); My Bets column only shown on My Bets tab.
 - TD Leaders tab removed from sidebar/App (TDWatch.js file + /api/td-leaders still exist, unused). In-Game Tracker tabs are text-only.
+- TD Scanner: ScanReady (Ready when you are + "Scan combos" button, scanner-scan-btn) before first scan; ScanLoader animated shining card (PROP OUTLIERS / TD SCANNER, rotating step pill, dots, multi-combo progress) while loading with no rows (components/props/ScanStage.js, CSS scan-* in index.css).
