@@ -29,6 +29,12 @@ const fairFrom = (books, hold) => {
   return ps.length ? ps.reduce((a, x) => a + x, 0) / ps.length : null;
 };
 
+// Straight average of the book prices (implied probability averaged, hold still in), as American odds.
+const marketAvg = (books) => {
+  const ps = Object.values(books || {}).map((v) => americanToProb(fmt(v))).filter((p) => p != null);
+  return ps.length ? probToAmerican(ps.reduce((a, x) => a + x, 0) / ps.length) : null;
+};
+
 const EvCell = ({ ev, testid }) => (
   <div data-testid={testid} className={`font-mono text-sm font-bold ${ev > 0 ? "text-emerald-400" : "text-red-400"}`}>
     {`${ev > 0 ? "+" : ""}${(ev * 100).toFixed(1)}%`}
@@ -78,6 +84,7 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
       </td>
       {tdBooks.map(([b]) => <Odds key={b} v={r.books[b]} testid={`${b}-td-${slug}`} />)}
       {sgpBooks.map(([b]) => <Odds key={b} v={r.sgp?.[b]} testid={`${b}-sgp-${slug}`} />)}
+      <td data-testid={`market-avg-${slug}`} className="py-3 px-4 text-right font-mono text-sm font-bold text-white bg-white/[0.03]">{fmt(r.avg) || "—"}</td>
       <td className="py-3 px-4 text-right"><EvCell ev={r.ev} testid={`ev-td-${slug}`} /></td>
     </tr>
   );
@@ -136,8 +143,10 @@ export default function DDScanner({ settings }) {
   const rows = useMemo(() => (data?.players || []).map((p) => {
     const price = p.combos[0].live.yes_price;
     const hasSgp = Object.keys(p.sgp || {}).length > 0;
-    const fair = hasSgp ? fairFrom(p.sgp, settings.singleHold) : !ra && p.combos[0].legs[0].market === "Points" && p.combos[0].legs[0].threshold === 10 ? fairFrom(p.books, settings.singleHold) : null;
-    return { ...p, price, ev: evPct(fair, price, settings.fees) };
+    const td10 = !ra && p.combos[0].legs[0].market === "Points" && p.combos[0].legs[0].threshold === 10;
+    const src = hasSgp ? p.sgp : td10 ? p.books : null;
+    const fair = src ? fairFrom(src, settings.singleHold) : null;
+    return { ...p, price, avg: src ? marketAvg(src) : null, ev: evPct(fair, price, settings.fees) };
   }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
   const lo = parseOdds(minOdds), hi = parseOdds(maxOdds);
   const shown = rows.filter((r) => {
@@ -146,7 +155,7 @@ export default function DDScanner({ settings }) {
   });
   const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
   const tdBooks = tdPts === 10 && !ra && !live ? BOOKS : [];
-  const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => `${l} Manual`), "EV"];
+  const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => `${l} Manual`), "Market Avg", "EV"];
 
   return (
     <div className="space-y-6">
