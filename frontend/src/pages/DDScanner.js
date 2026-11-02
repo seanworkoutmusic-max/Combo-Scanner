@@ -268,16 +268,6 @@ export default function DDScanner({ settings }) {
           </div>
         )}
       </div>
-      <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
-        {live && "Live mode: only games in progress, with in-game Kalshi and SGP prices and each player's current box score; combos already hit are hidden. "}
-        {all && "Multiple combos: each chosen combo is scanned in turn and every player keeps only their best-EV combo (legs shown under the Kalshi price). "}
-        Kalshi Combos is the live combo price for {all ? "the combo's legs" : `${tdPts ? `${tdPts}+ points, ` : ""}${ra || 10}+ rebounds and ${ra || 10}+ assists`}{settings.fees ? " (fee included)" : ""}. When Kalshi has no {all ? "matching" : `${tdPts}+`} points
-        line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings/Fanatics/BetMGM/Hard Rock same-game-parlay price for the exact same legs as the Kalshi combo
-        (FanDuel SGP isn't available from OddsBlaze).
-        EV compares Kalshi to the SGP price with a {settings.singleHold}% hold removed (books averaged); without an SGP price it falls back to the regular
-        "to record a triple-double" odds, only for 10+ point combos.
-        {data?.books?.credits_left ? ` ${data.books.credits_left} Odds API credits left this month.` : ""}
-      </p>
     </div>
   );
 }
