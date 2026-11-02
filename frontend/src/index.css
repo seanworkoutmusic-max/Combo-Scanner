@@ -98,3 +98,19 @@ body {
   to { opacity: 1; transform: none; }
 }
 @keyframes row-glow { 0%, 40% { background-color: rgba(56, 112, 223, 0.16); } 100% { background-color: transparent; } }
+
+/* Loading card: dolphin jumping out of the water */
+.scan-dolphin { animation: dolphin-jump 2.2s cubic-bezier(0.45, 0, 0.55, 1) infinite; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45)); }
+@keyframes dolphin-jump {
+  0% { transform: translate(-46px, 56px) rotate(-55deg); opacity: 0; }
+  12% { opacity: 1; }
+  50% { transform: translate(0, -8px) rotate(0deg); }
+  88% { opacity: 1; }
+  100% { transform: translate(46px, 56px) rotate(60deg); opacity: 0; }
+}
+.scan-wave { position: absolute; left: 0; bottom: 0; width: 200%; height: 100%; }
+.scan-wave path { fill: #3870df; }
+.scan-wave-back { opacity: 0.35; animation: wave-move 4s linear infinite reverse; }
+.scan-wave-front { opacity: 0.8; animation: wave-move 2.6s linear infinite; }
+.scan-wave-front path { fill: #2c5aca; }
+@keyframes wave-move { from { transform: translateX(0); } to { transform: translateX(-50%); } }
