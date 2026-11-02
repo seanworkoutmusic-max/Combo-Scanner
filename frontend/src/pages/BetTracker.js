@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, RefreshCw, Trash2 } from "lucide-react";
+import { ClipboardList, Link2, RefreshCw, Trash2 } from "lucide-react";
 import { getBets, gradeBets, deleteBet, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
@@ -78,6 +78,15 @@ export default function BetTracker() {
   useEffect(() => { load(); }, [load]);
 
   const onStake = (v) => { setStake(v); if (Number(v) > 0) localStorage.setItem(STAKE_KEY, String(Number(v))); };
+  const onShare = async () => {
+    const link = `${window.location.origin}/sean`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Share link copied", { description: link });
+    } catch {
+      window.prompt("Copy your share link:", link);
+    }
+  };
   const onDelete = async (b) => {
     try { await deleteBet(b.id); setBets((xs) => xs.filter((x) => x.id !== b.id)); toast.success("Bet deleted"); } catch (e) { toast.error(errMsg(e)); }
   };
@@ -105,6 +114,10 @@ export default function BetTracker() {
           <p className="text-sm text-slate-400 mt-1">Today's combos you added with + on the TD Scanner, locked at the Kalshi price and EV from the moment you added it. Resets each day at 6am ET.</p>
         </div>
         <div className="flex items-center gap-3">
+        <button data-testid="bet-share-btn" onClick={onShare}
+          className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-700 text-sm font-semibold text-white hover:border-white/60 hover:bg-white/[0.05] transition-colors">
+          <Link2 className="h-3.5 w-3.5" /> Share link
+        </button>
         <button data-testid="bet-grade-btn" onClick={() => load(true)} disabled={grading}
           className="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
           <RefreshCw className={`h-3.5 w-3.5 ${grading ? "animate-spin" : ""}`} /> Grade from ESPN
