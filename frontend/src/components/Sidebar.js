@@ -1,19 +1,18 @@
-import { BookOpen, ChartLine, ClipboardList, Crosshair, Disc, Layers, Table2 } from "lucide-react";
+import { BookOpen, ChartLine, ClipboardList, Crosshair, Layers, Table2 } from "lucide-react";
 import { HowItWorks } from "./HowItWorks";
 
 const TABS = [
-  { id: "props", label: "Player Props", testid: "nav-tab-props", icon: Layers },
+  { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers },
   { id: "scanner", label: "TD Scanner", testid: "nav-tab-scanner", icon: Table2 },
   { id: "tdwatch", label: "TD Leaders", testid: "nav-tab-tdwatch", icon: ChartLine },
-  { id: "hockey", label: "Hockey Scanner", testid: "nav-tab-hockey", icon: Disc },
   { id: "live", label: "Live Tracker", testid: "nav-tab-live", icon: Crosshair },
   { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList },
 ];
 
 const Logo = ({ collapsible }) => (
   <div className="flex items-center gap-2.5">
-    <img data-testid="site-logo" src="/logo.png" alt="Combo Builder logo" className="h-6 w-6 rounded object-cover shrink-0" />
-    <span data-testid="site-title" className={`font-display font-bold text-[17px] tracking-tight whitespace-nowrap ${collapsible ? "hidden min-[1440px]:inline" : ""}`}>Combo Builder</span>
+    <img data-testid="site-logo" src="/logo.png" alt="Edge Scanner logo" className="h-6 w-6 rounded object-cover shrink-0" />
+    <span data-testid="site-title" className={`font-display font-bold text-[17px] tracking-tight whitespace-nowrap ${collapsible ? "hidden min-[1440px]:inline" : ""}`}>Edge Scanner</span>
   </div>
 );
 
