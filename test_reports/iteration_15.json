@@ -1,0 +1,23 @@
+{
+  "summary": "Verified the fix for the empty SGP Scanner (OddsBlaze key was rejected). Backend: GET /api/scanner/board?ra=8&game=26NOV02CHIPHI returned 200 with books={enabled:true, sgp:true, sgp_key_rejected:false}, and its players had integer SGP prices from dk, fan and hr (for example LeBron James dk 350, fan 310, hr 382). 2/2 pytest passed. Frontend (2 full scans only): scanning with the 8+ reb & 8+ ast filter showed 12 rows ('12 of 17 combos across 15 games') with DraftKings, Fanatics, BetMGM and Hard Rock SGP prices and EV values (+372.4% down to +13.0%). The default 10+ pts triple-double scan showed 1 row (Luka Doncic, FD/DK triple-double odds plus all 5 SGP books, EV +36.6%). The sgp-key-warning banner did not appear in either scan, and there were no page errors. The '1 of 5' and '12 of 17' counts are not a bug: the 60 existing user bets include those combos, and tracked plays are hidden from the board on purpose.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [{"screen": "SGP Scanner Tonight's slate", "issues": ["Slate-card combo counts include combos the user already tracked, which are hidden from the board (e.g. CHI-PHI card says '1 combo' but the TD10 board has no CHI-PHI row). This could confuse users; consider counting only the rows that are shown."]}]
+  },
+  "test_report_links": ["/app/backend/tests/test_sgp_key_status.py", "/app/test_reports/pytest/pytest_sgp_key.xml"],
+  "action_items": ["Optional: make the slate-card counts use the shown rows (with tracked plays excluded) instead of all rows"],
+  "critical_code_review_comments": [
+    "oddsblaze.status['key_rejected'] is only updated when _book_props actually fetches; cached prop hits (120s TTL) keep the old flag. This is acceptable, but if the key is rotated the flag can lag by up to 2 minutes.",
+    "The flag is a single global for all books, so the last book's response wins. A 401 from one book followed by a 200 from another clears it. Consider any() across books per refresh.",
+    "If ODDSBLAZE_API_KEY is missing entirely, sgp is false but no warning is shown; the banner only covers a rejected key.",
+    "Carried over: scanner_game's book-only sort can call min() with no default."
+  ],
+  "updated_files": ["/app/backend/tests/test_sgp_key_status.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The slate is Nov 2 with 15 Kalshi games. FanDuel returns no SGP prices right now (only dk, fan, mgm and hr). The 60 real user bets hide the matching combos from the board, so don't touch them. Run with: REACT_APP_BACKEND_URL=... pytest backend/tests/test_sgp_key_status.py"
+}
