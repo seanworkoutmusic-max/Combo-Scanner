@@ -1,0 +1,14 @@
+{
+  "summary": "Ran a regression smoke test after the production deploy failure. All checks passed. Backend: 5/5 pytest passed. /api/status, /api/scanner/games (15 games, all kalshi=true, each with code/date/kalshi), single-game /api/scanner/board?td_pts=20&game=26NOV02OKCCLE (200 in seconds), /api/live-tracker, and the /api/bets list -> POST -> verify -> DELETE -> verify-gone cycle all worked, and the test bet was removed. Frontend: no console errors or page errors. Checked: site-logo, all 4 nav tabs, scanner-ready panel with the 'Scan all 15 games' button, 15 slate-game-* cards, 0 'Scan this game' buttons and no stat cards, combo-filter dropdown (10 combos, min/max odds inputs, NBA/NFL/MLB sports, Kalshi book), Bet Tracker, In-Game Tracker live-tab-all/live-tab-mine, and /sean shared-bets-page (read-only, no delete buttons). The app itself is healthy and deployable, so the deploy failure is not caused by app code.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_deploy_smoke.py", "/app/test_reports/pytest/pytest_deploy_smoke.xml"],
+  "action_items": [],
+  "critical_code_review_comments": ["Carried over from iteration 13: scanner_game's book-only extra.sort calls min() without default= and can raise a 500 if all book prices are None"],
+  "updated_files": ["/app/backend/tests/test_deploy_smoke.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "none (one TEST_Player bet was created and deleted)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Live data slate on Nov 2 had 15 Kalshi games. The bets collection holds 60 real user bets, so don't touch them. The browser runs in UTC, so tip times show as about 12:10 AM. Run the smoke tests with: REACT_APP_BACKEND_URL=... pytest backend/tests/test_deploy_smoke.py"
+}
