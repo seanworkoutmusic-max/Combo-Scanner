@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { RefreshCw, ExternalLink, Plus, Check, Search } from "lucide-react";
 import { ComboFilter } from "../components/props/ComboFilter";
 import { ScanLoader, ScanReady } from "../components/props/ScanStage";
-import { ScannerStats, SlateCards } from "../components/props/ScannerOverview";
+import { SlateCards } from "../components/props/ScannerOverview";
 import { getScannerBoard, getScannerGames, getBets, addBet, errMsg } from "../lib/api";
 import { getStake } from "./BetTracker";
 import { probToAmerican } from "../lib/ev";
@@ -209,7 +209,6 @@ export default function DDScanner({ settings }) {
   (slate || []).forEach((g) => {
     if (data && !loading && (scannedGames === "all" || scannedGames?.includes(g.code))) counts[g.code] = rows.filter((r) => r.game.code === g.code).length;
   });
-  const bookNames = ["Kalshi", ...(sgpBooks.length ? sgpBooks : SGP_BOOKS.filter(([b]) => b !== "fd")).map(([, l]) => l)];
 
   return (
     <div className="space-y-6">
@@ -243,7 +242,6 @@ export default function DDScanner({ settings }) {
         {progress && <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400">Loading {progress.done}/{progress.total} combos…</span>}
       </div>
 
-      <ScannerStats games={slate} books={bookNames} best={rows[0]?.ev > 0 ? rows[0] : null} plusEv={rows.filter((r) => r.ev > 0).length} scanned={!!data && !loading} />
 
       <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
         {ready ? <ScanReady onScan={() => load()} games={slate?.length} /> : showLoader ? <ScanLoader progress={progress} /> : (

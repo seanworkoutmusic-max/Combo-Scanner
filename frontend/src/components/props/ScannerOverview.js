@@ -1,24 +1,7 @@
 import { TeamLogo } from "./TeamLogo";
 
-const Card = ({ label, value, sub, tone = "text-white", testid }) => (
-  <div data-testid={testid} className="rounded-xl border border-slate-800 bg-[#0D1B33] px-5 py-4">
-    <div className="text-xs text-slate-400">{label}</div>
-    <div className={`mt-2 font-mono text-2xl font-bold ${tone}`}>{value}</div>
-    <div className="mt-1.5 text-[11px] text-slate-500 truncate">{sub}</div>
-  </div>
-);
 
-const fmtDay = (d) => new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "2-digit", day: "2-digit" });
 
-export const ScannerStats = ({ games, books, best, plusEv, scanned }) => (
-  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <Card testid="stat-games" label="Games on the slate" value={games?.length ?? "—"} sub={games?.length ? `NBA · ${fmtDay(games[0].date)}` : "NBA"} />
-    <Card testid="stat-books" label="Books compared" value={books.length} sub={books.join(" · ")} />
-    <Card testid="stat-best" label="Best edge" tone={best ? "text-emerald-400" : "text-white"}
-      value={best ? `+${(best.ev * 100).toFixed(1)}%` : "—"} sub={best ? `${best.name} · ${best.combos[0].legs.length}-leg SGP` : "Run a scan to find it"} />
-    <Card testid="stat-plus-ev" label="+EV combos found" value={scanned ? plusEv : "—"} sub={scanned ? "On the current board" : "Run a scan to fill this in"} />
-  </div>
-);
 
 const tip = (g) => (g.start ? new Date(g.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "Tip-off TBA");
 
