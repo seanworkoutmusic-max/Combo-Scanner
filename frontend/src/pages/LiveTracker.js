@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Crosshair, RefreshCw } from "lucide-react";
-import { getLiveTracker, errMsg } from "../lib/api";
+import { getLiveTracker, getBets, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { TeamLogo } from "../components/props/TeamLogo";
 
@@ -14,6 +14,25 @@ const testParams = () => {
   return q.get("date") ? { date: q.get("date"), include_final: q.get("final") === "1" } : {};
 };
 
+const normName = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]/g, "").replace(/\s+(jr|sr|ii|iii|iv)$/, "").trim();
+const LEG_STAT = { Points: ["pts", "PTS"], Rebounds: ["reb", "REB"], Assists: ["ast", "AST"] };
+const BET_TONE = { won: "text-emerald-400", lost: "text-red-400", void: "text-slate-500", pending: "text-white" };
+
+const MyBets = ({ p, bets, slug }) => (
+  <td data-testid={`live-mybets-${slug}`} className="py-2.5 px-4 text-left">
+    {bets.length ? bets.map((b) => (
+      <div key={b.id} className={`text-[11px] font-mono whitespace-nowrap ${BET_TONE[b.status]}`}>
+        {b.legs.map((l) => {
+          const [k, lbl] = LEG_STAT[l.market] || [null, l.market];
+          const v = k ? p[k] : null, hit = v != null && v >= l.threshold;
+          return <span key={l.ticker} className={`mr-2 ${hit ? "text-emerald-400 font-bold" : ""}`}>{lbl} {v ?? "–"}/{l.threshold}</span>;
+        })}
+        <span className="text-[10px] uppercase tracking-wider text-slate-500">{b.status === "pending" ? "live" : b.status}</span>
+      </div>
+    )) : <span className="text-slate-700">—</span>}
+  </td>
+);
+
 const GameChip = ({ g }) => (
   <div data-testid={`live-game-${g.id}`} className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800 bg-[#181818] text-sm font-semibold">
     <TeamLogo team={g.away} size={16} />{g.away} <span className="font-mono text-white">{g.away_score}</span>
@@ -23,7 +42,7 @@ const GameChip = ({ g }) => (
   </div>
 );
 
-const Row = ({ p, i, game }) => {
+const Row = ({ p, i, game, bets }) => {
   const slug = `${p.game}-${p.key.replace(/\s/g, "-")}`;
   return (
     <tr data-testid={`live-row-${slug}`} className="border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
@@ -48,6 +67,7 @@ const Row = ({ p, i, game }) => {
       <td data-testid={`live-need-${slug}`} style={{ background: heat(p.need) }} className="py-2.5 px-4 text-center font-mono text-sm font-bold text-white">
         {p.need === 0 ? "10/10" : p.need}
       </td>
+      <MyBets p={p} bets={bets} slug={slug} />
     </tr>
   );
 };
@@ -55,9 +75,12 @@ const Row = ({ p, i, game }) => {
 export default function LiveTracker() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [bets, setBets] = useState([]);
+  const [mine, setMine] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
+    getBets().then(setBets).catch(() => {});
     try {
       setData(await getLiveTracker(testParams()));
     } catch (e) {
@@ -74,24 +97,36 @@ export default function LiveTracker() {
   }, [load]);
 
   const games = Object.fromEntries((data?.games || []).map((g) => [g.id, g]));
-  const players = data?.players || [];
+  const betsBy = {};
+  bets.forEach((b) => { (betsBy[normName(b.player)] ||= []).push(b); });
+  const all = data?.players || [];
+  const players = mine ? all.filter((p) => betsBy[normName(p.name)]) : all;
 
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-            <Crosshair data-testid="live-tracker-logo" className="h-8 w-8 text-emerald-400" /> Live Tracker
+            <Crosshair data-testid="live-tracker-logo" className="h-8 w-8 text-emerald-400" /> In-Game Tracker
           </h1>
           <p className="text-sm text-slate-400 mt-1">Every player in games in progress, ranked by how many rebounds and assists they still need to reach 10 of each (points ignored).</p>
           <p data-testid="live-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · refreshes every 30 seconds` : "Loading live box scores…"}
           </p>
         </div>
+        <div className="flex items-center gap-3">
+        <button data-testid="live-mine-toggle" onClick={() => setMine((m) => !m)}
+          className={`flex items-center gap-2 h-9 px-3 rounded-lg border text-sm font-semibold transition-colors ${mine ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300" : "border-slate-700 text-slate-300 hover:text-white hover:border-white/50"}`}>
+          <span className={`h-3.5 w-6 rounded-full p-0.5 transition-colors ${mine ? "bg-emerald-500" : "bg-slate-700"}`}>
+            <span className={`block h-2.5 w-2.5 rounded-full bg-white transition-transform ${mine ? "translate-x-2.5" : ""}`} />
+          </span>
+          Only my bets
+        </button>
         <button data-testid="live-refresh-btn" onClick={load} disabled={loading}
           className="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
         </button>
+        </div>
       </div>
 
       {data?.games?.length > 0 && (
@@ -99,7 +134,7 @@ export default function LiveTracker() {
       )}
 
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
-        <table data-testid="live-table" className="w-full min-w-[820px]">
+        <table data-testid="live-table" className="w-full min-w-[1040px]">
           <thead>
             <tr className="text-xs text-slate-400">
               <th className="py-3 px-4 text-left font-semibold">#</th>
@@ -108,16 +143,17 @@ export default function LiveTracker() {
               <th className="py-3 px-4 text-right font-semibold">MIN</th>
               {STATS.map(([k, l]) => <th key={k} className="py-3 px-4 text-right font-semibold">{l}</th>)}
               <th className="py-3 px-4 text-center font-semibold text-white border-b-2 border-slate-300" title="Rebounds + assists still needed to reach 10/10">Need (RA)</th>
+              <th className="py-3 px-4 text-left font-semibold">My Bets</th>
             </tr>
           </thead>
           <tbody>
-            {players.map((p, i) => <Row key={`${p.game}-${p.key}`} p={p} i={i} game={games[p.game]} />)}
+            {players.map((p, i) => <Row key={`${p.game}-${p.key}`} p={p} i={i} game={games[p.game]} bets={betsBy[normName(p.name)] || []} />)}
           </tbody>
         </table>
         {data && !players.length && (
           <div data-testid="live-empty" className="py-16 text-center text-sm text-slate-500">
-            No games in progress right now.
-            {data.next_tip && ` Next tip-off: ${new Date(data.next_tip).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}.`}
+            {mine && all.length ? "None of your tracked players are in a game right now." : "No games in progress right now."}
+            {!(mine && all.length) && data.next_tip && ` Next tip-off: ${new Date(data.next_tip).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}.`}
           </div>
         )}
       </div>

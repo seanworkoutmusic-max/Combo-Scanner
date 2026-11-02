@@ -5,7 +5,7 @@ const TABS = [
   { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers },
   { id: "scanner", label: "TD Scanner", testid: "nav-tab-scanner", icon: Table2 },
   { id: "tdwatch", label: "TD Leaders", testid: "nav-tab-tdwatch", icon: ChartLine },
-  { id: "live", label: "Live Tracker", testid: "nav-tab-live", icon: Crosshair },
+  { id: "live", label: "In-Game Tracker", testid: "nav-tab-live", icon: Crosshair },
   { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList },
 ];
 

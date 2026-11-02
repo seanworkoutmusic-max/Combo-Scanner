@@ -63,3 +63,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - TD Scanner hides rows already tracked in Bet Tracker (today).
 - Shareable /sean page (pages/SharedBets.js): read-only today bets (no stake/profit/delete), stats Plays/Record/Pending/Avg EV, live clocks via gradeBets; App.js picks tab "sean" from pathname, sidebar nav pushes "/" (popstate handled). testids shared-bets-page, shared-bet-row-*, shared-bet-result-*, shared-stat-*.
 - Bet Tracker "Share link" button (bet-share-btn) copies {origin}/sean to clipboard with toast (prompt fallback).
+- Live Tracker renamed "In-Game Tracker" (sidebar+heading). My Bets column (live-mybets-{slug}) shows today tracked bets matched by normalized player name with leg progress (green when hit) and status; "Only my bets" toggle (live-mine-toggle).
