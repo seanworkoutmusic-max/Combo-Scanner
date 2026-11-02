@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { RefreshCw, ExternalLink, Plus, Check } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, Check, Search } from "lucide-react";
 import { ComboFilter } from "../components/props/ComboFilter";
 import { ScanLoader, ScanReady } from "../components/props/ScanStage";
 import { getScannerBoard, getBets, addBet, errMsg } from "../lib/api";
@@ -8,13 +8,6 @@ import { getStake } from "./BetTracker";
 import { probToAmerican } from "../lib/ev";
 
 const parseOdds = (v) => (v.trim() === "" || Number.isNaN(Number(v)) ? null : Number(v));
-const OddsInput = ({ label, value, onChange, testid }) => (
-  <label className="flex items-center gap-2 text-sm text-slate-400">
-    {label}
-    <input data-testid={testid} value={value} onChange={(e) => onChange(e.target.value)} placeholder={label === "Min odds" ? "+500" : "+3000"} inputMode="numeric"
-      className="h-8 w-24 px-2.5 rounded-lg border border-slate-700 bg-[#0E0E0E] font-mono text-sm font-semibold text-white outline-none focus:border-white/60 placeholder:text-slate-600" />
-  </label>
-);
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
@@ -202,7 +195,7 @@ export default function DDScanner({ settings }) {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Triple-double scanner</h1>
+          <h1 data-testid="scanner-title" className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight"><Search className="h-8 w-8 text-emerald-400" strokeWidth={2.5} /> Kalshi SGP Scanner</h1>
           <p className="text-sm text-slate-400 mt-1">Every game on one board: live Kalshi triple-double combos, ranked by EV against devigged sportsbook odds.</p>
           <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${shown.length === rows.length ? rows.length : `${shown.length} of ${rows.length}`} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
@@ -223,16 +216,11 @@ export default function DDScanner({ settings }) {
           </button>
         ))}
       </div>
-      <label className="flex items-center gap-2 text-sm text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-400">
         Filter
-        <ComboFilter combos={COMBOS} value={sel} onChange={setSel} />
-      </label>
+        <ComboFilter combos={COMBOS} value={sel} onChange={setSel} minOdds={minOdds} maxOdds={maxOdds} setMinOdds={setMinOdds} setMaxOdds={setMaxOdds} />
+      </div>
         {progress && <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400">Loading {progress.done}/{progress.total} combos…</span>}
-        <OddsInput label="Min odds" value={minOdds} onChange={setMinOdds} testid="odds-min-input" />
-        <OddsInput label="Max odds" value={maxOdds} onChange={setMaxOdds} testid="odds-max-input" />
-        {(minOdds || maxOdds) && (
-          <button data-testid="odds-clear-btn" onClick={() => { setMinOdds(""); setMaxOdds(""); }} className="text-xs text-slate-400 hover:text-white underline underline-offset-2">Clear</button>
-        )}
       </div>
 
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">

@@ -67,3 +67,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - In-Game Tracker: "Only my bets" toggle replaced by tabs All Players | My Bets (live-tab-all, live-tab-mine with count); My Bets column only shown on My Bets tab.
 - TD Leaders tab removed from sidebar/App (TDWatch.js file + /api/td-leaders still exist, unused). In-Game Tracker tabs are text-only.
 - TD Scanner: ScanReady (Ready when you are + "Scan combos" button, scanner-scan-btn) before first scan; ScanLoader animated shining card (PROP OUTLIERS / TD SCANNER, rotating step pill, dots, multi-combo progress) while loading with no rows (components/props/ScanStage.js, CSS scan-* in index.css).
+- Scanner title "Kalshi SGP Scanner" with emerald Search icon (scanner-title). Filter dropdown now 3 columns: Combos | Odds (min/max, instant, odds-min-input/odds-max-input/odds-clear-btn) | Books (Kalshi only, book-filter-kalshi, checked+disabled); trigger shows odds range.
