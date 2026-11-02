@@ -28,9 +28,8 @@ const NavItem = ({ t, active, onClick, compact }) => {
 
 export const Sidebar = ({ tab, setTab, kalshiOk }) => (
   <>
-    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-16 min-[1440px]:w-56 flex-col border-r border-slate-800/80 bg-[#0E0E0E] px-3 py-5 z-30">
+    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-16 min-[1440px]:w-56 flex-col border-r border-slate-800/80 bg-[#0A1730] px-3 py-5 z-30">
       <div className="px-2 mb-8"><Logo collapsible /></div>
-      <div className="px-3 mb-2 text-xs font-medium text-slate-500 hidden min-[1440px]:block">Kalshi</div>
       <nav className="space-y-0.5">
         {TABS.map((t) => <NavItem key={t.id} t={t} active={tab === t.id} onClick={() => setTab(t.id)} />)}
       </nav>
@@ -46,7 +45,7 @@ export const Sidebar = ({ tab, setTab, kalshiOk }) => (
         </div>
       </div>
     </aside>
-    <header className="lg:hidden sticky top-0 z-30 border-b border-slate-800/80 bg-[#0E0E0E]/95 backdrop-blur-xl px-4 py-3 space-y-3">
+    <header className="lg:hidden sticky top-0 z-30 border-b border-slate-800/80 bg-[#0A1730]/95 backdrop-blur-xl px-4 py-3 space-y-3">
       <Logo />
       <nav className="flex gap-1 overflow-x-auto">
         {TABS.map((t) => <NavItem key={t.id} t={t} compact active={tab === t.id} onClick={() => setTab(t.id)} />)}

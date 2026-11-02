@@ -3,7 +3,8 @@ import { toast } from "sonner";
 import { RefreshCw, ExternalLink, Plus, Check, Search } from "lucide-react";
 import { ComboFilter } from "../components/props/ComboFilter";
 import { ScanLoader, ScanReady } from "../components/props/ScanStage";
-import { getScannerBoard, getBets, addBet, errMsg } from "../lib/api";
+import { ScannerStats, SlateCards } from "../components/props/ScannerOverview";
+import { getScannerBoard, getScannerGames, getBets, addBet, errMsg } from "../lib/api";
 import { getStake } from "./BetTracker";
 import { probToAmerican } from "../lib/ev";
 
@@ -58,7 +59,7 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
   const legs = r.combos[0].legs;
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${Math.min(i, 14) * 90}ms` }} className={`row-flip ${i < 3 ? "row-flip-top" : ""} border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors`}>
-      <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
+      <td className="py-3 px-4 sticky left-0 z-10 bg-[#0D1B33]">
         <div className="flex items-center gap-3">
           <button data-testid={`track-bet-${slug}`} onClick={() => onTrack(r)} disabled={tracked} title={tracked ? "Tracked in Bet Tracker" : "Track this bet"}
             className={`h-8 w-8 shrink-0 grid place-items-center rounded-md border transition-colors ${tracked ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-400" : "border-slate-700 text-slate-400 hover:text-white hover:border-white/50 hover:bg-white/[0.05]"}`}>
@@ -112,10 +113,22 @@ export default function DDScanner({ settings }) {
   const selKey = sel.join();
   const { td_pts: tdPts, ra } = all ? {} : pickParams(sel[0]);
   const reqId = useRef(0);
+  const [scanning, setScanning] = useState(null);
+  const [scannedGames, setScannedGames] = useState(null);
+  const [slate, setSlate] = useState(null);
+  useEffect(() => {
+    getScannerGames().then((gs) => {
+      const k = gs.filter((g) => g.kalshi);
+      setSlate(k.filter((g) => g.date === k[0]?.date));
+    }).catch(() => setSlate([]));
+  }, []);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (gameArg) => {
+    const game = typeof gameArg === "string" ? gameArg : undefined;
     const id = ++reqId.current;
     setLoading(true);
+    setScanning(game || "all");
+    setScannedGames(game ? [game] : "all");
     try {
       if (all) {  // one board per chosen combo, loaded one after another (each must finish within the 60s proxy limit)
         const sel = COMBOS.filter(([k]) => selRef.current.includes(k));
@@ -125,7 +138,7 @@ export default function DDScanner({ settings }) {
         setData(acc);
         for (const [k, label] of sel) {
           try {
-            const d = await getScannerBoard({ ...pickParams(k), live: live || undefined });
+            const d = await getScannerBoard({ ...pickParams(k), live: live || undefined, game });
             if (id !== reqId.current) return;
             acc = { ...acc, games: Math.max(acc.games, d.games), updated_at: d.updated_at,
               players: [...acc.players, ...d.players.map((p) => ({ ...p, comboLabel: label, pts: pickParams(k).td_pts }))] };
@@ -137,16 +150,16 @@ export default function DDScanner({ settings }) {
         }
         return;
       }
-      const d = await getScannerBoard({ td_pts: tdPts || undefined, ra: ra || undefined, live: live || undefined });
+      const d = await getScannerBoard({ td_pts: tdPts || undefined, ra: ra || undefined, live: live || undefined, game });
       if (id === reqId.current) { setData(d); setScanId(id); }
     } catch (e) {
       if (id === reqId.current) toast.error(errMsg(e));
     } finally {
-      if (id === reqId.current) { setLoading(false); setProgress(null); }
+      if (id === reqId.current) { setLoading(false); setProgress(null); setScanning(null); }
     }
   }, [all, ra, tdPts, live, selKey]);
 
-  useEffect(() => { reqId.current++; setData(null); setLoading(false); setProgress(null); }, [load]);
+  useEffect(() => { reqId.current++; setData(null); setLoading(false); setProgress(null); setScanning(null); setScannedGames(null); }, [load]);
 
   const [tracked, setTracked] = useState(new Set());
   useEffect(() => {
@@ -192,6 +205,11 @@ export default function DDScanner({ settings }) {
   const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
   const tdBooks = tdPts === 10 && !ra && !live ? BOOKS : [];
   const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => l), "EV"];
+  const counts = {};
+  (slate || []).forEach((g) => {
+    if (data && !loading && (scannedGames === "all" || scannedGames?.includes(g.code))) counts[g.code] = rows.filter((r) => r.game.code === g.code).length;
+  });
+  const bookNames = ["Kalshi", ...(sgpBooks.length ? sgpBooks : SGP_BOOKS.filter(([b]) => b !== "fd")).map(([, l]) => l)];
 
   return (
     <div className="space-y-6">
@@ -203,17 +221,17 @@ export default function DDScanner({ settings }) {
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${shown.length === rows.length ? rows.length : `${shown.length} of ${rows.length}`} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
         </div>
-        <button data-testid="scanner-refresh-btn" onClick={load} disabled={loading}
-          className="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+        <button data-testid="scanner-refresh-btn" onClick={() => load()} disabled={loading}
+          className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-dolphin/60 bg-dolphin/10 text-white text-sm font-semibold hover:bg-dolphin/25 disabled:opacity-50 transition-colors">
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh odds
         </button>
       </div>
 
       <div className="flex items-center gap-5 flex-wrap">
-      <div data-testid="scanner-mode" className="flex rounded-lg border border-slate-700 bg-[#0E0E0E] p-0.5">
+      <div data-testid="scanner-mode" className="flex rounded-lg border border-slate-700 bg-[#0A1730] p-0.5">
         {[["pregame", "Pregame"], ["live", "Live"]].map(([k, l]) => (
           <button key={k} data-testid={`scanner-mode-${k}`} onClick={() => setLive(k === "live")}
-            className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"}`}>
+            className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-dolphin text-white" : "text-slate-400 hover:text-white"}`}>
             {k === "live" && <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-red-500 animate-pulse" : "bg-red-500/60"}`} />}{l}
           </button>
         ))}
@@ -225,13 +243,16 @@ export default function DDScanner({ settings }) {
         {progress && <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400">Loading {progress.done}/{progress.total} combos…</span>}
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
-        {ready ? <ScanReady onScan={load} /> : showLoader ? <ScanLoader progress={progress} /> : (
+      <ScannerStats games={slate} books={bookNames} best={rows[0]?.ev > 0 ? rows[0] : null} plusEv={rows.filter((r) => r.ev > 0).length} scanned={!!data && !loading} />
+      <SlateCards games={slate} counts={counts} scanning={scanning} onScan={(c) => load(c)} />
+
+      <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
+        {ready ? <ScanReady onScan={() => load()} /> : showLoader ? <ScanLoader progress={progress} /> : (
         <table data-testid="scanner-board" className="w-full min-w-[1000px]">
           <thead>
             <tr className="text-xs text-slate-400">
               {heads.map((h, i) => (
-                <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#181818]"}`}>
+                <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#0D1B33]"}`}>
                   {HEAD_LOGOS[h] ? (
                     <span className="inline-flex items-center gap-1.5">
                       <img data-testid={`logo-${h.toLowerCase()}`} src={HEAD_LOGOS[h]} alt="" className="h-4 w-4 rounded-[3px]" />{h}

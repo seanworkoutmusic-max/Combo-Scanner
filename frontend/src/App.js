@@ -49,7 +49,7 @@ function App() {
   const update = (patch) => setSettings((p) => ({ ...p, ...patch }));
 
   return (
-    <div className="App min-h-screen bg-[#121212]">
+    <div className="App min-h-screen bg-[#071226]">
       <Sidebar tab={tab} setTab={setTab} kalshiOk={!gamesErr && games.length > 0} />
       <main className="lg:pl-16 min-[1440px]:pl-56">
         <div className="max-w-[1320px] mx-auto px-4 sm:px-6 2xl:px-10 py-6 lg:py-8 space-y-5">

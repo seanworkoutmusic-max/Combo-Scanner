@@ -95,7 +95,7 @@ export default function TDWatch() {
           </button>
         ))}
       </div>
-      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
         <table className="w-full min-w-[760px]">
           <thead>
             <tr className="text-xs text-slate-400 border-b border-slate-700">

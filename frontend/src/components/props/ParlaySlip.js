@@ -37,7 +37,7 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
   const ev = evPct(fair, k.price, settings.fees);
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-800 bg-[#181818]">
+      <div className="rounded-xl border border-slate-800 bg-[#0D1B33]">
         <div className="flex items-center justify-between px-3 py-3 border-b border-slate-800">
           <span className="text-sm font-semibold">{legs.length}-Leg Same Game Parlay</span>
         </div>

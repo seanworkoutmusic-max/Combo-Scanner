@@ -20,7 +20,7 @@ export const LegProgress = ({ b, live }) => live ? (
 ) : null;
 
 export const Stat = ({ label, value, testid, tone = "text-white" }) => (
-  <div className="rounded-xl border border-slate-800 bg-[#181818] px-4 py-3">
+  <div className="rounded-xl border border-slate-800 bg-[#0D1B33] px-4 py-3">
     <div className="text-[11px] uppercase tracking-widest font-mono text-slate-500">{label}</div>
     <div data-testid={testid} className={`mt-1 font-mono text-xl font-bold ${tone}`}>{value}</div>
   </div>
@@ -124,7 +124,7 @@ export default function BetTracker() {
         </button>
         <label className="flex items-center gap-2 text-sm text-slate-400">
           Stake per bet
-          <span className="flex items-center h-9 rounded-lg border border-slate-700 bg-[#0E0E0E] px-2.5 focus-within:border-white/60">
+          <span className="flex items-center h-9 rounded-lg border border-slate-700 bg-[#0A1730] px-2.5 focus-within:border-white/60">
             <span className="text-slate-500 font-mono">$</span>
             <input data-testid="bet-stake-input" type="number" min="1" value={stake} onChange={(e) => onStake(e.target.value)}
               className="w-20 bg-transparent outline-none font-mono text-sm font-semibold text-white pl-1" />
@@ -141,7 +141,7 @@ export default function BetTracker() {
         <Stat label="ROI · Avg EV" value={`${s.roi == null ? "—" : `${(s.roi * 100).toFixed(1)}%`} · ${s.ev == null ? "—" : `${(s.ev * 100).toFixed(1)}%`}`} testid="bet-stat-roi" />
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
         <table data-testid="bet-table" className="w-full min-w-[1100px]">
           <thead>
             <tr className="text-xs text-slate-400">

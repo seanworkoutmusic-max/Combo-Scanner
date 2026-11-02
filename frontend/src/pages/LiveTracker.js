@@ -34,7 +34,7 @@ const MyBets = ({ p, bets, slug }) => (
 );
 
 const GameChip = ({ g }) => (
-  <div data-testid={`live-game-${g.id}`} className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800 bg-[#181818] text-sm font-semibold">
+  <div data-testid={`live-game-${g.id}`} className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800 bg-[#0D1B33] text-sm font-semibold">
     <TeamLogo team={g.away} size={16} />{g.away} <span className="font-mono text-white">{g.away_score}</span>
     <span className="text-slate-600">–</span>
     <span className="font-mono text-white">{g.home_score}</span> {g.home}<TeamLogo team={g.home} size={16} />
@@ -136,7 +136,7 @@ export default function LiveTracker() {
         ))}
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
         <table data-testid="live-table" className="w-full min-w-[1040px]">
           <thead>
             <tr className="text-xs text-slate-400">

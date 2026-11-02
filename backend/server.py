@@ -262,13 +262,16 @@ async def live_tracker(date: Optional[str] = Query(None, pattern=r"^\d{8}$"), in
 
 
 @api_router.get("/scanner/board")
-async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Optional[int] = Query(None, ge=3, le=15), live: bool = False):
+async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Optional[int] = Query(None, ge=3, le=15), live: bool = False,
+                        game: Optional[str] = Query(None, pattern=r"^[0-9A-Z]{10,14}$")):
     """Every Kalshi game's triple-double combos (or reb+ast combos when ra is set), with book odds and exact-leg SGP prices.
     live=true: only games in progress, live SGP prices, current box-score stats, combos already hit hidden."""
     if not td_pts and not ra:
         td_pts = 10
     reb_ast = ra or 10
     games = await kalshi_props.load_props()
+    if game:
+        games = {c: g for c, g in games.items() if c == game}
     boxes = {}
     if live:
         res = await asyncio.gather(*[espn.game_box(g["date"].replace("-", ""), c[-6:-3], c[-3:]) for c, g in games.items()], return_exceptions=True)

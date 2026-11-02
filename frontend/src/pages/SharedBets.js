@@ -63,7 +63,7 @@ export default function SharedBets() {
         <Stat label="Avg EV" value={s.ev == null ? "—" : `${(s.ev * 100).toFixed(1)}%`} testid="shared-stat-ev" />
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
         <table data-testid="shared-bet-table" className="w-full min-w-[760px]">
           <thead>
             <tr className="text-xs text-slate-400">

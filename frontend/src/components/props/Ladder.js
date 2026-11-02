@@ -14,7 +14,7 @@ export const Ladder = ({ rows, format, testid, title, cumulative }) => {
     return { ...r, cum, cumPay };
   });
   return (
-    <div data-testid={testid} className="rounded border border-slate-800 bg-[#0E0E0E]">
+    <div data-testid={testid} className="rounded border border-slate-800 bg-[#0A1730]">
       <div className="px-2.5 py-1.5 border-b border-slate-800 text-[10px] uppercase tracking-widest font-mono text-slate-500">{title}</div>
       <table className="w-full font-mono text-[11px]">
         <thead>

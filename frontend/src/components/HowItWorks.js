@@ -12,7 +12,7 @@ const M = ({ children }) => <code className="font-mono text-xs bg-slate-900 bord
 export const HowItWorks = ({ trigger }) => (
   <Dialog>
     <DialogTrigger asChild>{trigger}</DialogTrigger>
-    <DialogContent data-testid="modal-how-it-works" className="max-w-2xl bg-[#141414] border-slate-800 max-h-[85vh] overflow-y-auto">
+    <DialogContent data-testid="modal-how-it-works" className="max-w-2xl bg-[#0F1F3A] border-slate-800 max-h-[85vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="font-display text-2xl">How it works</DialogTitle>
       </DialogHeader>
