@@ -72,7 +72,8 @@ export const ComboFilter = ({ combos, value, onChange, minOdds, maxOdds, setMinO
             <Heading>Books</Heading>
             {BOOKS.map((b) => (
               <label key={b} data-testid={`book-filter-${b.toLowerCase()}`} className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm">
-                <Checkbox checked disabled className={CHECK} />{b}
+                <Checkbox checked disabled className={CHECK} />
+                <img src="/kalshi.png" alt="" data-testid={`book-filter-logo-${b.toLowerCase()}`} className="h-4 w-4 rounded-[3px] object-cover shrink-0" />{b}
               </label>
             ))}
           </div>
