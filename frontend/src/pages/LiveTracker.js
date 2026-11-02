@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Crosshair, RefreshCw, Ticket, Users } from "lucide-react";
+import { Crosshair, RefreshCw } from "lucide-react";
 import { getLiveTracker, getBets, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { TeamLogo } from "../components/props/TeamLogo";
@@ -127,10 +127,10 @@ export default function LiveTracker() {
       )}
 
       <div data-testid="live-view-tabs" className="flex items-center gap-6 border-b border-slate-800">
-        {[[false, "All Players", Users], [true, "My Bets", Ticket]].map(([v, l, Icon]) => (
+        {[[false, "All Players"], [true, "My Bets"]].map(([v, l]) => (
           <button key={l} data-testid={`live-tab-${v ? "mine" : "all"}`} onClick={() => setMine(v)}
             className={`flex items-center gap-2 pb-2.5 -mb-px border-b-2 text-sm font-semibold transition-colors ${mine === v ? "border-white text-white" : "border-transparent text-slate-500 hover:text-slate-300"}`}>
-            <Icon className={`h-4 w-4 ${mine === v ? "text-emerald-400" : ""}`} />{l}
+            {l}
             {v && <span className="text-[11px] font-mono text-slate-500">{all.filter((p) => betsBy[normName(p.name)]).length}</span>}
           </button>
         ))}
