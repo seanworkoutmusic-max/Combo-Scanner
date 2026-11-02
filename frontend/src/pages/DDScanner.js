@@ -97,7 +97,6 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
       </td>
       {tdBooks.map(([b]) => <Odds key={b} v={r.books[b]} testid={`${b}-td-${slug}`} />)}
       {sgpBooks.map(([b]) => <Odds key={b} v={r.sgp?.[b]} testid={`${b}-sgp-${slug}`} />)}
-      <td data-testid={`market-avg-${slug}`} className="py-3 px-4 text-right font-mono text-sm font-bold text-white bg-white/[0.03]">{fmt(r.avg) || "—"}</td>
       <td className="py-3 px-4 text-right"><EvCell ev={r.ev} testid={`ev-td-${slug}`} /></td>
     </tr>
   );
@@ -194,7 +193,7 @@ export default function DDScanner({ settings }) {
   });
   const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
   const tdBooks = tdPts === 10 && !ra && !live ? BOOKS : [];
-  const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => l), "Market Avg", "EV"];
+  const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => l), "EV"];
 
   return (
     <div className="space-y-6">
