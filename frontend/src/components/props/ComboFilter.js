@@ -38,8 +38,8 @@ export const ComboFilter = ({ combos, value, onChange, minOdds, maxOdds, setMinO
           <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[calc(100vw-2rem)] max-w-[760px] p-2 bg-[#141414] border-slate-700 text-white">
-        <div className="grid grid-cols-1 sm:grid-cols-[1.6fr_1fr_0.9fr_0.8fr] gap-2 sm:divide-x divide-slate-800">
+      <PopoverContent align="start" className="w-[calc(100vw-2rem)] max-w-[520px] p-2 bg-[#141414] border-slate-700 text-white">
+        <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr] gap-2 sm:divide-x divide-slate-800">
           <div>
             <Heading>Combos</Heading>
             {combos.map(([k, l]) => (
@@ -57,8 +57,7 @@ export const ComboFilter = ({ combos, value, onChange, minOdds, maxOdds, setMinO
               <button data-testid="odds-clear-btn" onClick={() => { setMinOdds(""); setMaxOdds(""); }}
                 className="px-2 text-xs text-slate-400 hover:text-white underline underline-offset-2">Clear odds</button>
             )}
-          </div>
-          <div className="sm:pl-2">
+            <div className="mt-3 pt-3 border-t border-slate-800">
             <Heading>Sport</Heading>
             {SPORTS.map(([s, logo, on]) => (
               <label key={s} data-testid={`sport-filter-${s.toLowerCase()}`} title={on ? "" : "Coming soon"}
@@ -69,7 +68,7 @@ export const ComboFilter = ({ combos, value, onChange, minOdds, maxOdds, setMinO
               </label>
             ))}
           </div>
-          <div className="sm:pl-2">
+          <div className="mt-3 pt-3 border-t border-slate-800">
             <Heading>Books</Heading>
             {BOOKS.map((b) => (
               <label key={b} data-testid={`book-filter-${b.toLowerCase()}`} className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm">
@@ -77,13 +76,13 @@ export const ComboFilter = ({ combos, value, onChange, minOdds, maxOdds, setMinO
               </label>
             ))}
           </div>
+          </div>
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-slate-800 mt-2 pt-2 px-1">
           <button data-testid="combo-filter-all" onClick={() => setDraft(combos.map(([k]) => k))} className="text-xs text-slate-400 hover:text-white">Select all combos</button>
           <button data-testid="combo-filter-apply" disabled={!draft.length} onClick={() => onOpen(false)}
             className="h-7 px-3 rounded-md bg-white text-slate-950 text-xs font-semibold hover:bg-slate-200 disabled:opacity-40">Apply</button>
         </div>
-        <p className="px-2 pb-1 pt-1.5 text-[10px] text-slate-500">More than one combo loads each in turn (~25s each); each player keeps their best-EV combo. Odds filter the Kalshi price instantly.</p>
       </PopoverContent>
     </Popover>
   );
