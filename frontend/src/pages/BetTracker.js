@@ -11,15 +11,15 @@ export const getStake = () => Number(localStorage.getItem(STAKE_KEY)) || 10;
 
 const profit = (b) => (b.status === "won" ? (b.stake * (1 - b.price)) / b.price : b.status === "lost" ? -b.stake : 0);
 const money = (v) => `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(2)}`;
-const STATUS_LABEL = { won: "Won", lost: "Lost", void: "Void" };
+export const STATUS_LABEL = { won: "Won", lost: "Lost", void: "Void" };
 
-const LegProgress = ({ b, live }) => live ? (
+export const LegProgress = ({ b, live }) => live ? (
   <div data-testid={`bet-live-${b.id}`} className="mt-1 flex items-center gap-1 text-[10px] font-mono text-red-400">
     <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />{live.clock}
   </div>
 ) : null;
 
-const Stat = ({ label, value, testid, tone = "text-white" }) => (
+export const Stat = ({ label, value, testid, tone = "text-white" }) => (
   <div className="rounded-xl border border-slate-800 bg-[#181818] px-4 py-3">
     <div className="text-[11px] uppercase tracking-widest font-mono text-slate-500">{label}</div>
     <div data-testid={testid} className={`mt-1 font-mono text-xl font-bold ${tone}`}>{value}</div>

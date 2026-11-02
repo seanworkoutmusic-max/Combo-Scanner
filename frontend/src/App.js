@@ -6,6 +6,7 @@ import DDScanner from "./pages/DDScanner";
 import TDWatch from "./pages/TDWatch";
 import LiveTracker from "./pages/LiveTracker";
 import BetTracker from "./pages/BetTracker";
+import SharedBets from "./pages/SharedBets";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
 
@@ -20,7 +21,11 @@ const loadSettings = () => {
 };
 
 function App() {
-  const [tab, setTab] = useState("props");
+  const [tab, setTabState] = useState(window.location.pathname.replace(/\/+$/, "") === "/sean" ? "sean" : "props");
+  const setTab = (t) => {
+    if (window.location.pathname !== "/") window.history.pushState({}, "", "/");
+    setTabState(t);
+  };
   const [status, setStatus] = useState(null);
   const [games, setGames] = useState([]);
   const [gamesErr, setGamesErr] = useState(null);
@@ -32,6 +37,12 @@ function App() {
       setSettings((p) => (p.books ? p : { ...p, books: s.default_books }));
     });
     getGames().then(setGames).catch((e) => setGamesErr(errMsg(e)));
+  }, []);
+
+  useEffect(() => {
+    const onPop = () => { if (window.location.pathname.replace(/\/+$/, "") === "/sean") setTabState("sean"); };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   useEffect(() => localStorage.setItem("ev-settings", JSON.stringify(settings)), [settings]);
@@ -51,6 +62,8 @@ function App() {
             <LiveTracker />
           ) : tab === "bets" ? (
             <BetTracker />
+          ) : tab === "sean" ? (
+            <SharedBets />
           ) : (
             <DDScanner settings={settings} />
           )}
