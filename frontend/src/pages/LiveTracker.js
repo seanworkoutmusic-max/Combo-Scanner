@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Crosshair, RefreshCw } from "lucide-react";
+import { Crosshair, RefreshCw, Ticket, Users } from "lucide-react";
 import { getLiveTracker, getBets, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { TeamLogo } from "../components/props/TeamLogo";
@@ -67,7 +67,7 @@ const Row = ({ p, i, game, bets }) => {
       <td data-testid={`live-need-${slug}`} style={{ background: heat(p.need) }} className="py-2.5 px-4 text-center font-mono text-sm font-bold text-white">
         {p.need === 0 ? "10/10" : p.need}
       </td>
-      <MyBets p={p} bets={bets} slug={slug} />
+      {bets && <MyBets p={p} bets={bets} slug={slug} />}
     </tr>
   );
 };
@@ -115,13 +115,6 @@ export default function LiveTracker() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-        <button data-testid="live-mine-toggle" onClick={() => setMine((m) => !m)}
-          className={`flex items-center gap-2 h-9 px-3 rounded-lg border text-sm font-semibold transition-colors ${mine ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300" : "border-slate-700 text-slate-300 hover:text-white hover:border-white/50"}`}>
-          <span className={`h-3.5 w-6 rounded-full p-0.5 transition-colors ${mine ? "bg-emerald-500" : "bg-slate-700"}`}>
-            <span className={`block h-2.5 w-2.5 rounded-full bg-white transition-transform ${mine ? "translate-x-2.5" : ""}`} />
-          </span>
-          Only my bets
-        </button>
         <button data-testid="live-refresh-btn" onClick={load} disabled={loading}
           className="flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
@@ -133,6 +126,16 @@ export default function LiveTracker() {
         <div data-testid="live-games" className="flex gap-2 overflow-x-auto">{data.games.map((g) => <GameChip key={g.id} g={g} />)}</div>
       )}
 
+      <div data-testid="live-view-tabs" className="flex items-center gap-6 border-b border-slate-800">
+        {[[false, "All Players", Users], [true, "My Bets", Ticket]].map(([v, l, Icon]) => (
+          <button key={l} data-testid={`live-tab-${v ? "mine" : "all"}`} onClick={() => setMine(v)}
+            className={`flex items-center gap-2 pb-2.5 -mb-px border-b-2 text-sm font-semibold transition-colors ${mine === v ? "border-white text-white" : "border-transparent text-slate-500 hover:text-slate-300"}`}>
+            <Icon className={`h-4 w-4 ${mine === v ? "text-emerald-400" : ""}`} />{l}
+            {v && <span className="text-[11px] font-mono text-slate-500">{all.filter((p) => betsBy[normName(p.name)]).length}</span>}
+          </button>
+        ))}
+      </div>
+
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
         <table data-testid="live-table" className="w-full min-w-[1040px]">
           <thead>
@@ -143,11 +146,11 @@ export default function LiveTracker() {
               <th className="py-3 px-4 text-right font-semibold">MIN</th>
               {STATS.map(([k, l]) => <th key={k} className="py-3 px-4 text-right font-semibold">{l}</th>)}
               <th className="py-3 px-4 text-center font-semibold text-white border-b-2 border-slate-300" title="Rebounds + assists still needed to reach 10/10">Need (RA)</th>
-              <th className="py-3 px-4 text-left font-semibold">My Bets</th>
+              {mine && <th className="py-3 px-4 text-left font-semibold">My Bets</th>}
             </tr>
           </thead>
           <tbody>
-            {players.map((p, i) => <Row key={`${p.game}-${p.key}`} p={p} i={i} game={games[p.game]} bets={betsBy[normName(p.name)] || []} />)}
+            {players.map((p, i) => <Row key={`${p.game}-${p.key}`} p={p} i={i} game={games[p.game]} bets={mine ? betsBy[normName(p.name)] || [] : null} />)}
           </tbody>
         </table>
         {data && !players.length && (
