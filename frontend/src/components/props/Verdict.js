@@ -1,7 +1,7 @@
 import { fmtAmerican, fmtPct, probToAmerican } from "../../lib/ev";
 import { PriceTag } from "./MarketList";
 
-const Ev = ({ ev, testid }) => (
+export const Ev = ({ ev, testid }) => (
   <span data-testid={testid} className={`font-mono font-bold ${ev == null ? "text-slate-600" : ev > 0 ? "text-emerald-400" : "text-red-400"}`}>
     {ev == null ? "—" : `${ev > 0 ? "+" : ""}${(ev * 100).toFixed(1)}%`}
   </span>

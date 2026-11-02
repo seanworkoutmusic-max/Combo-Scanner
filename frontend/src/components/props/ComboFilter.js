@@ -43,7 +43,8 @@ export const ComboFilter = ({ combos, value, onChange, minOdds, maxOdds, setMinO
             <Heading>Combos</Heading>
             {combos.map(([k, l]) => (
               <label key={k} data-testid={`combo-filter-${k}`} className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-white/[0.05]">
-                <Checkbox checked={draft.includes(k)} onCheckedChange={() => toggle(k)} className={CHECK} />{l}
+                <Checkbox checked={draft.includes(k)} onCheckedChange={() => toggle(k)} className={CHECK} />
+                <img src="/nba.png" alt="NBA" data-testid={`combo-nba-logo-${k}`} className="h-4 w-4 object-contain shrink-0" />{l}
               </label>
             ))}
           </div>

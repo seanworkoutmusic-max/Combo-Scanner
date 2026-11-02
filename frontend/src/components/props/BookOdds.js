@@ -11,7 +11,7 @@ const OddsInput = ({ value, onChange, testid, placeholder = "+000" }) => (
   />
 );
 
-const BOOK_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png", Fanatics: "/fanatics.png" };
+const BOOK_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png", Fanatics: "/fanatics.png", Kalshi: "/kalshi.png" };
 
 const BookName = ({ b }) => (
   <span className="flex items-center gap-2 text-xs text-slate-300">
@@ -21,11 +21,17 @@ const BookName = ({ b }) => (
 );
 
 // Parlay: DraftKings SGP price, filled automatically. Straight: Over / Under per book.
-export const BookOdds = ({ mode, odds, setOdds, prefix }) => mode !== "straight" ? (
+export const BookOdds = ({ mode, odds, setOdds, prefix, kalshi }) => mode !== "straight" ? (
   <div data-testid={`${prefix}-book-odds`} className="space-y-1.5">
     <div className="grid grid-cols-[1fr_auto] gap-2 text-[10px] uppercase tracking-widest font-mono text-slate-500 px-1">
       <span>Book</span><span>SGP odds</span>
     </div>
+    {kalshi && (
+      <div className="flex items-center justify-between rounded border border-emerald-500/30 bg-[#0E0E0E] px-2 py-2.5">
+        <BookName b="Kalshi" />
+        <span data-testid={`${prefix}-sgp-Kalshi`} className="font-mono text-sm font-semibold text-white">{kalshi}</span>
+      </div>
+    )}
     {["DraftKings", "Fanatics"].map((b) => (
       <div key={b} className="flex items-center justify-between rounded border border-slate-800/70 bg-[#0E0E0E] px-2 py-2.5">
         <BookName b={b} />
