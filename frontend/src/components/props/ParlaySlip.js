@@ -1,6 +1,5 @@
 import { Trash2, ExternalLink } from "lucide-react";
 import { BookOdds } from "./BookOdds";
-import { Ev } from "./Verdict";
 import { PriceTag } from "./MarketList";
 import { PlayerPhoto } from "./PlayerPhoto";
 import { americanToProb, avg, devigOneSided, evPct, legOver, kalshiGameUrl } from "../../lib/slip";
@@ -56,11 +55,16 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
         </div>
       </div>
       <BookOdds mode="parlay" odds={odds} setOdds={setOdds} prefix="parlay"
-        kalshi={k.price ? <PriceTag p={k.price} format={format} /> : liveLoading ? "…" : "—"} />
-      <div data-testid="parlay-verdict" className={`flex items-center justify-between rounded border px-3 py-2.5 ${ev > 0 ? "border-emerald-500/50 bg-emerald-500/10" : "border-slate-800 bg-slate-950/50"}`}>
-        <span className="text-[10px] uppercase tracking-widest font-mono text-slate-500">EV</span>
-        <span className="text-lg"><Ev ev={ev} testid="parlay-ev" /></span>
-      </div>
+        kalshi={
+          <span className="flex items-center gap-2">
+            {ev != null && (
+              <span data-testid="parlay-ev" className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${ev > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
+                EV {ev > 0 ? "+" : ""}{(ev * 100).toFixed(1)}%
+              </span>
+            )}
+            {k.price ? <PriceTag p={k.price} format={format} /> : liveLoading ? "…" : "—"}
+          </span>
+        } />
     </div>
   );
 };
