@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, ExternalLink, Plus, Check } from "lucide-react";
+import { ComboFilter } from "../components/props/ComboFilter";
 import { getScannerBoard, getBets, addBet, errMsg } from "../lib/api";
 import { getStake } from "./BetTracker";
 import { probToAmerican } from "../lib/ev";
@@ -106,16 +107,16 @@ export default function DDScanner({ settings }) {
   const format = settings.fees ? "fee" : "raw";
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [pick, setPick] = useState("10");
   const [live, setLive] = useState(false);
   const [minOdds, setMinOdds] = useState("");
   const [maxOdds, setMaxOdds] = useState("");
-  const [allSel, setAllSel] = useState(["10", "ra10", "ra8"]);
+  const [sel, setSel] = useState(["10"]);
   const [progress, setProgress] = useState(null);
-  const selRef = useRef(allSel);
-  selRef.current = allSel;
-  const all = pick === "all";
-  const { td_pts: tdPts, ra } = all ? {} : pickParams(pick);
+  const selRef = useRef(sel);
+  selRef.current = sel;
+  const all = sel.length > 1;
+  const selKey = sel.join();
+  const { td_pts: tdPts, ra } = all ? {} : pickParams(sel[0]);
   const reqId = useRef(0);
 
   const load = useCallback(async () => {
@@ -148,7 +149,7 @@ export default function DDScanner({ settings }) {
     } finally {
       if (id === reqId.current) { setLoading(false); setProgress(null); }
     }
-  }, [all, ra, tdPts, live]);
+  }, [all, ra, tdPts, live, selKey]);
 
   useEffect(() => { setData(null); load(); }, [load]);
 
@@ -220,36 +221,16 @@ export default function DDScanner({ settings }) {
         ))}
       </div>
       <label className="flex items-center gap-2 text-sm text-slate-400">
-        Combo
-        <select data-testid="td-points-select" value={pick} onChange={(e) => setPick(e.target.value)}
-          className="h-8 pl-2.5 pr-7 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm font-semibold text-white outline-none focus:border-white/60 cursor-pointer">
-          {COMBOS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-          <option value="all">All combos (choose)</option>
-        </select>
+        Filter
+        <ComboFilter combos={COMBOS} value={sel} onChange={setSel} />
       </label>
+        {progress && <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400">Loading {progress.done}/{progress.total} combos…</span>}
         <OddsInput label="Min odds" value={minOdds} onChange={setMinOdds} testid="odds-min-input" />
         <OddsInput label="Max odds" value={maxOdds} onChange={setMaxOdds} testid="odds-max-input" />
         {(minOdds || maxOdds) && (
           <button data-testid="odds-clear-btn" onClick={() => { setMinOdds(""); setMaxOdds(""); }} className="text-xs text-slate-400 hover:text-white underline underline-offset-2">Clear</button>
         )}
       </div>
-
-      {all && (
-        <div data-testid="all-combos-picker" className="flex flex-wrap items-center gap-2">
-          {COMBOS.map(([k, l]) => {
-            const on = allSel.includes(k);
-            return (
-              <button key={k} data-testid={`all-combo-${k}`} onClick={() => setAllSel((s) => (on ? s.filter((x) => x !== k) : [...s, k]))}
-                className={`h-7 px-2.5 rounded-full border text-xs font-semibold transition-colors ${on ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300" : "border-slate-700 text-slate-400 hover:text-white"}`}>
-                {l}
-              </button>
-            );
-          })}
-          <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400 ml-1">
-            {progress ? `Loading ${progress.done}/${progress.total} combos…` : `${allSel.length} chosen · press Refresh to scan (~25s each)`}
-          </span>
-        </div>
-      )}
 
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
         <table data-testid="scanner-board" className="w-full min-w-[1000px]">
@@ -288,7 +269,7 @@ export default function DDScanner({ settings }) {
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
         {live && "Live mode: only games in progress, with in-game Kalshi and SGP prices and each player's current box score; combos already hit are hidden. "}
-        {all && "All combos: each chosen combo is scanned in turn and every player keeps only their best-EV combo (legs shown under the Kalshi price). "}
+        {all && "Multiple combos: each chosen combo is scanned in turn and every player keeps only their best-EV combo (legs shown under the Kalshi price). "}
         Kalshi Combos is the live combo price for {all ? "the combo's legs" : `${tdPts ? `${tdPts}+ points, ` : ""}${ra || 10}+ rebounds and ${ra || 10}+ assists`}{settings.fees ? " (fee included)" : ""}. When Kalshi has no {all ? "matching" : `${tdPts}+`} points
         line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings/Fanatics/BetMGM/Hard Rock same-game-parlay price for the exact same legs as the Kalshi combo
         (FanDuel SGP isn't available from OddsBlaze).
