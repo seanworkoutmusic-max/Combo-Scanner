@@ -10,7 +10,7 @@ const TABS = [
 
 const Logo = ({ collapsible }) => (
   <div className="flex items-center gap-2.5">
-    <Search data-testid="site-logo" aria-label="Prop Outliers logo" className="h-6 w-6 text-emerald-400 shrink-0" strokeWidth={2.5} />
+    <img data-testid="site-logo" src="/logo.png" alt="Prop Outliers logo" className="h-6 w-6 rounded object-cover shrink-0" />
     <span data-testid="site-title" className={`font-display font-bold text-[17px] tracking-tight whitespace-nowrap ${collapsible ? "hidden min-[1440px]:inline" : ""}`}>Prop Outliers</span>
   </div>
 );
