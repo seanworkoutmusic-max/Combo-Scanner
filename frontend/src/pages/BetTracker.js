@@ -138,7 +138,7 @@ export default function BetTracker() {
         <Stat label="Record (W-L)" value={s.record} testid="bet-stat-record" />
         <Stat label="Pending" value={s.pending} testid="bet-stat-pending" />
         <Stat label="Profit" value={money(s.pl)} testid="bet-stat-profit" tone={s.pl > 0 ? "text-emerald-400" : s.pl < 0 ? "text-red-400" : "text-white"} />
-        <Stat label="ROI · Avg EV" value={`${s.roi == null ? "—" : `${(s.roi * 100).toFixed(1)}%`} · ${s.ev == null ? "—" : `${(s.ev * 100).toFixed(1)}%`}`} testid="bet-stat-roi" />
+        <Stat label="ROI" value={s.roi == null ? "—" : `${s.roi > 0 ? "+" : ""}${(s.roi * 100).toFixed(1)}%`} testid="bet-stat-roi" tone={s.roi > 0 ? "text-emerald-400" : s.roi < 0 ? "text-red-400" : "text-white"} />
       </div>
 
       <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
