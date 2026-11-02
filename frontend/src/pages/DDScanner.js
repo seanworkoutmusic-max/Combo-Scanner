@@ -19,8 +19,8 @@ import { PriceTag } from "../components/props/MarketList";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
 
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
-const SGP_BOOKS = [["fd", "FD"], ["dk", "DK"], ["fan", "Fanatics"], ["mgm", "BetMGM"], ["hr", "Hard Rock"]];
-const HEAD_LOGOS = { FD: "/fd.png", DK: "/dk.png", "FD Manual": "/fd.png", "DK Manual": "/dk.png", "Fanatics Manual": "/fanatics.png", "BetMGM Manual": "/betmgm.png", "Hard Rock Manual": "/hardrock.png" };
+const SGP_BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"], ["fan", "Fanatics"], ["mgm", "BetMGM"], ["hr", "Hard Rock"]];
+const HEAD_LOGOS = { FD: "/fd.png", DK: "/dk.png", FanDuel: "/fd.png", DraftKings: "/dk.png", Fanatics: "/fanatics.png", BetMGM: "/betmgm.png", "Hard Rock": "/hardrock.png" };
 
 const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
 
@@ -155,7 +155,7 @@ export default function DDScanner({ settings }) {
   });
   const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
   const tdBooks = tdPts === 10 && !ra && !live ? BOOKS : [];
-  const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => `${l} Manual`), "Market Avg", "EV"];
+  const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => l), "Market Avg", "EV"];
 
   return (
     <div className="space-y-6">
