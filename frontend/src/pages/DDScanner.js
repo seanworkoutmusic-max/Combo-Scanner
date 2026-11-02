@@ -188,6 +188,7 @@ export default function DDScanner({ settings }) {
   [data, settings.singleHold, settings.fees, all]);
   const lo = parseOdds(minOdds), hi = parseOdds(maxOdds);
   const shown = rows.filter((r) => {
+    if (tracked.has(betKey(r.game.code, r.combos[0].legs))) return false;  // tracked plays leave the board
     const a = probToAmerican(settings.fees ? Math.min(r.price + 0.07 * r.price * (1 - r.price), 0.999) : r.price);
     return a != null && (lo == null || a >= lo) && (hi == null || a <= hi);
   });

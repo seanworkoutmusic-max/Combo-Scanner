@@ -60,3 +60,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - TD Scanner "Market Avg" column (left of EV): straight average of the books EV uses (SGP books; or FD/DK TD odds when no SGP at 10+ pts), implied-prob averaged with hold kept, shown American. testid market-avg-{slug}.
 - TD Scanner combo picker is now a "Filter" multi-select dropdown (components/props/ComboFilter.js, testids combo-filter-btn, combo-filter-{key}, combo-filter-apply, combo-filter-all; applies on close). 1 combo = single board; 2+ = sequential multi-board; frontend loads /api/scanner/board per combo sequentially (progress all-combos-progress), keeps each player best-EV combo, legs label combo-label-{slug}. Loads on entering All + Refresh only.
 - TD Scanner loads nothing until Refresh is clicked; changing filter/Pregame-Live clears the board (cancels in-flight) and waits for Refresh.
+- TD Scanner hides rows already tracked in Bet Tracker (today).
