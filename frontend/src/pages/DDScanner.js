@@ -140,7 +140,7 @@ export default function DDScanner({ settings }) {
           try {
             const d = await getScannerBoard({ ...pickParams(k), live: live || undefined, game });
             if (id !== reqId.current) return;
-            acc = { ...acc, games: Math.max(acc.games, d.games), updated_at: d.updated_at,
+            acc = { ...acc, games: Math.max(acc.games, d.games), updated_at: d.updated_at, books: d.books,
               players: [...acc.players, ...d.players.map((p) => ({ ...p, comboLabel: label, pts: pickParams(k).td_pts }))] };
             setData(acc);
           } catch (e) {
@@ -242,6 +242,12 @@ export default function DDScanner({ settings }) {
         {progress && <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400">Loading {progress.done}/{progress.total} combos…</span>}
       </div>
 
+      {data?.books?.sgp_key_rejected && (
+        <div data-testid="sgp-key-warning" className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          OddsBlaze is rejecting your API key (your trial may have ended), so DraftKings / Fanatics / BetMGM / Hard Rock SGP prices can't load.
+          Without them only 10+ pts triple-doubles can be priced (from regular FD/DK triple-double odds). Add a new OddsBlaze key to bring the rest back.
+        </div>
+      )}
 
       <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
         {ready ? <ScanReady onScan={() => load()} games={slate?.length} /> : showLoader ? <ScanLoader progress={progress} /> : (

@@ -17,6 +17,7 @@ MARKETS = {
     "Player Steals": "Steals", "Player Blocks": "Blocks", "Player Triple Double": "Triple Double", "Player Double Double": "Double Double",
 }
 _props = {}
+status = {"key_rejected": False}
 _sgp = {}
 _lock = asyncio.Lock()
 
@@ -40,6 +41,10 @@ async def _book_props(client, book, ttl=120, live=False):
         params["live"] = "false"
     r = await client.get(ODDS, params=params)
     games = {}
+    if r.status_code in (401, 403):
+        status["key_rejected"] = True
+    elif r.status_code == 200:
+        status["key_rejected"] = False
     if r.status_code == 200:
         for e in r.json().get("events", []):
             if live and not e.get("live"):

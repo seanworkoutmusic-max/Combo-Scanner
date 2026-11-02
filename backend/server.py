@@ -309,7 +309,8 @@ async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Op
     players = [{**_player_payload(p, photos, [c]), "books": odds, "sgp": s, "game": {k: g[k] for k in ("code", "date", "label")}}
                for g, p, c, odds, s in todo if (c.get("live") or {}).get("yes_price")]
     return {"players": players, "games": len(games),
-            "books": {"enabled": odds_api.configured(), "credits_left": odds_api.quota["remaining"], "sgp": oddsblaze.configured()},
+            "books": {"enabled": odds_api.configured(), "credits_left": odds_api.quota["remaining"], "sgp": oddsblaze.configured(),
+                      "sgp_key_rejected": oddsblaze.status["key_rejected"]},
             "updated_at": datetime.now(timezone.utc).isoformat()}
 
 
