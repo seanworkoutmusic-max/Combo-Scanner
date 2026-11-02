@@ -197,7 +197,7 @@ export default function DDScanner({ settings }) {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 data-testid="scanner-title" className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight"><Search className="h-8 w-8 text-emerald-400" strokeWidth={2.5} /> Kalshi SGP Scanner</h1>
+          <h1 data-testid="scanner-title" className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight"><Search className="h-8 w-8 text-white" strokeWidth={2.5} /> Kalshi SGP Scanner</h1>
           <p className="text-sm text-slate-400 mt-1">Every game on one board: live Kalshi combos, ranked by EV against devigged sportsbook odds.</p>
           <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${shown.length === rows.length ? rows.length : `${shown.length} of ${rows.length}`} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}

@@ -71,18 +71,18 @@ body {
 
 /* TD Scanner loading card */
 .scan-card {
-  background: linear-gradient(160deg, #1f2a24 0%, #121614 55%, #18231d 100%);
+  background: linear-gradient(160deg, #1c2638 0%, #121520 55%, #182238 100%);
   box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   animation: scan-float 3.2s ease-in-out infinite;
 }
 .scan-shine {
   position: absolute; inset: -40% auto -40% -60%; width: 45%;
-  background: linear-gradient(100deg, transparent, rgba(52, 211, 153, 0.18), rgba(255, 255, 255, 0.22), transparent);
+  background: linear-gradient(100deg, transparent, rgba(107, 152, 242, 0.22), rgba(255, 255, 255, 0.22), transparent);
   transform: skewX(-18deg);
   animation: scan-sweep 2.4s ease-in-out infinite;
 }
 .scan-dot { animation: scan-pulse 1s ease-in-out infinite; }
-.scan-glow { box-shadow: 0 10px 40px -8px rgba(52, 211, 153, 0.55); }
+.scan-glow { box-shadow: 0 10px 40px -8px rgba(56, 112, 223, 0.6); }
 .scan-fade-in { animation: scan-in 0.45s ease-out both; }
 @keyframes scan-sweep { 0% { left: -60%; } 60%, 100% { left: 130%; } }
 @keyframes scan-float { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
@@ -97,4 +97,4 @@ body {
   60% { opacity: 1; transform: perspective(900px) rotateX(10deg); }
   to { opacity: 1; transform: none; }
 }
-@keyframes row-glow { 0%, 40% { background-color: rgba(52, 211, 153, 0.14); } 100% { background-color: transparent; } }
+@keyframes row-glow { 0%, 40% { background-color: rgba(56, 112, 223, 0.16); } 100% { background-color: transparent; } }

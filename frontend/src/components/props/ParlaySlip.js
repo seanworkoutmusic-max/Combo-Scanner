@@ -21,7 +21,7 @@ const Leg = ({ l, format, onRemove }) => (
       <div className="text-[11px] font-mono text-slate-500">{l.team}{l.threshold ? ` · ${l.threshold}+` : ""}</div>
     </div>
     <div className="flex items-center gap-3 shrink-0">
-      <span className="font-mono text-sm text-sky-300"><PriceTag p={l.yes_ask} format={format} /></span>
+      <span className="font-mono text-sm text-dolphin-light"><PriceTag p={l.yes_ask} format={format} /></span>
       <button data-testid={`remove-leg-${l.ticker}`} onClick={onRemove} className="text-slate-500 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
     </div>
   </div>
@@ -48,7 +48,7 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
             href={kalshiGameUrl(legs[0]?.ticker)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full h-10 rounded bg-emerald-400 text-slate-950 text-sm font-bold tracking-widest uppercase hover:bg-emerald-300 transition-colors"
+            className="flex items-center justify-center gap-2 w-full h-10 rounded bg-dolphin text-white text-sm font-bold tracking-widest uppercase hover:bg-dolphin-light transition-colors"
           >
             Bet on Kalshi <ExternalLink className="h-3.5 w-3.5" />
           </a>
