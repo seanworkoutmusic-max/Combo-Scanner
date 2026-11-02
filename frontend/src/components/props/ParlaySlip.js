@@ -48,7 +48,7 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
             href={kalshiGameUrl(legs[0]?.ticker)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full h-10 rounded bg-dolphin text-white text-sm font-bold tracking-widest uppercase hover:bg-dolphin-light transition-colors"
+            className="flex items-center justify-center gap-2 w-full h-10 rounded bg-white text-slate-950 text-sm font-bold tracking-widest uppercase hover:bg-slate-200 transition-colors"
           >
             Bet on Kalshi <ExternalLink className="h-3.5 w-3.5" />
           </a>
