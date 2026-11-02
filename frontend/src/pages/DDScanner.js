@@ -47,6 +47,17 @@ const Odds = ({ v, testid }) => (
 
 const betKey = (code, legs) => `${code}|${legs.map((l) => l.ticker).join(",")}`;
 
+const COMBOS = [
+  ["10", "10+ pts triple-double"], ["15", "15+ pts triple-double"], ["20", "20+ pts triple-double"], ["25", "25+ pts triple-double"],
+  ["p10ra8", "10+ pts & 8+ reb & 8+ ast"], ["p15ra8", "15+ pts & 8+ reb & 8+ ast"],
+  ["ra10", "10+ reb & 10+ ast"], ["ra8", "8+ reb & 8+ ast"], ["ra6", "6+ reb & 6+ ast"], ["ra4", "4+ reb & 4+ ast"],
+];
+const LEG_SHORT = { Points: "PTS", Rebounds: "REB", Assists: "AST" };
+const pickParams = (k) => {
+  const [, p, r] = k.match(/^(?:p?(\d+))?(?:ra(\d+))?$/);
+  return { td_pts: p ? Number(p) : undefined, ra: r ? Number(r) : undefined };
+};
+
 const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
   const slug = r.key.replace(/\s/g, "-");
   const legs = r.combos[0].legs;
@@ -80,7 +91,8 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
       </td>
       <td className="py-3 px-4 text-right">
         <span data-testid={`td-${slug}`} className="font-mono text-base font-bold text-white"><PriceTag p={r.price} format={format} /></span>
-        {legs[0].market === "Points" && legs[0].threshold !== tdPts && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{legs[0].threshold}+ pts (lowest Kalshi line)</div>}
+        {r.comboLabel && <div data-testid={`combo-label-${slug}`} className="text-[10px] font-mono text-slate-400 whitespace-nowrap">{r.combos[0].legs.map((l) => `${l.threshold}+ ${LEG_SHORT[l.market] || l.market}`).join(" · ")}</div>}
+        {legs[0].market === "Points" && legs[0].threshold !== (r.comboLabel ? r.pts : tdPts) && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{legs[0].threshold}+ pts (lowest Kalshi line)</div>}
       </td>
       {tdBooks.map(([b]) => <Odds key={b} v={r.books[b]} testid={`${b}-td-${slug}`} />)}
       {sgpBooks.map(([b]) => <Odds key={b} v={r.sgp?.[b]} testid={`${b}-sgp-${slug}`} />)}
@@ -98,23 +110,45 @@ export default function DDScanner({ settings }) {
   const [live, setLive] = useState(false);
   const [minOdds, setMinOdds] = useState("");
   const [maxOdds, setMaxOdds] = useState("");
-  const [, ptsStr, raStr] = pick.match(/^(?:p?(\d+))?(?:ra(\d+))?$/);
-  const tdPts = ptsStr ? Number(ptsStr) : null;
-  const ra = raStr ? Number(raStr) : null;
+  const [allSel, setAllSel] = useState(["10", "ra10", "ra8"]);
+  const [progress, setProgress] = useState(null);
+  const selRef = useRef(allSel);
+  selRef.current = allSel;
+  const all = pick === "all";
+  const { td_pts: tdPts, ra } = all ? {} : pickParams(pick);
   const reqId = useRef(0);
 
   const load = useCallback(async () => {
     const id = ++reqId.current;
     setLoading(true);
     try {
+      if (all) {  // one board per chosen combo, loaded one after another (each must finish within the 60s proxy limit)
+        const sel = COMBOS.filter(([k]) => selRef.current.includes(k));
+        setProgress({ done: 0, total: sel.length });
+        let acc = { players: [], games: 0, updated_at: new Date().toISOString() };
+        setData(acc);
+        for (const [k, label] of sel) {
+          try {
+            const d = await getScannerBoard({ ...pickParams(k), live: live || undefined });
+            if (id !== reqId.current) return;
+            acc = { ...acc, games: Math.max(acc.games, d.games), updated_at: d.updated_at,
+              players: [...acc.players, ...d.players.map((p) => ({ ...p, comboLabel: label, pts: pickParams(k).td_pts }))] };
+            setData(acc);
+          } catch (e) {
+            if (id === reqId.current) toast.error(`${label}: ${errMsg(e)}`);
+          }
+          if (id === reqId.current) setProgress((pr) => ({ ...pr, done: pr.done + 1 }));
+        }
+        return;
+      }
       const d = await getScannerBoard({ td_pts: tdPts || undefined, ra: ra || undefined, live: live || undefined });
       if (id === reqId.current) setData(d);
     } catch (e) {
       if (id === reqId.current) toast.error(errMsg(e));
     } finally {
-      if (id === reqId.current) setLoading(false);
+      if (id === reqId.current) { setLoading(false); setProgress(null); }
     }
-  }, [ra, tdPts, live]);
+  }, [all, ra, tdPts, live]);
 
   useEffect(() => { setData(null); load(); }, [load]);
 
@@ -143,11 +177,14 @@ export default function DDScanner({ settings }) {
   const rows = useMemo(() => (data?.players || []).map((p) => {
     const price = p.combos[0].live.yes_price;
     const hasSgp = Object.keys(p.sgp || {}).length > 0;
-    const td10 = !ra && p.combos[0].legs[0].market === "Points" && p.combos[0].legs[0].threshold === 10;
+    const legs = p.combos[0].legs;
+    const td10 = legs.length === 3 && legs[0].market === "Points" && legs[0].threshold === 10 && legs[1].threshold === 10;
     const src = hasSgp ? p.sgp : td10 ? p.books : null;
     const fair = src ? fairFrom(src, settings.singleHold) : null;
     return { ...p, price, avg: src ? marketAvg(src) : null, ev: evPct(fair, price, settings.fees) };
-  }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev), [data, settings.singleHold, settings.fees]);
+  }).filter((r) => r.ev != null).sort((a, b) => b.ev - a.ev)
+    .filter((r, i, arr) => !all || arr.findIndex((x) => x.key === r.key && x.game.code === r.game.code) === i),
+  [data, settings.singleHold, settings.fees, all]);
   const lo = parseOdds(minOdds), hi = parseOdds(maxOdds);
   const shown = rows.filter((r) => {
     const a = probToAmerican(settings.fees ? Math.min(r.price + 0.07 * r.price * (1 - r.price), 0.999) : r.price);
@@ -186,9 +223,8 @@ export default function DDScanner({ settings }) {
         Combo
         <select data-testid="td-points-select" value={pick} onChange={(e) => setPick(e.target.value)}
           className="h-8 pl-2.5 pr-7 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm font-semibold text-white outline-none focus:border-white/60 cursor-pointer">
-          {[10, 15, 20, 25].map((n) => <option key={n} value={String(n)}>{n}+ pts triple-double</option>)}
-          {[10, 15].map((n) => <option key={`p${n}`} value={`p${n}ra8`}>{n}+ pts &amp; 8+ reb &amp; 8+ ast</option>)}
-          {[10, 8, 6, 4].map((n) => <option key={n} value={`ra${n}`}>{n}+ reb &amp; {n}+ ast</option>)}
+          {COMBOS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          <option value="all">All combos (choose)</option>
         </select>
       </label>
         <OddsInput label="Min odds" value={minOdds} onChange={setMinOdds} testid="odds-min-input" />
@@ -197,6 +233,23 @@ export default function DDScanner({ settings }) {
           <button data-testid="odds-clear-btn" onClick={() => { setMinOdds(""); setMaxOdds(""); }} className="text-xs text-slate-400 hover:text-white underline underline-offset-2">Clear</button>
         )}
       </div>
+
+      {all && (
+        <div data-testid="all-combos-picker" className="flex flex-wrap items-center gap-2">
+          {COMBOS.map(([k, l]) => {
+            const on = allSel.includes(k);
+            return (
+              <button key={k} data-testid={`all-combo-${k}`} onClick={() => setAllSel((s) => (on ? s.filter((x) => x !== k) : [...s, k]))}
+                className={`h-7 px-2.5 rounded-full border text-xs font-semibold transition-colors ${on ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300" : "border-slate-700 text-slate-400 hover:text-white"}`}>
+                {l}
+              </button>
+            );
+          })}
+          <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400 ml-1">
+            {progress ? `Loading ${progress.done}/${progress.total} combos…` : `${allSel.length} chosen · press Refresh to scan (~25s each)`}
+          </span>
+        </div>
+      )}
 
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
         <table data-testid="scanner-board" className="w-full min-w-[1000px]">
@@ -235,7 +288,8 @@ export default function DDScanner({ settings }) {
       </div>
       <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
         {live && "Live mode: only games in progress, with in-game Kalshi and SGP prices and each player's current box score; combos already hit are hidden. "}
-        Kalshi Combos is the live combo price for {`${tdPts ? `${tdPts}+ points, ` : ""}${ra || 10}+ rebounds and ${ra || 10}+ assists`}{settings.fees ? " (fee included)" : ""}. When Kalshi has no {tdPts}+ points
+        {all && "All combos: each chosen combo is scanned in turn and every player keeps only their best-EV combo (legs shown under the Kalshi price). "}
+        Kalshi Combos is the live combo price for {all ? "the combo's legs" : `${tdPts ? `${tdPts}+ points, ` : ""}${ra || 10}+ rebounds and ${ra || 10}+ assists`}{settings.fees ? " (fee included)" : ""}. When Kalshi has no {all ? "matching" : `${tdPts}+`} points
         line, the player's next Kalshi points line is used (shown in amber). SGP is the DraftKings/Fanatics/BetMGM/Hard Rock same-game-parlay price for the exact same legs as the Kalshi combo
         (FanDuel SGP isn't available from OddsBlaze).
         EV compares Kalshi to the SGP price with a {settings.singleHold}% hold removed (books averaged); without an SGP price it falls back to the regular
