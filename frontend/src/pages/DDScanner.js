@@ -16,7 +16,7 @@ import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip
 
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
 const SGP_BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"], ["fan", "Fanatics"], ["mgm", "BetMGM"], ["hr", "Hard Rock"]];
-const HEAD_LOGOS = { FD: "/fd.png", DK: "/dk.png", FanDuel: "/fd.png", DraftKings: "/dk.png", Fanatics: "/fanatics.png", BetMGM: "/betmgm.png", "Hard Rock": "/hardrock.png" };
+const HEAD_LOGOS = { Kalshi: "/kalshi.png", FD: "/fd.png", DK: "/dk.png", FanDuel: "/fd.png", DraftKings: "/dk.png", Fanatics: "/fanatics.png", BetMGM: "/betmgm.png", "Hard Rock": "/hardrock.png" };
 
 const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
 
@@ -204,7 +204,7 @@ export default function DDScanner({ settings }) {
   });
   const sgpBooks = SGP_BOOKS.filter(([b]) => rows.some((r) => r.sgp?.[b] != null));
   const tdBooks = tdPts === 10 && !ra && !live ? BOOKS : [];
-  const heads = ["Player", "Game", "Kalshi Combos", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => l), "EV"];
+  const heads = ["Player", "Game", "Kalshi", ...tdBooks.map(([b]) => b.toUpperCase()), ...sgpBooks.map(([, l]) => l), "EV"];
   const counts = {};
   (slate || []).forEach((g) => {
     if (data && !loading && (scannedGames === "all" || scannedGames?.includes(g.code))) counts[g.code] = rows.filter((r) => r.game.code === g.code).length;
