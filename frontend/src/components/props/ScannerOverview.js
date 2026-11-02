@@ -22,7 +22,7 @@ export const ScannerStats = ({ games, books, best, plusEv, scanned }) => (
 
 const tip = (g) => (g.start ? new Date(g.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "Tip-off TBA");
 
-const GameCard = ({ g, status, busy, onScan }) => {
+const GameCard = ({ g, status, busy }) => {
   const [away, home] = [g.code.slice(-6, -3), g.code.slice(-3)];
   return (
     <div data-testid={`slate-game-${g.code}`} className="rounded-xl border border-slate-800 bg-[#0D1B33] p-4 flex flex-col gap-3 hover:border-dolphin/50 transition-colors">
@@ -37,22 +37,18 @@ const GameCard = ({ g, status, busy, onScan }) => {
           {busy ? "Scanning…" : status != null ? `${status} combo${status === 1 ? "" : "s"}` : "Not scanned"}
         </span>
       </div>
-      <button data-testid={`slate-scan-${g.code}`} onClick={onScan} disabled={busy}
-        className="h-9 rounded-lg border border-slate-700 text-sm font-semibold text-white hover:border-dolphin hover:bg-dolphin/15 disabled:opacity-50 transition-colors">
-        Scan this game
-      </button>
     </div>
   );
 };
 
-export const SlateCards = ({ games, counts, scanning, onScan }) => !games?.length ? null : (
+export const SlateCards = ({ games, counts, scanning }) => !games?.length ? null : (
   <div className="space-y-3">
     <div className="flex items-end justify-between">
       <h2 className="font-display text-lg font-bold text-white">Tonight's slate</h2>
       <span className="text-xs text-slate-500">{new Date(`${games[0].date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
     </div>
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-      {games.map((g) => <GameCard key={g.code} g={g} status={counts[g.code]} busy={scanning === g.code} onScan={() => onScan(g.code)} />)}
+      {games.map((g) => <GameCard key={g.code} g={g} status={counts[g.code]} busy={scanning === "all" || scanning === g.code} />)}
     </div>
   </div>
 );

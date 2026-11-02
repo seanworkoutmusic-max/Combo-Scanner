@@ -244,10 +244,9 @@ export default function DDScanner({ settings }) {
       </div>
 
       <ScannerStats games={slate} books={bookNames} best={rows[0]?.ev > 0 ? rows[0] : null} plusEv={rows.filter((r) => r.ev > 0).length} scanned={!!data && !loading} />
-      <SlateCards games={slate} counts={counts} scanning={scanning} onScan={(c) => load(c)} />
 
       <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
-        {ready ? <ScanReady onScan={() => load()} /> : showLoader ? <ScanLoader progress={progress} /> : (
+        {ready ? <ScanReady onScan={() => load()} games={slate?.length} /> : showLoader ? <ScanLoader progress={progress} /> : (
         <table data-testid="scanner-board" className="w-full min-w-[1000px]">
           <thead>
             <tr className="text-xs text-slate-400">
@@ -278,6 +277,8 @@ export default function DDScanner({ settings }) {
           </div>
         )}
       </div>
+
+      <SlateCards games={slate} counts={counts} scanning={scanning} />
     </div>
   );
 }

@@ -8,16 +8,46 @@ const STEPS = [
   "Devigging and ranking by EV…",
 ];
 
-export const ScanReady = ({ onScan }) => (
-  <div data-testid="scanner-ready" className="py-20 px-6 flex flex-col items-center text-center scan-fade-in">
-    <h3 className="text-base font-bold text-white">Ready when you are</h3>
-    <p className="mt-2 max-w-md text-sm text-slate-400">
-      Pick your combos in the filter, then scan every game for live Kalshi combo prices against the sportsbooks.
-    </p>
-    <button data-testid="scanner-scan-btn" onClick={onScan}
-      className="scan-glow mt-6 flex items-center gap-2 h-12 px-8 rounded-xl bg-dolphin text-white text-base font-bold hover:bg-dolphin-light hover:-translate-y-0.5 transition-[background-color,transform]">
-      <Sparkles className="h-4 w-4" /> Scan combos
-    </button>
+const STEPS_HOW = [
+  ["Choose combos", "Points, boards, triple-doubles"],
+  ["We devig the books", "DraftKings, Fanatics, BetMGM & Hard Rock fair odds"],
+  ["Bet the edge on Kalshi", "Ranked by EV, one tap to place"],
+];
+
+const HeroWaves = () => (
+  <div className="absolute inset-x-0 bottom-0 h-16 pointer-events-none">
+    <svg className="scan-wave scan-wave-back" viewBox="0 0 400 40" preserveAspectRatio="none"><path d="M0 20 Q25 10 50 20 T100 20 T150 20 T200 20 T250 20 T300 20 T350 20 T400 20 V40 H0Z" /></svg>
+    <svg className="scan-wave scan-wave-front" style={{ opacity: 0.35 }} viewBox="0 0 400 40" preserveAspectRatio="none"><path d="M0 24 Q25 14 50 24 T100 24 T150 24 T200 24 T250 24 T300 24 T350 24 T400 24 V40 H0Z" /></svg>
+  </div>
+);
+
+export const ScanReady = ({ onScan, games }) => (
+  <div data-testid="scanner-ready" className="relative overflow-hidden px-6 sm:px-10 pt-10 pb-16 bg-gradient-to-br from-[#12264a] via-[#0f1f3d] to-[#0b1830] scan-fade-in">
+    <HeroWaves />
+    <div className="relative grid lg:grid-cols-[auto_1fr_minmax(0,380px)] gap-8 items-center">
+      <img src="/logo.png" alt="" className="hidden sm:block h-36 w-36 object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.5)]" />
+      <div>
+        <h3 className="font-display text-3xl font-bold text-white">Ready to dive in?</h3>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-300">
+          Pick your combos in the filter, then we scan every game for live Kalshi combo prices against the sportsbooks.
+        </p>
+        <button data-testid="scanner-scan-btn" onClick={onScan}
+          className="scan-glow mt-6 inline-flex items-center gap-2 h-12 px-7 rounded-xl bg-dolphin text-white text-base font-bold hover:bg-dolphin-light hover:-translate-y-0.5 transition-[background-color,transform]">
+          <Sparkles className="h-4 w-4" /> Scan all {games ? `${games} ` : ""}games
+        </button>
+      </div>
+      <div className="space-y-3">
+        {STEPS_HOW.map(([t, s], i) => (
+          <div key={t} data-testid={`scanner-step-${i + 1}`} className="flex items-center gap-4 rounded-xl border border-slate-700/80 bg-[#0b1830]/80 px-4 py-3">
+            <span className="grid place-items-center h-7 w-7 shrink-0 rounded-full bg-dolphin/20 text-xs font-bold text-dolphin-light">{i + 1}</span>
+            <div className="leading-tight">
+              <div className="text-sm font-semibold text-white">{t}</div>
+              <div className="text-xs text-slate-400 mt-0.5">{s}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
 );
 
