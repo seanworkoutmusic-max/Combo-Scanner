@@ -57,7 +57,7 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
   const slug = r.key.replace(/\s/g, "-");
   const legs = r.combos[0].legs;
   return (
-    <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${i * 30}ms` }} className="row-in border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors">
+    <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${Math.min(i, 14) * 90}ms` }} className={`row-flip ${i < 3 ? "row-flip-top" : ""} border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors`}>
       <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
         <div className="flex items-center gap-3">
           <button data-testid={`track-bet-${slug}`} onClick={() => onTrack(r)} disabled={tracked} title={tracked ? "Tracked in Bet Tracker" : "Track this bet"}
@@ -100,6 +100,7 @@ export default function DDScanner({ settings }) {
   const format = settings.fees ? "fee" : "raw";
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [scanId, setScanId] = useState(0);
   const [live, setLive] = useState(false);
   const [minOdds, setMinOdds] = useState("");
   const [maxOdds, setMaxOdds] = useState("");
@@ -120,6 +121,7 @@ export default function DDScanner({ settings }) {
         const sel = COMBOS.filter(([k]) => selRef.current.includes(k));
         setProgress({ done: 0, total: sel.length });
         let acc = { players: [], games: 0, updated_at: new Date().toISOString() };
+        setScanId(id);
         setData(acc);
         for (const [k, label] of sel) {
           try {
@@ -136,7 +138,7 @@ export default function DDScanner({ settings }) {
         return;
       }
       const d = await getScannerBoard({ td_pts: tdPts || undefined, ra: ra || undefined, live: live || undefined });
-      if (id === reqId.current) setData(d);
+      if (id === reqId.current) { setData(d); setScanId(id); }
     } catch (e) {
       if (id === reqId.current) toast.error(errMsg(e));
     } finally {
@@ -239,7 +241,7 @@ export default function DDScanner({ settings }) {
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody key={scanId}>
             {shown.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} tdPts={tdPts} sgpBooks={sgpBooks} tdBooks={tdBooks}
               tracked={tracked.has(betKey(r.game.code, r.combos[0].legs))} onTrack={onTrack} />)}
           </tbody>

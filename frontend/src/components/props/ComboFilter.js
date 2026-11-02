@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Checkbox } from "../ui/checkbox";
 
 const BOOKS = ["Kalshi"];
+const SPORTS = [["NBA", "/nba.png", true], ["NFL", "/nfl.png", false], ["MLB", "/mlb.png", false]];
 const CHECK = "border-slate-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 data-[state=checked]:text-black";
 
 const Heading = ({ children }) => <div className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">{children}</div>;
@@ -37,8 +38,8 @@ export const ComboFilter = ({ combos, value, onChange, minOdds, maxOdds, setMinO
           <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[calc(100vw-2rem)] max-w-[600px] p-2 bg-[#141414] border-slate-700 text-white">
-        <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_0.8fr] gap-2 sm:divide-x divide-slate-800">
+      <PopoverContent align="start" className="w-[calc(100vw-2rem)] max-w-[760px] p-2 bg-[#141414] border-slate-700 text-white">
+        <div className="grid grid-cols-1 sm:grid-cols-[1.6fr_1fr_0.9fr_0.8fr] gap-2 sm:divide-x divide-slate-800">
           <div>
             <Heading>Combos</Heading>
             {combos.map(([k, l]) => (
@@ -56,6 +57,17 @@ export const ComboFilter = ({ combos, value, onChange, minOdds, maxOdds, setMinO
               <button data-testid="odds-clear-btn" onClick={() => { setMinOdds(""); setMaxOdds(""); }}
                 className="px-2 text-xs text-slate-400 hover:text-white underline underline-offset-2">Clear odds</button>
             )}
+          </div>
+          <div className="sm:pl-2">
+            <Heading>Sport</Heading>
+            {SPORTS.map(([s, logo, on]) => (
+              <label key={s} data-testid={`sport-filter-${s.toLowerCase()}`} title={on ? "" : "Coming soon"}
+                className={`flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm ${on ? "" : "opacity-45"}`}>
+                <Checkbox checked={on} disabled className={CHECK} />
+                <img src={logo} alt={s} className="h-4 w-4 object-contain shrink-0" />{s}
+                {!on && <span className="ml-auto text-[9px] font-mono uppercase tracking-wider text-slate-500">Soon</span>}
+              </label>
+            ))}
           </div>
           <div className="sm:pl-2">
             <Heading>Books</Heading>

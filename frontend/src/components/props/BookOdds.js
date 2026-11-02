@@ -11,11 +11,11 @@ const OddsInput = ({ value, onChange, testid, placeholder = "+000" }) => (
   />
 );
 
-const BOOK_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png", Fanatics: "/fanatics.png", Kalshi: "/kalshi.png" };
+const BOOK_LOGOS = { FanDuel: "/fd.png", DraftKings: "/dk.png", Fanatics: "/fanatics-sb.png", Kalshi: "/kalshi.png" };
 
 const BookName = ({ b }) => (
   <span className="flex items-center gap-2 text-xs text-slate-300">
-    {BOOK_LOGOS[b] ? <img src={BOOK_LOGOS[b]} alt="" className="h-4 w-4 rounded-[3px]" /> : <span className="h-2 w-2 rounded-sm mx-1" style={{ background: BOOK_COLORS[b] }} />}
+    {BOOK_LOGOS[b] ? <img src={BOOK_LOGOS[b]} alt="" className="h-5 w-5 rounded-[4px] object-cover" /> : <span className="h-2 w-2 rounded-sm mx-1" style={{ background: BOOK_COLORS[b] }} />}
     {b}
   </span>
 );
@@ -27,7 +27,7 @@ export const BookOdds = ({ mode, odds, setOdds, prefix, kalshi }) => mode !== "s
       <span>Book</span><span>SGP odds</span>
     </div>
     {kalshi && (
-      <div className="flex items-center justify-between rounded border border-emerald-500/30 bg-[#0E0E0E] px-2 py-2.5">
+      <div className="flex items-center justify-between rounded border border-slate-800/70 bg-[#0E0E0E] px-2 py-2.5">
         <BookName b="Kalshi" />
         <span data-testid={`${prefix}-sgp-Kalshi`} className="font-mono text-sm font-semibold text-white">{kalshi}</span>
       </div>
