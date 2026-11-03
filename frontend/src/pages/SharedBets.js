@@ -51,7 +51,7 @@ export default function SharedBets() {
     <div data-testid="shared-bets-page" className="space-y-6">
       <div>
         <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-          <ClipboardList className="h-8 w-8 text-emerald-400" /> Sean's Plays
+          <ClipboardList className="h-8 w-8 text-white" /> Sean's Plays
         </h1>
         <p data-testid="shared-bets-date" className="text-sm text-slate-400 mt-1">{day} · Kalshi combos, graded from ESPN box scores</p>
       </div>

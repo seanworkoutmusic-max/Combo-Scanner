@@ -5,7 +5,7 @@ import { Checkbox } from "../ui/checkbox";
 
 const BOOKS = ["Kalshi"];
 const SPORTS = [["NBA", "/nba.png", true], ["NFL", "/nfl.png", false], ["MLB", "/mlb.png", false]];
-const CHECK = "border-slate-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 data-[state=checked]:text-black";
+const CHECK = "border-slate-500 data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-black";
 
 const Heading = ({ children }) => <div className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">{children}</div>;
 

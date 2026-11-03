@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 
 const STEPS = [
   "Pulling Kalshi combo markets…",
@@ -24,14 +24,14 @@ export const ScanReady = ({ onScan, games }) => (
           Pick your combos in the filter, then we scan every game for live Kalshi combo prices against the sportsbooks.
         </p>
         <button data-testid="scanner-scan-btn" onClick={onScan}
-          className="scan-glow mt-6 inline-flex items-center gap-2 h-12 px-7 rounded-xl bg-emerald-400 text-slate-950 text-base font-bold hover:bg-emerald-300 hover:-translate-y-0.5 transition-[background-color,transform]">
+          className="mt-6 inline-flex items-center gap-2 h-12 px-7 rounded-xl bg-white text-slate-950 text-base font-bold hover:bg-slate-200 hover:-translate-y-0.5 transition-[background-color,transform]">
           <Sparkles className="h-4 w-4" /> Scan all {games ? `${games} ` : ""}games
         </button>
       </div>
       <div className="space-y-3">
         {STEPS_HOW.map(([t, s], i) => (
           <div key={t} data-testid={`scanner-step-${i + 1}`} className="flex items-center gap-4 rounded-xl border border-slate-800 bg-[#0E0E0E] px-4 py-3">
-            <span className="grid place-items-center h-7 w-7 shrink-0 rounded-full bg-emerald-500/20 text-xs font-bold text-emerald-400">{i + 1}</span>
+            <span className="grid place-items-center h-7 w-7 shrink-0 rounded-full bg-white/10 text-xs font-bold text-white">{i + 1}</span>
             <div className="leading-tight">
               <div className="text-sm font-semibold text-white">{t}</div>
               <div className="text-xs text-slate-400 mt-0.5">{s}</div>
@@ -50,22 +50,10 @@ export const ScanLoader = ({ progress }) => {
     return () => clearInterval(t);
   }, []);
   return (
-    <div data-testid="scanner-loading" className="py-16 flex flex-col items-center scan-fade-in">
-      <div className="scan-card relative w-56 h-72 rounded-2xl border border-emerald-500/30 overflow-hidden flex flex-col items-center justify-center">
-        <div className="scan-shine" />
-        <div className="relative font-display text-xl font-extrabold tracking-[0.18em] text-white">
-          PROP<span className="text-emerald-400">OUTLIERS</span>
-        </div>
-        <div className="relative mt-2 text-[10px] tracking-[0.4em] text-slate-400">SGP SCANNER</div>
-        <div key={step} data-testid="scanner-loading-step"
-          className="relative mt-6 mx-4 px-3 py-1.5 rounded-full border border-white/10 bg-black/30 text-[11px] text-slate-300 text-center scan-fade-in">
-          {STEPS[step]}
-        </div>
-      </div>
-      <div className="mt-5 flex items-center gap-1.5">
-        {[0, 1, 2].map((i) => <span key={i} className="scan-dot h-1.5 w-1.5 rounded-full bg-emerald-400" style={{ animationDelay: `${i * 0.2}s` }} />)}
-      </div>
-      <p className="mt-3 text-xs font-mono text-slate-500">
+    <div data-testid="scanner-loading" className="py-20 flex flex-col items-center scan-fade-in">
+      <Loader2 data-testid="scanner-spinner" className="h-8 w-8 text-white animate-spin" />
+      <div key={step} data-testid="scanner-loading-step" className="mt-5 text-sm text-slate-300 scan-fade-in">{STEPS[step]}</div>
+      <p className="mt-2 text-xs font-mono text-slate-500">
         {progress ? `Combo ${Math.min(progress.done + 1, progress.total)} of ${progress.total} · ~25s each` : "Usually 10–40 seconds"}
       </p>
     </div>

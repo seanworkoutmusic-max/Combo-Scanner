@@ -214,7 +214,7 @@ export default function DDScanner({ settings }) {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 data-testid="scanner-title" className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight"><Search className="h-8 w-8 text-emerald-400" strokeWidth={2.5} /> Kalshi SGP Scanner</h1>
+          <h1 data-testid="scanner-title" className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight"><Search className="h-8 w-8 text-white" strokeWidth={2.5} /> Kalshi SGP Scanner</h1>
           <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${shown.length === rows.length ? rows.length : `${shown.length} of ${rows.length}`} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
@@ -229,7 +229,7 @@ export default function DDScanner({ settings }) {
       <div data-testid="scanner-mode" className="flex rounded-lg border border-slate-700 bg-[#0E0E0E] p-0.5">
         {[["pregame", "Pregame"], ["live", "Live"]].map(([k, l]) => (
           <button key={k} data-testid={`scanner-mode-${k}`} onClick={() => setLive(k === "live")}
-            className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-emerald-400 text-slate-950" : "text-slate-400 hover:text-white"}`}>
+            className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"}`}>
             {k === "live" && <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-red-500 animate-pulse" : "bg-red-500/60"}`} />}{l}
           </button>
         ))}

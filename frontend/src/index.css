@@ -91,7 +91,7 @@ body {
 
 /* Scanner reveal: rows flip in like cards, best EV first */
 .row-flip { transform-origin: 50% 0; animation: row-flip 0.55s cubic-bezier(0.2, 0.8, 0.25, 1.1) both; }
-.row-flip-top { animation: row-flip 0.55s cubic-bezier(0.2, 0.8, 0.25, 1.1) both, row-glow 1.6s ease-out backwards; }
+.row-flip-top { animation: row-flip 0.55s cubic-bezier(0.2, 0.8, 0.25, 1.1) both; }
 @keyframes row-flip {
   from { opacity: 0; transform: perspective(900px) rotateX(-85deg) translateY(-6px); }
   60% { opacity: 1; transform: perspective(900px) rotateX(10deg); }

@@ -107,7 +107,7 @@ export default function LiveTracker() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-            <Crosshair data-testid="live-tracker-logo" className="h-8 w-8 text-emerald-400" /> In-Game Tracker
+            <Crosshair data-testid="live-tracker-logo" className="h-8 w-8 text-white" /> In-Game Tracker
           </h1>
           <p className="text-sm text-slate-400 mt-1">Every player in games in progress, ranked by how many rebounds and assists they still need to reach 10 of each (points ignored).</p>
           <p data-testid="live-updated" className="text-sm font-semibold text-white mt-1">
