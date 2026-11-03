@@ -27,13 +27,13 @@ export const BookOdds = ({ mode, odds, setOdds, prefix, kalshi }) => mode !== "s
       <span>Book</span><span>SGP odds</span>
     </div>
     {kalshi && (
-      <div className="flex items-center justify-between rounded border border-slate-800/70 bg-[#0A1730] px-2 py-2.5">
+      <div className="flex items-center justify-between rounded border border-slate-800/70 bg-[#0E0E0E] px-2 py-2.5">
         <BookName b="Kalshi" />
         <span data-testid={`${prefix}-sgp-Kalshi`} className="font-mono text-sm font-semibold text-white">{kalshi}</span>
       </div>
     )}
     {["DraftKings", "Fanatics"].map((b) => (
-      <div key={b} className="flex items-center justify-between rounded border border-slate-800/70 bg-[#0A1730] px-2 py-2.5">
+      <div key={b} className="flex items-center justify-between rounded border border-slate-800/70 bg-[#0E0E0E] px-2 py-2.5">
         <BookName b={b} />
         <span data-testid={`${prefix}-sgp-${b}`} className={`font-mono text-sm font-semibold ${odds[b]?.price ? "text-white" : "text-slate-600"}`}>
           {odds[b]?.price || "—"}
@@ -49,7 +49,7 @@ export const BookOdds = ({ mode, odds, setOdds, prefix, kalshi }) => mode !== "s
       {mode === "straight" ? (<><span>Over</span><span>Under</span></>) : <span>SGP odds</span>}
     </div>
     {BOOKS.map((b) => (
-      <div key={b} className="grid gap-2 items-center rounded border border-slate-800/70 bg-[#0A1730] px-2 py-1.5"
+      <div key={b} className="grid gap-2 items-center rounded border border-slate-800/70 bg-[#0E0E0E] px-2 py-1.5"
         style={{ gridTemplateColumns: mode === "straight" ? "1fr 80px 80px" : "1fr 90px" }}>
         <BookName b={b} />
         {mode === "straight" ? (

@@ -51,7 +51,7 @@ export default function SharedBets() {
     <div data-testid="shared-bets-page" className="space-y-6">
       <div>
         <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-          <ClipboardList className="h-8 w-8 text-dolphin-light" /> Sean's Plays
+          <ClipboardList className="h-8 w-8 text-emerald-400" /> Sean's Plays
         </h1>
         <p data-testid="shared-bets-date" className="text-sm text-slate-400 mt-1">{day} · Kalshi combos, graded from ESPN box scores</p>
       </div>
@@ -63,7 +63,7 @@ export default function SharedBets() {
         <Stat label="Avg EV" value={s.ev == null ? "—" : `${(s.ev * 100).toFixed(1)}%`} testid="shared-stat-ev" />
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
         <table data-testid="shared-bet-table" className="w-full min-w-[760px]">
           <thead>
             <tr className="text-xs text-slate-400">

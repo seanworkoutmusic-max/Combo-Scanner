@@ -10,7 +10,7 @@ const TABS = [
 
 const Logo = () => (
   <div className="flex items-center gap-2.5">
-    <img data-testid="site-logo" src="/logo.png" alt="Prop Outliers logo" className="h-10 w-10 object-contain shrink-0" />
+    <img data-testid="site-logo" src="/logo.png" alt="Prop Outliers logo" className="h-7 w-7 rounded object-cover shrink-0" />
   </div>
 );
 
@@ -28,7 +28,7 @@ const NavItem = ({ t, active, onClick, compact }) => {
 
 export const Sidebar = ({ tab, setTab, kalshiOk }) => (
   <>
-    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-16 min-[1440px]:w-56 flex-col border-r border-slate-800/80 bg-[#0A1730] px-3 py-5 z-30">
+    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-16 min-[1440px]:w-56 flex-col border-r border-slate-800/80 bg-[#0E0E0E] px-3 py-5 z-30">
       <div className="px-2 mb-8"><Logo collapsible /></div>
       <nav className="space-y-0.5">
         {TABS.map((t) => <NavItem key={t.id} t={t} active={tab === t.id} onClick={() => setTab(t.id)} />)}
@@ -45,7 +45,7 @@ export const Sidebar = ({ tab, setTab, kalshiOk }) => (
         </div>
       </div>
     </aside>
-    <header className="lg:hidden sticky top-0 z-30 border-b border-slate-800/80 bg-[#0A1730]/95 backdrop-blur-xl px-4 py-3 space-y-3">
+    <header className="lg:hidden sticky top-0 z-30 border-b border-slate-800/80 bg-[#0E0E0E]/95 backdrop-blur-xl px-4 py-3 space-y-3">
       <Logo />
       <nav className="flex gap-1 overflow-x-auto">
         {TABS.map((t) => <NavItem key={t.id} t={t} compact active={tab === t.id} onClick={() => setTab(t.id)} />)}

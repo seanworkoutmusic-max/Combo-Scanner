@@ -21,7 +21,7 @@ const Leg = ({ l, format, onRemove }) => (
       <div className="text-[11px] font-mono text-slate-500">{l.team}{l.threshold ? ` · ${l.threshold}+` : ""}</div>
     </div>
     <div className="flex items-center gap-3 shrink-0">
-      <span className="font-mono text-sm text-dolphin-light"><PriceTag p={l.yes_ask} format={format} /></span>
+      <span className="font-mono text-sm text-emerald-400"><PriceTag p={l.yes_ask} format={format} /></span>
       <button data-testid={`remove-leg-${l.ticker}`} onClick={onRemove} className="text-slate-500 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
     </div>
   </div>
@@ -37,7 +37,7 @@ export const ParlaySlip = ({ legs, combo, odds, setOdds, settings, format, remov
   const ev = evPct(fair, k.price, settings.fees);
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-800 bg-[#0D1B33]">
+      <div className="rounded-xl border border-slate-800 bg-[#181818]">
         <div className="flex items-center justify-between px-3 py-3 border-b border-slate-800">
           <span className="text-sm font-semibold">{legs.length}-Leg Same Game Parlay</span>
         </div>

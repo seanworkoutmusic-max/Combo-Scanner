@@ -34,7 +34,7 @@ const MyBets = ({ p, bets, slug }) => (
 );
 
 const GameChip = ({ g }) => (
-  <div data-testid={`live-game-${g.id}`} className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800 bg-[#0D1B33] text-sm font-semibold">
+  <div data-testid={`live-game-${g.id}`} className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800 bg-[#181818] text-sm font-semibold">
     <TeamLogo team={g.away} size={16} />{g.away} <span className="font-mono text-white">{g.away_score}</span>
     <span className="text-slate-600">–</span>
     <span className="font-mono text-white">{g.home_score}</span> {g.home}<TeamLogo team={g.home} size={16} />
@@ -107,7 +107,7 @@ export default function LiveTracker() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-            <Crosshair data-testid="live-tracker-logo" className="h-8 w-8 text-dolphin-light" /> In-Game Tracker
+            <Crosshair data-testid="live-tracker-logo" className="h-8 w-8 text-emerald-400" /> In-Game Tracker
           </h1>
           <p className="text-sm text-slate-400 mt-1">Every player in games in progress, ranked by how many rebounds and assists they still need to reach 10 of each (points ignored).</p>
           <p data-testid="live-updated" className="text-sm font-semibold text-white mt-1">
@@ -136,7 +136,7 @@ export default function LiveTracker() {
         ))}
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
         <table data-testid="live-table" className="w-full min-w-[1040px]">
           <thead>
             <tr className="text-xs text-slate-400">

@@ -59,7 +59,7 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
   const legs = r.combos[0].legs;
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${Math.min(i, 14) * 90}ms` }} className={`row-flip ${i < 3 ? "row-flip-top" : ""} border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors`}>
-      <td className="py-3 px-4 sticky left-0 z-10 bg-[#0D1B33]">
+      <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
         <div className="flex items-center gap-3">
           <button data-testid={`track-bet-${slug}`} onClick={() => onTrack(r)} disabled={tracked} title={tracked ? "Tracked in Bet Tracker" : "Track this bet"}
             className={`h-8 w-8 shrink-0 grid place-items-center rounded-md border transition-colors ${tracked ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-400" : "border-slate-700 text-slate-400 hover:text-white hover:border-white/50 hover:bg-white/[0.05]"}`}>
@@ -214,22 +214,22 @@ export default function DDScanner({ settings }) {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 data-testid="scanner-title" className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight"><Search className="h-8 w-8 text-dolphin-light" strokeWidth={2.5} /> Kalshi SGP Scanner</h1>
+          <h1 data-testid="scanner-title" className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight"><Search className="h-8 w-8 text-emerald-400" strokeWidth={2.5} /> Kalshi SGP Scanner</h1>
           <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${shown.length === rows.length ? rows.length : `${shown.length} of ${rows.length}`} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
         </div>
         <button data-testid="scanner-refresh-btn" onClick={() => load()} disabled={loading}
-          className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-dolphin/60 bg-dolphin/10 text-white text-sm font-semibold hover:bg-dolphin/25 disabled:opacity-50 transition-colors">
+          className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh odds
         </button>
       </div>
 
       <div className="flex items-center gap-5 flex-wrap">
-      <div data-testid="scanner-mode" className="flex rounded-lg border border-slate-700 bg-[#0A1730] p-0.5">
+      <div data-testid="scanner-mode" className="flex rounded-lg border border-slate-700 bg-[#0E0E0E] p-0.5">
         {[["pregame", "Pregame"], ["live", "Live"]].map(([k, l]) => (
           <button key={k} data-testid={`scanner-mode-${k}`} onClick={() => setLive(k === "live")}
-            className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-dolphin text-white" : "text-slate-400 hover:text-white"}`}>
+            className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-emerald-400 text-slate-950" : "text-slate-400 hover:text-white"}`}>
             {k === "live" && <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-red-500 animate-pulse" : "bg-red-500/60"}`} />}{l}
           </button>
         ))}
@@ -248,13 +248,13 @@ export default function DDScanner({ settings }) {
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-800 bg-[#0D1B33] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
         {ready ? <ScanReady onScan={() => load()} games={slate?.length} /> : showLoader ? <ScanLoader progress={progress} /> : (
         <table data-testid="scanner-board" className="w-full min-w-[1000px]">
           <thead>
             <tr className="text-xs text-slate-400">
               {heads.map((h, i) => (
-                <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#0D1B33]"}`}>
+                <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#181818]"}`}>
                   {HEAD_LOGOS[h] ? (
                     <span className="inline-flex items-center gap-1.5">
                       <img data-testid={`logo-${h.toLowerCase()}`} src={HEAD_LOGOS[h]} alt="" className="h-4 w-4 rounded-[3px]" />{h}
