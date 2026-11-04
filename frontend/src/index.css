@@ -15,6 +15,13 @@ body {
 .font-display { font-family: "Geist", sans-serif; letter-spacing: -0.02em; }
 .font-mono { font-family: "Geist Mono", monospace; }
 
+.dot-grid {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-attachment: fixed;
+}
+
+
 .grid-bg {
     background-image:
         linear-gradient(rgba(0, 217, 145, 0.04) 1px, transparent 1px),
