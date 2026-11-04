@@ -4,7 +4,7 @@ import { RefreshCw, ExternalLink, Plus, Check, Search } from "lucide-react";
 import { ComboFilter } from "../components/props/ComboFilter";
 import { ScanLoader, ScanReady } from "../components/props/ScanStage";
 import { SlateCards } from "../components/props/ScannerOverview";
-import { getScannerBoard, getScannerGames, getBets, addBet, errMsg } from "../lib/api";
+import { getScannerBoard, getScannerGames, getBets, addBet, errMsg, fillScannerSgp } from "../lib/api";
 import { getStake } from "./BetTracker";
 import { probToAmerican } from "../lib/ev";
 
@@ -161,6 +161,25 @@ export default function DDScanner({ settings }) {
 
   useEffect(() => { reqId.current++; setData(null); setLoading(false); setProgress(null); setScanning(null); setScannedGames(null); }, [load]);
 
+  const [filling, setFilling] = useState(false);
+  const fill = async () => {
+    const id = reqId.current;
+    const players = data?.players || [];
+    setFilling(true);
+    try {
+      const r = await fillScannerSgp({ live, items: players.map((p) => ({ code: p.game.code, player: p.key, legs: p.combos[0].legs.map((l) => ({ market: l.market, threshold: l.threshold })) })) });
+      if (id !== reqId.current) return;
+      const added = r.sgp.reduce((n, s, i) => n + Object.keys(s).filter((b) => players[i].sgp?.[b] == null).length, 0);
+      setData((d) => ({ ...d, books: { ...d.books, sgp_pending: r.pending },
+        players: d.players.map((p, i) => ({ ...p, sgp: { ...(p.sgp || {}), ...(r.sgp[i] || {}) } })) }));
+      toast.success(added ? `Added ${added} more book price${added === 1 ? "" : "s"}` : "No new book prices yet, try again in a minute");
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setFilling(false);
+    }
+  };
+
   const [tracked, setTracked] = useState(new Set());
   useEffect(() => {
     getBets().then((bs) => setTracked(new Set(bs.map((b) => betKey(b.game_code, b.legs))))).catch(() => {});
@@ -219,10 +238,19 @@ export default function DDScanner({ settings }) {
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${shown.length === rows.length ? rows.length : `${shown.length} of ${rows.length}`} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
         </div>
-        <button data-testid="scanner-refresh-btn" onClick={() => load()} disabled={loading}
-          className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh odds
-        </button>
+        <div className="flex items-center gap-2">
+          {data?.players?.length > 0 && (
+            <button data-testid="scanner-fill-btn" onClick={fill} disabled={loading || filling}
+              title="Pull more sportsbook prices for the plays already on the board"
+              className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-slate-600 text-white text-sm font-semibold hover:bg-white/[0.06] disabled:opacity-50 transition-colors">
+              <Plus className={`h-3.5 w-3.5 ${filling ? "animate-spin" : ""}`} /> {filling ? "Pulling book odds…" : "Load more book odds"}
+            </button>
+          )}
+          <button data-testid="scanner-refresh-btn" onClick={() => load()} disabled={loading || filling}
+            className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh odds
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-5 flex-wrap">
@@ -243,7 +271,7 @@ export default function DDScanner({ settings }) {
 
       {data?.books?.sgp_pending > 0 && !loading && (
         <div data-testid="sgp-pending-note" className="rounded-xl border border-slate-700 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
-          Still pulling {data.books.sgp_pending} sportsbook price{data.books.sgp_pending === 1 ? "" : "s"} (your OddsBlaze plan allows 30 per minute). Hit Refresh odds in a minute to fill in the dashes.
+          Still pulling {data.books.sgp_pending} sportsbook price{data.books.sgp_pending === 1 ? "" : "s"} (your OddsBlaze plan allows 30 per minute). Hit Load more book odds in a minute to fill in the dashes.
         </div>
       )}
 
