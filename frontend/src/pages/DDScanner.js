@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { RefreshCw, ExternalLink, Plus, Check } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, Check, Search } from "lucide-react";
 import { ComboFilter } from "../components/props/ComboFilter";
 import { ScanLoader, ScanReady } from "../components/props/ScanStage";
-import { SlateCards, StatsRow } from "../components/props/ScannerOverview";
-import { PageTitle } from "../components/TopBar";
+import { SlateCards } from "../components/props/ScannerOverview";
 import { getScannerBoard, getScannerGames, getBets, addBet, errMsg } from "../lib/api";
 import { getStake } from "./BetTracker";
 import { probToAmerican } from "../lib/ev";
@@ -60,7 +59,7 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
   const legs = r.combos[0].legs;
   return (
     <tr data-testid={`scanner-row-${slug}`} style={{ animationDelay: `${Math.min(i, 14) * 90}ms` }} className={`row-flip ${i < 3 ? "row-flip-top" : ""} border-t border-slate-800/70 hover:bg-white/[0.03] transition-colors`}>
-      <td className="py-3 px-4 sticky left-0 z-10 bg-[#121212]">
+      <td className="py-3 px-4 sticky left-0 z-10 bg-[#181818]">
         <div className="flex items-center gap-3">
           <button data-testid={`track-bet-${slug}`} onClick={() => onTrack(r)} disabled={tracked} title={tracked ? "Tracked in Bet Tracker" : "Track this bet"}
             className={`h-8 w-8 shrink-0 grid place-items-center rounded-md border transition-colors ${tracked ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-400" : "border-slate-700 text-slate-400 hover:text-white hover:border-white/50 hover:bg-white/[0.05]"}`}>
@@ -98,7 +97,7 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
   );
 };
 
-export default function DDScanner({ settings, onUpdated }) {
+export default function DDScanner({ settings }) {
   const format = settings.fees ? "fee" : "raw";
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -149,17 +148,16 @@ export default function DDScanner({ settings, onUpdated }) {
           }
           if (id === reqId.current) setProgress((pr) => ({ ...pr, done: pr.done + 1 }));
         }
-        if (id === reqId.current) onUpdated?.(acc.updated_at);
         return;
       }
       const d = await getScannerBoard({ td_pts: tdPts || undefined, ra: ra || undefined, live: live || undefined, game });
-      if (id === reqId.current) { setData(d); setScanId(id); onUpdated?.(d.updated_at); }
+      if (id === reqId.current) { setData(d); setScanId(id); }
     } catch (e) {
       if (id === reqId.current) toast.error(errMsg(e));
     } finally {
       if (id === reqId.current) { setLoading(false); setProgress(null); setScanning(null); }
     }
-  }, [all, ra, tdPts, live, selKey, onUpdated]);
+  }, [all, ra, tdPts, live, selKey]);
 
   useEffect(() => { reqId.current++; setData(null); setLoading(false); setProgress(null); setScanning(null); setScannedGames(null); }, [load]);
 
@@ -216,27 +214,27 @@ export default function DDScanner({ settings, onUpdated }) {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <PageTitle eyebrow="Tools / 02" testid="scanner-title">Kalshi SGP Scanner</PageTitle>
-          <p data-testid="scanner-updated" className="text-sm text-slate-400 mt-3 min-h-5">
+          <h1 data-testid="scanner-title" className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight"><Search className="h-8 w-8 text-white" strokeWidth={2.5} /> Kalshi SGP Scanner</h1>
+          <p data-testid="scanner-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${shown.length === rows.length ? rows.length : `${shown.length} of ${rows.length}`} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
         </div>
         <button data-testid="scanner-refresh-btn" onClick={() => load()} disabled={loading}
-          className="flex items-center gap-1.5 h-10 px-4 rounded-lg border border-slate-700 bg-[#0E0E0E] text-white text-sm font-semibold hover:border-slate-500 hover:bg-white/[0.04] disabled:opacity-50 transition-colors">
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh odds
         </button>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap pb-6 border-b border-slate-800/80">
-      <div data-testid="scanner-mode" className="flex rounded-lg border border-slate-800 bg-[#0E0E0E] p-1">
+      <div className="flex items-center gap-5 flex-wrap">
+      <div data-testid="scanner-mode" className="flex rounded-lg border border-slate-700 bg-[#0E0E0E] p-0.5">
         {[["pregame", "Pregame"], ["live", "Live"]].map(([k, l]) => (
           <button key={k} data-testid={`scanner-mode-${k}`} onClick={() => setLive(k === "live")}
-            className={`flex items-center gap-1.5 h-8 px-4 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"}`}>
-            {k === "live" && <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-red-500 animate-pulse" : "border border-slate-500"}`} />}{l}
+            className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"}`}>
+            {k === "live" && <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-red-500 animate-pulse" : "bg-red-500/60"}`} />}{l}
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-2 h-10 pl-3 rounded-lg border border-slate-800 bg-[#0E0E0E] text-sm text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-400">
         Filter
         <ComboFilter combos={COMBOS} value={sel} onChange={setSel} minOdds={minOdds} maxOdds={maxOdds} setMinOdds={setMinOdds} setMaxOdds={setMaxOdds} />
       </div>
@@ -250,21 +248,13 @@ export default function DDScanner({ settings, onUpdated }) {
         </div>
       )}
 
-      <StatsRow games={slate?.length} books={data ? (sgpBooks.length || tdBooks.length) : SGP_BOOKS.length}
-        evCount={data && !loading ? shown.filter((r) => r.ev > 0).length : null} best={data && shown.length ? shown[0].ev : null} />
-
-      <div className="rounded-xl border border-slate-800 bg-[#121212] overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
-          <h2 className="text-sm font-bold text-white">Results</h2>
-          <span className="font-mono text-xs text-slate-500">sorted by EV ↓</span>
-        </div>
-        <div className="overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
         {ready ? <ScanReady onScan={() => load()} games={slate?.length} /> : showLoader ? <ScanLoader progress={progress} /> : (
         <table data-testid="scanner-board" className="w-full min-w-[1000px]">
           <thead>
-            <tr className="font-mono text-[11px] tracking-[0.1em] uppercase text-slate-500">
+            <tr className="text-xs text-slate-400">
               {heads.map((h, i) => (
-                <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#121212]"}`}>
+                <th key={h} className={`py-3 font-semibold ${i ? "px-4 text-right" : "px-4 text-left sticky left-0 z-10 bg-[#181818]"}`}>
                   {HEAD_LOGOS[h] ? (
                     <span className="inline-flex items-center gap-1.5">
                       <img data-testid={`logo-${h.toLowerCase()}`} src={HEAD_LOGOS[h]} alt="" className="h-4 w-4 rounded-[3px]" />{h}
@@ -289,7 +279,6 @@ export default function DDScanner({ settings, onUpdated }) {
               : "No player has both a live Kalshi combo and a FanDuel/DraftKings price right now. Books usually post these on game day."}
           </div>
         )}
-        </div>
       </div>
 
       <SlateCards games={slate} counts={counts} scanning={scanning} />

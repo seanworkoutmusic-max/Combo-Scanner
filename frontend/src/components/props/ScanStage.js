@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 
 const STEPS = [
   "Pulling Kalshi combo markets…",
@@ -8,27 +8,37 @@ const STEPS = [
   "Devigging and ranking by EV…",
 ];
 
-const SKELETON = [["w-[52%]", "w-16", "w-20", "w-24", "w-16"], ["w-[42%]", "w-16", "w-20", "w-24", "w-12"], ["w-[48%]", "w-16", "w-20", "w-24", "w-16"], ["w-[36%]", "w-16", "w-20", "w-24", "w-14"]];
+const STEPS_HOW = [
+  ["Choose combos", "Points, boards, triple-doubles"],
+  ["We devig the books", "DraftKings, Fanatics, BetMGM & Hard Rock fair odds"],
+  ["Bet the edge on Kalshi", "Ranked by EV, one tap to place"],
+];
+
 
 export const ScanReady = ({ onScan, games }) => (
-  <div data-testid="scanner-ready" className="scan-fade-in">
-    <div className="hidden sm:grid grid-cols-[minmax(0,2.2fr)_1fr_1fr_1fr_1fr] px-5 py-3 font-mono text-[11px] tracking-[0.12em] text-slate-500 border-b border-slate-800">
-      <span>COMBO</span><span>GAME</span><span>KALSHI</span><span>BEST BOOK</span><span className="text-right">EV</span>
-    </div>
-    {SKELETON.map((r, i) => (
-      <div key={i} className="hidden sm:grid grid-cols-[minmax(0,2.2fr)_1fr_1fr_1fr_1fr] items-center px-5 py-4 border-b border-slate-800/60 opacity-40">
-        {r.map((w, j) => <div key={j} className={`h-2 rounded-full bg-slate-700 ${j === 0 ? "w-full" : w} ${j === 4 ? "ml-auto" : ""}`} style={j === 0 ? { maxWidth: w.slice(3, -1) } : undefined} />)}
+  <div data-testid="scanner-ready" className="relative overflow-hidden px-6 sm:px-10 py-12 scan-fade-in">
+    <div className="relative grid lg:grid-cols-[1fr_minmax(0,380px)] gap-8 items-center">
+      <div>
+        <h3 className="font-display text-3xl font-bold text-white">Ready when you are</h3>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-300">
+          Pick your combos in the filter, then we scan every game for live Kalshi combo prices against the sportsbooks.
+        </p>
+        <button data-testid="scanner-scan-btn" onClick={onScan}
+          className="mt-6 inline-flex items-center gap-2 h-12 px-7 rounded-xl bg-white text-slate-950 text-base font-bold hover:bg-slate-200 hover:-translate-y-0.5 transition-[background-color,transform]">
+          <Sparkles className="h-4 w-4" /> Scan all {games ? `${games} ` : ""}games
+        </button>
       </div>
-    ))}
-    <div className="py-12 text-center px-6">
-      <h3 className="text-base font-bold text-white">Nothing scanned yet</h3>
-      <p className="mt-3 mx-auto max-w-sm text-sm leading-relaxed text-slate-400">
-        Pick your combos in the filter, then scan all {games ? `${games} ` : ""}games for live Kalshi prices against the books.
-      </p>
-      <button data-testid="scanner-scan-btn" onClick={onScan}
-        className="mt-6 inline-flex items-center h-11 px-5 rounded-lg bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 hover:-translate-y-0.5 transition-[background-color,transform]">
-        Scan combos
-      </button>
+      <div className="space-y-3">
+        {STEPS_HOW.map(([t, s], i) => (
+          <div key={t} data-testid={`scanner-step-${i + 1}`} className="flex items-center gap-4 rounded-xl border border-slate-800 bg-[#0E0E0E] px-4 py-3">
+            <span className="grid place-items-center h-7 w-7 shrink-0 rounded-full bg-white/10 text-xs font-bold text-white">{i + 1}</span>
+            <div className="leading-tight">
+              <div className="text-sm font-semibold text-white">{t}</div>
+              <div className="text-xs text-slate-400 mt-0.5">{s}</div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   </div>
 );

@@ -1,62 +1,51 @@
 import { BookOpen, ClipboardList, Crosshair, Layers, Search } from "lucide-react";
 import { HowItWorks } from "./HowItWorks";
 
-export const TABS = [
-  { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers, crumb: ["builder", "parlay"] },
-  { id: "scanner", label: "SGP Scanner", testid: "nav-tab-scanner", icon: Search, crumb: ["scanner", "sgp"] },
-  { id: "live", label: "In-Game Tracker", testid: "nav-tab-live", icon: Crosshair, crumb: ["tracker", "in-game"] },
-  { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList, crumb: ["tracker", "bets"] },
+const TABS = [
+  { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers },
+  { id: "scanner", label: "SGP Scanner", testid: "nav-tab-scanner", icon: Search },
+  { id: "live", label: "In-Game Tracker", testid: "nav-tab-live", icon: Crosshair },
+  { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList },
 ];
 
 const Logo = () => (
-  <div className="grid place-items-center h-9 w-9 rounded-lg bg-white">
-    <img data-testid="site-logo" src="/logo.png" alt="Kalshi Combo Scanner logo" className="h-6 w-6 object-contain invert" />
+  <div className="flex items-center gap-2.5">
+    <img data-testid="site-logo" src="/logo.png" alt="Kalshi Combo Scanner logo" className="h-7 w-7 rounded object-cover shrink-0" />
   </div>
-);
-
-const Tip = ({ children }) => (
-  <span className="pointer-events-none absolute left-full ml-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-slate-800 bg-[#0E0E0E] px-2.5 py-1 text-xs font-semibold text-white opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform] z-50">
-    {children}
-  </span>
 );
 
 const NavItem = ({ t, active, onClick, compact }) => {
   const Icon = t.icon;
-  if (compact) {
-    return (
-      <button data-testid={`${t.testid}-mobile`} onClick={onClick}
-        className={`flex items-center gap-1.5 rounded-lg text-sm px-2.5 py-1.5 whitespace-nowrap shrink-0 transition-colors ${active ? "bg-white/[0.08] text-white font-semibold" : "text-slate-400 hover:text-white"}`}>
-        <Icon className="h-4 w-4" /> {t.label}
-      </button>
-    );
-  }
   return (
-    <button data-testid={t.testid} onClick={onClick} aria-label={t.label}
-      className={`group relative grid place-items-center h-10 w-10 rounded-lg border transition-colors ${active ? "border-slate-700 bg-white/[0.06] text-white" : "border-transparent text-slate-500 hover:text-white hover:bg-white/[0.04]"}`}>
-      <Icon className="h-4 w-4" />
-      <Tip>{t.label}</Tip>
+    <button data-testid={compact ? `${t.testid}-mobile` : t.testid} onClick={onClick} title={t.label}
+      className={`flex items-center gap-2.5 rounded-lg text-sm transition-colors ${compact ? "px-2.5 py-1.5 gap-1.5 whitespace-nowrap shrink-0" : "w-full px-3 py-2 justify-center min-[1440px]:justify-start"} ${
+        active ? "bg-white/[0.08] text-white font-semibold" : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+      }`}>
+      <Icon className="h-4 w-4 shrink-0" /> <span className={compact ? "" : "hidden min-[1440px]:inline whitespace-nowrap"}>{t.label}</span>
     </button>
   );
 };
 
-export const Sidebar = ({ tab, setTab }) => (
+export const Sidebar = ({ tab, setTab, kalshiOk }) => (
   <>
-    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-16 flex-col items-center border-r border-slate-800/80 bg-[#0B0B0B] py-4 z-30">
-      <Logo />
-      <nav className="mt-8 flex flex-col items-center gap-2">
+    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-16 min-[1440px]:w-56 flex-col border-r border-slate-800/80 bg-[#0E0E0E] px-3 py-5 z-30">
+      <div className="px-2 mb-8"><Logo collapsible /></div>
+      <nav className="space-y-0.5">
         {TABS.map((t) => <NavItem key={t.id} t={t} active={tab === t.id} onClick={() => setTab(t.id)} />)}
       </nav>
-      <div className="mt-auto">
+      <div className="mt-auto space-y-3 px-1 min-[1440px]:px-3">
         <HowItWorks trigger={
-          <button data-testid="nav-btn-how-it-works" aria-label="How it works"
-            className="group relative grid place-items-center h-10 w-10 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] transition-colors">
-            <BookOpen className="h-4 w-4" />
-            <Tip>How it works</Tip>
+          <button data-testid="nav-btn-how-it-works" title="How it works" className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
+            <BookOpen className="h-4 w-4 shrink-0" /> <span className="hidden min-[1440px]:inline">How it works</span>
           </button>
         } />
+        <div data-testid="nav-status-kalshi" title={kalshiOk ? "Kalshi live" : "Kalshi offline"} className="flex items-center gap-2 text-xs text-slate-500">
+          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${kalshiOk ? "bg-emerald-400" : "bg-slate-600"}`} />
+          <span className="hidden min-[1440px]:inline">{kalshiOk ? "Kalshi live" : "Kalshi offline"}</span>
+        </div>
       </div>
     </aside>
-    <header className="lg:hidden sticky top-0 z-30 border-b border-slate-800/80 bg-[#0B0B0B]/95 backdrop-blur-xl px-4 py-3 space-y-3">
+    <header className="lg:hidden sticky top-0 z-30 border-b border-slate-800/80 bg-[#0E0E0E]/95 backdrop-blur-xl px-4 py-3 space-y-3">
       <Logo />
       <nav className="flex gap-1 overflow-x-auto">
         {TABS.map((t) => <NavItem key={t.id} t={t} compact active={tab === t.id} onClick={() => setTab(t.id)} />)}

@@ -1,13 +1,23 @@
-const tip = (g) => (g.start ? new Date(g.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "TBA");
+import { TeamLogo } from "./TeamLogo";
+
+
+
+
+const tip = (g) => (g.start ? new Date(g.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "Tip-off TBA");
 
 const GameCard = ({ g, status, busy }) => {
   const [away, home] = [g.code.slice(-6, -3), g.code.slice(-3)];
   return (
-    <div data-testid={`slate-game-${g.code}`} className="rounded-xl border border-slate-800 bg-[#121212] px-4 py-3.5 hover:border-slate-600 transition-colors">
-      <div className="font-mono text-base font-bold text-white">{away} <span className="text-slate-600 font-normal">@</span> {home}</div>
-      <div className="mt-1.5 font-mono text-[11px] text-slate-500">
-        {tip(g)} · <span data-testid={`slate-status-${g.code}`} className={busy ? "text-white" : status ? "text-emerald-400" : ""}>
-          {busy ? "scanning…" : status != null ? `${status} combo${status === 1 ? "" : "s"}` : "not scanned"}
+    <div data-testid={`slate-game-${g.code}`} className="rounded-xl border border-slate-800 bg-[#181818] p-4 flex flex-col gap-3 hover:border-slate-600 transition-colors">
+      <div className="flex items-center justify-between font-mono text-base font-bold text-white">
+        <span className="flex items-center gap-1.5"><TeamLogo team={away} size={20} />{away}</span>
+        <span className="text-[10px] font-sans font-normal text-slate-500">at</span>
+        <span className="flex items-center gap-1.5">{home}<TeamLogo team={home} size={20} /></span>
+      </div>
+      <div className="flex items-center justify-between gap-2 text-[11px]">
+        <span className="text-slate-400 font-mono">{tip(g)}</span>
+        <span data-testid={`slate-status-${g.code}`} className={`px-2 py-0.5 rounded-md ${busy ? "bg-white/10 text-white" : status != null ? "bg-emerald-500/10 text-emerald-400" : "bg-white/[0.04] text-slate-400"}`}>
+          {busy ? "Scanning…" : status != null ? `${status} combo${status === 1 ? "" : "s"}` : "Not scanned"}
         </span>
       </div>
     </div>
@@ -17,27 +27,11 @@ const GameCard = ({ g, status, busy }) => {
 export const SlateCards = ({ games, counts, scanning }) => !games?.length ? null : (
   <div className="space-y-3">
     <div className="flex items-end justify-between">
-      <h2 className="text-base font-bold text-white">Tonight</h2>
-      <span className="font-mono text-xs text-slate-500">{new Date(`${games[0].date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "2-digit", day: "2-digit" }).replace(",", " ·")}</span>
+      <h2 className="font-display text-lg font-bold text-white">Tonight's slate</h2>
+      <span className="text-xs text-slate-500">{new Date(`${games[0].date}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
     </div>
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
       {games.map((g) => <GameCard key={g.code} g={g} status={counts[g.code]} busy={scanning === "all" || scanning === g.code} />)}
     </div>
-  </div>
-);
-
-const Stat = ({ label, value, accent, testid }) => (
-  <div className="px-5 py-5 border-slate-800 [&:nth-child(even)]:border-l md:[&:not(:first-child)]:border-l [&:nth-child(-n+2)]:border-b md:[&:nth-child(-n+2)]:border-b-0">
-    <div className="font-mono text-[11px] tracking-[0.12em] text-slate-500 uppercase">{label}</div>
-    <div data-testid={testid} className={`mt-3 font-mono text-3xl font-bold ${accent ? "text-emerald-400" : "text-white"}`}>{value}</div>
-  </div>
-);
-
-export const StatsRow = ({ games, books, evCount, best }) => (
-  <div data-testid="scanner-stats" className="grid grid-cols-2 md:grid-cols-4 rounded-xl border border-slate-800 bg-[#121212] overflow-hidden">
-    <Stat label="Games" value={games ?? "—"} testid="stat-games" />
-    <Stat label="Books" value={books} testid="stat-books" />
-    <Stat label="+EV Combos" value={evCount ?? "—"} testid="stat-ev-combos" />
-    <Stat label="Best Edge" value={best == null ? "—" : `${best > 0 ? "+" : ""}${(best * 100).toFixed(1)}%`} accent={best > 0} testid="stat-best-edge" />
   </div>
 );

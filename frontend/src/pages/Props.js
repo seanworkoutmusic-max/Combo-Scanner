@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
-import { PageTitle } from "../components/TopBar";
 import { getPropsGames, getPropsGame, getPropsPlayers, postSlip, postKalshiQuote, postSgp, errMsg } from "../lib/api";
 import { MarketList } from "../components/props/MarketList";
 import { BetSlip } from "../components/props/BetSlip";
@@ -37,7 +36,7 @@ const PlayerList = ({ players, allPlayers, player, onPick }) => {
   const nq = norm(q).trim();
   const shown = nq ? allPlayers.filter((p) => norm(p.name).includes(nq) || p.key.includes(nq)) : players;
   return (
-    <div className="rounded-xl border border-slate-800 bg-[#121212]/80">
+    <div className="rounded-xl border border-slate-800 bg-[#181818]/80">
       <div className="flex items-center gap-2 px-3 border-b border-slate-800">
         <Search className="h-3.5 w-3.5 text-slate-500" />
         <input data-testid="player-search-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search any player"
@@ -152,8 +151,7 @@ export default function Props({ settings, update, status }) {
   };
 
   return (
-    <div className="space-y-6">
-      <PageTitle eyebrow="Tools / 01" testid="props-title">Parlay Builder</PageTitle>
+    <div className="space-y-4">
       <GameStrip games={games} game={game} setGame={setGame} />
       <div className="grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)_320px] xl:grid-cols-[200px_minmax(0,1fr)_360px] 2xl:grid-cols-[220px_minmax(0,1fr)_400px]">
         <PlayerList players={data?.players || []} allPlayers={allPlayers} player={player} onPick={pickPlayer} />
