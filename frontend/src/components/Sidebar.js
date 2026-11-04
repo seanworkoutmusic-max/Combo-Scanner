@@ -10,7 +10,7 @@ const TABS = [
 
 const Logo = () => (
   <div className="flex items-center gap-2.5">
-    <img data-testid="site-logo" src="/logo.png" alt="Prop Outliers logo" className="h-7 w-7 rounded object-cover shrink-0" />
+    <img data-testid="site-logo" src="/logo.png" alt="Kalshi Combo Scanner logo" className="h-7 w-7 rounded object-cover shrink-0" />
   </div>
 );
 
