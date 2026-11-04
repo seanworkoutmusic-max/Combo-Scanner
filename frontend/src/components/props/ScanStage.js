@@ -4,13 +4,13 @@ import { Loader2, Sparkles } from "lucide-react";
 const STEPS = [
   "Pulling Kalshi combo markets…",
   "Asking market makers for live quotes…",
-  "Pricing DraftKings, Fanatics, BetMGM & Hard Rock…",
+  "Pricing FanDuel same-game parlays…",
   "Devigging and ranking by EV…",
 ];
 
 const STEPS_HOW = [
   ["Choose combos", "Points, boards, triple-doubles"],
-  ["We devig the books", "DraftKings, Fanatics, BetMGM & Hard Rock fair odds"],
+  ["We devig FanDuel", "FanDuel SGP fair odds"],
   ["Bet the edge on Kalshi", "Ranked by EV, one tap to place"],
 ];
 

@@ -14,8 +14,8 @@ import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
 
-const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
-const SGP_BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"], ["fan", "Fanatics"], ["mgm", "BetMGM"], ["hr", "Hard Rock"]];
+const BOOKS = [["fd", "FanDuel"]];
+const SGP_BOOKS = [["fd", "FanDuel"]];
 const HEAD_LOGOS = { Kalshi: "/kalshi.png", FD: "/fd.png", DK: "/dk.png", FanDuel: "/fd.png", DraftKings: "/dk.png", Fanatics: "/fanatics.png", BetMGM: "/betmgm.png", "Hard Rock": "/hardrock.png" };
 
 const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
@@ -249,7 +249,7 @@ export default function DDScanner({ settings }) {
 
       {data?.books?.sgp_key_rejected && (
         <div data-testid="sgp-key-warning" className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          OddsBlaze is rejecting your API key (your trial may have ended), so DraftKings / Fanatics / BetMGM / Hard Rock SGP prices can't load.
+          OddsBlaze is rejecting your API key (your trial may have ended), so FanDuel SGP prices can't load.
           Without them only 10+ pts triple-doubles can be priced (from regular FD/DK triple-double odds). Add a new OddsBlaze key to bring the rest back.
         </div>
       )}
@@ -282,7 +282,7 @@ export default function DDScanner({ settings }) {
         {data && !loading && !rows.length && (
           <div data-testid="scanner-empty" className="py-16 text-center text-sm text-slate-500">
             {live ? "No games in progress with live Kalshi combos and live sportsbook SGP prices right now."
-              : "No player has both a live Kalshi combo and a FanDuel/DraftKings price right now. Books usually post these on game day."}
+              : "No player has both a live Kalshi combo and a FanDuel price right now. Books usually post these on game day."}
           </div>
         )}
       </div>

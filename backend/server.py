@@ -285,7 +285,7 @@ async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Op
     todo = []
     for g, (bk, _) in zip(games.values(), books):
         for p in g["players"].values():
-            odds = (bk.get(p["key"]) or {}).get("odds") or {}
+            odds = {b: v for b, v in ((bk.get(p["key"]) or {}).get("odds") or {}).items() if b == "fd"}  # FanDuel is the sole devig source
             legs = [_pick(p["markets"], "Rebounds", reb_ast), _pick(p["markets"], "Assists", reb_ast)]
             if td_pts:
                 legs.insert(0, _pick(p["markets"], "Points", td_pts) or min(
@@ -302,7 +302,7 @@ async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Op
     t0 = time.monotonic()
     quotes = {id(c): asyncio.create_task(_quote(c)) for _, _, c, _ in todo}  # Kalshi quotes run alongside SGP pricing
     sgps = await oddsblaze.sgp_prices([(g["code"][-6:-3], g["code"][-3:], [(p["key"], l["market"], l["threshold"]) for l in c["legs"]])
-                                       for g, p, c, _ in todo], timeout=25, live=live)
+                                       for g, p, c, _ in todo], books={"fd"}, timeout=25, live=live)
     todo = [(g, p, c, odds, s) for (g, p, c, odds), s in zip(todo, sgps)
             if s or (odds and td_pts == 10 and reb_ast == 10 and c["legs"][0]["threshold"] == 10)]
     keep = {id(c) for _, _, c, _, _ in todo}
