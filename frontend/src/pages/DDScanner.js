@@ -243,7 +243,7 @@ export default function DDScanner({ settings }) {
             <button data-testid="scanner-fill-btn" onClick={fill} disabled={loading || filling}
               title="Pull more sportsbook prices for the plays already on the board"
               className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-slate-600 text-white text-sm font-semibold hover:bg-white/[0.06] disabled:opacity-50 transition-colors">
-              <Plus className={`h-3.5 w-3.5 ${filling ? "animate-spin" : ""}`} /> {filling ? "Pulling book odds…" : "Load more book odds"}
+              <RefreshCw className={`h-3.5 w-3.5 ${filling ? "animate-spin" : ""}`} /> {filling ? "Pulling book odds…" : "Load more book odds"}
             </button>
           )}
           <button data-testid="scanner-refresh-btn" onClick={() => load()} disabled={loading || filling}

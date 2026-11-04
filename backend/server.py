@@ -389,10 +389,15 @@ async def props_game(code: str):
             "updated_at": datetime.now(timezone.utc).isoformat()}
 
 
+class FillLeg(BaseModel):
+    market: str
+    threshold: Optional[float] = None
+
+
 class FillItem(BaseModel):
     code: str
     player: str
-    legs: list[dict]
+    legs: list[FillLeg]
 
 
 class FillReq(BaseModel):
@@ -403,7 +408,7 @@ class FillReq(BaseModel):
 @api_router.post("/scanner/sgp-fill")
 async def scanner_sgp_fill(req: FillReq):
     """Re-price only the combos already on the board (no new Kalshi scan)."""
-    sgps = await oddsblaze.sgp_prices([(i.code[-6:-3], i.code[-3:], [(i.player, l["market"], l["threshold"]) for l in i.legs])
+    sgps = await oddsblaze.sgp_prices([(i.code[-6:-3], i.code[-3:], [(i.player, l.market, l.threshold) for l in i.legs])
                                        for i in req.items[:200]], timeout=40, live=req.live, boost=True)
     return {"sgp": sgps, "pending": oddsblaze.status.get("sgp_pending", 0)}
 

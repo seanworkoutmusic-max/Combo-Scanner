@@ -44,6 +44,8 @@ class _Limiter:
         await fut
 
     def _kick(self):
+        if self.timer:
+            self.timer.cancel()
         self.timer = None
         now = time.time()
         self.calls = [t for t in self.calls if now - t < 60]

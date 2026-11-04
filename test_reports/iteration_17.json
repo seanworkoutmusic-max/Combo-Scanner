@@ -1,0 +1,33 @@
+{
+  "summary": "Tested the new 'Load more book odds' feature (POST /api/scanner/sgp-fill and scanner-fill-btn on /kalshi) against live Kalshi and OddsBlaze data, plus regressions for Refresh and Track. Backend: board ra=8 returned 14 rows with 14 book prices. After waiting 20s, the fill call took 40.3s and returned 43 prices, kept the same order and length, and dropped none of the board's existing prices. Empty items and unknown players are handled correctly, and a missing required field returns 422. A malformed legs dict returns 500. Frontend: with the 8+ reb & 8+ ast filter, the button appears only once the board has rows and is labelled 'Load more book odds'. During loading it shows 'Pulling book odds…' and the button and Refresh are both disabled. The board stays visible (75/190 SGP cells filled before). The toast read 'Added 28 more book prices'. Cells went from 75 to 103 filled, EV values changed and the pending note went from 145 to 46. The pending note mentions 'Load more book odds'. Regression: during Refresh the row count never dropped below 42 (it ended at 48). Tracking with + showed the toast and removed the row. The test bet was deleted afterwards.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/scanner/sgp-fill", "issue": "FillItem.legs is list[dict] with no validation. A leg without market/threshold raises KeyError and returns 500 instead of 422. Add a Leg(BaseModel){market:str, threshold:Optional[int]} model."},
+      {"endpoint": "GET /api/scanner/board + sgp-fill", "issue": "oddsblaze.status['sgp_pending'] is a single global value, so concurrent scans or fills overwrite each other's pending count. Also, the board's pending count includes jobs for players who were dropped from the board for having no SGP price. Example: 230 pending for 14 rows, so the note overstates what the fill will cover."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/kalshi board after fill", "issues": ["After a fill, rows re-sort by the new EV and the row-flip animation plays again, so for about 1s rows appear half faded or empty (seen in the screenshot). Consider skipping the animation on fill, since tbody key=scanId does not change but row order does.", "The loading state spins the Plus icon. A RefreshCw or Loader icon would read better."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_sgp_fill_api.py", "/app/test_reports/pytest/sgp_fill.xml"],
+  "action_items": [
+    "Add a Pydantic model for fill legs so bad payloads return 422, not 500 (low priority).",
+    "Optional: make sgp_pending per-request (return it from sgp_prices) instead of a global status value.",
+    "Optional: suppress the row-flip re-animation when the board updates after a fill."
+  ],
+  "critical_code_review_comments": [
+    "_Limiter._kick sets self.timer=None on every call without cancelling the existing call_later handle, so redundant timers can pile up. This is harmless but wasteful; cancel the old handle first.",
+    "After a Refresh, one row lost a price it had before (Jaylen Brown FD was +4615, then a dash). This may be live data (the book pulled the line) and was not seen in the fill path. Worth checking whether the OddsBlaze props cache drops lines between refreshes."
+  ],
+  "updated_files": ["/app/backend/tests/test_sgp_fill_api.py"],
+  "success_rate": {"backend": "86% (6/7; the only failure is the malformed-legs 500 edge case)", "frontend": "100%"},
+  "seed_data_creation": "One bet was created through the Track button and deleted by its id (6aeb80b18f143f851928392f).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run tests with: pytest -n 0 tests/test_sgp_fill_api.py (pytest.ini adds xdist). One fill call takes about 40s and one board call about 45s. Wait 20s or more between calls because of the 30/min SGP limit. The board pending count can be much larger than the number of rows."
+}
