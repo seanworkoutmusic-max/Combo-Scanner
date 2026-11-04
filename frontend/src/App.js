@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import "@/App.css";
 import { Toaster } from "./components/ui/sonner";
-import { Sidebar } from "./components/Sidebar";
+import { Sidebar, TABS } from "./components/Sidebar";
+import { TopBar } from "./components/TopBar";
 import DDScanner from "./pages/DDScanner";
 import LiveTracker from "./pages/LiveTracker";
 import BetTracker from "./pages/BetTracker";
@@ -29,6 +30,7 @@ function App() {
   const [games, setGames] = useState([]);
   const [gamesErr, setGamesErr] = useState(null);
   const [settings, setSettings] = useState(loadSettings);
+  const [updatedAt, setUpdatedAt] = useState(null);
 
   useEffect(() => {
     getStatus().then((s) => {
@@ -49,10 +51,11 @@ function App() {
   const update = (patch) => setSettings((p) => ({ ...p, ...patch }));
 
   return (
-    <div className="App min-h-screen bg-[#121212]">
-      <Sidebar tab={tab} setTab={setTab} kalshiOk={!gamesErr && games.length > 0} />
-      <main className="lg:pl-16 min-[1440px]:pl-56">
-        <div className="max-w-[1320px] mx-auto px-4 sm:px-6 2xl:px-10 py-6 lg:py-8 space-y-5">
+    <div className="App min-h-screen bg-[#0A0A0A]">
+      <Sidebar tab={tab} setTab={setTab} />
+      <main className="lg:pl-16">
+        <TopBar crumb={(TABS.find((t) => t.id === tab) || { crumb: ["shared", "sean"] }).crumb} kalshiOk={!gamesErr && games.length > 0} updatedAt={updatedAt} />
+        <div className="max-w-[1180px] mx-auto px-4 sm:px-6 2xl:px-10 py-6 lg:py-12 space-y-5">
           {tab === "props" ? (
             <Props settings={settings} update={update} status={status} />
           ) : tab === "live" ? (
@@ -62,7 +65,7 @@ function App() {
           ) : tab === "sean" ? (
             <SharedBets />
           ) : (
-            <DDScanner settings={settings} />
+            <DDScanner settings={settings} onUpdated={setUpdatedAt} />
           )}
         </div>
       </main>

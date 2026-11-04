@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, Link2, RefreshCw, Trash2 } from "lucide-react";
+import { Link2, RefreshCw, Trash2 } from "lucide-react";
+import { PageTitle } from "../components/TopBar";
 import { getBets, gradeBets, deleteBet, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
@@ -20,7 +21,7 @@ export const LegProgress = ({ b, live }) => live ? (
 ) : null;
 
 export const Stat = ({ label, value, testid, tone = "text-white" }) => (
-  <div className="rounded-xl border border-slate-800 bg-[#181818] px-4 py-3">
+  <div className="rounded-xl border border-slate-800 bg-[#121212] px-4 py-3">
     <div className="text-[11px] uppercase tracking-widest font-mono text-slate-500">{label}</div>
     <div data-testid={testid} className={`mt-1 font-mono text-xl font-bold ${tone}`}>{value}</div>
   </div>
@@ -108,10 +109,8 @@ export default function BetTracker() {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-            <ClipboardList className="h-8 w-8 text-white" /> Bet Tracker
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">Today's combos you added with + on the TD Scanner, locked at the Kalshi price and EV from the moment you added it. Resets each day at 6am ET.</p>
+          <PageTitle eyebrow="Tools / 04" testid="bet-tracker-title">Bet Tracker</PageTitle>
+          <p className="text-sm text-slate-400 mt-3 max-w-xl">Today's combos you added with + on the TD Scanner, locked at the Kalshi price and EV from the moment you added it. Resets each day at 6am ET.</p>
         </div>
         <div className="flex items-center gap-3">
         <button data-testid="bet-share-btn" onClick={onShare}
@@ -141,7 +140,7 @@ export default function BetTracker() {
         <Stat label="ROI" value={s.roi == null ? "—" : `${s.roi > 0 ? "+" : ""}${(s.roi * 100).toFixed(1)}%`} testid="bet-stat-roi" tone={s.roi > 0 ? "text-emerald-400" : s.roi < 0 ? "text-red-400" : "text-white"} />
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#121212] overflow-x-auto">
         <table data-testid="bet-table" className="w-full min-w-[1100px]">
           <thead>
             <tr className="text-xs text-slate-400">

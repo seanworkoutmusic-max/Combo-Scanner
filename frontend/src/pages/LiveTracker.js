@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Crosshair, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import { PageTitle } from "../components/TopBar";
 import { getLiveTracker, getBets, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { TeamLogo } from "../components/props/TeamLogo";
@@ -34,7 +35,7 @@ const MyBets = ({ p, bets, slug }) => (
 );
 
 const GameChip = ({ g }) => (
-  <div data-testid={`live-game-${g.id}`} className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800 bg-[#181818] text-sm font-semibold">
+  <div data-testid={`live-game-${g.id}`} className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800 bg-[#121212] text-sm font-semibold">
     <TeamLogo team={g.away} size={16} />{g.away} <span className="font-mono text-white">{g.away_score}</span>
     <span className="text-slate-600">–</span>
     <span className="font-mono text-white">{g.home_score}</span> {g.home}<TeamLogo team={g.home} size={16} />
@@ -106,10 +107,8 @@ export default function LiveTracker() {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-            <Crosshair data-testid="live-tracker-logo" className="h-8 w-8 text-white" /> In-Game Tracker
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">Every player in games in progress, ranked by how many rebounds and assists they still need to reach 10 of each (points ignored).</p>
+          <PageTitle eyebrow="Tools / 03" testid="live-tracker-title">In-Game Tracker</PageTitle>
+          <p className="text-sm text-slate-400 mt-3 max-w-xl">Every player in games in progress, ranked by how many rebounds and assists they still need to reach 10 of each (points ignored).</p>
           <p data-testid="live-updated" className="text-sm font-semibold text-white mt-1">
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · refreshes every 30 seconds` : "Loading live box scores…"}
           </p>
@@ -136,7 +135,7 @@ export default function LiveTracker() {
         ))}
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#121212] overflow-x-auto">
         <table data-testid="live-table" className="w-full min-w-[1040px]">
           <thead>
             <tr className="text-xs text-slate-400">

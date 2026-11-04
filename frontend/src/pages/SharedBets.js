@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ClipboardList } from "lucide-react";
+import { PageTitle } from "../components/TopBar";
 import { getBets, gradeBets } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
@@ -50,10 +50,8 @@ export default function SharedBets() {
   return (
     <div data-testid="shared-bets-page" className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-          <ClipboardList className="h-8 w-8 text-white" /> Sean's Plays
-        </h1>
-        <p data-testid="shared-bets-date" className="text-sm text-slate-400 mt-1">{day} · Kalshi combos, graded from ESPN box scores</p>
+        <PageTitle eyebrow="Shared" testid="shared-bets-title">Sean's Plays</PageTitle>
+        <p data-testid="shared-bets-date" className="text-sm text-slate-400 mt-3">{day} · Kalshi combos, graded from ESPN box scores</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -63,7 +61,7 @@ export default function SharedBets() {
         <Stat label="Avg EV" value={s.ev == null ? "—" : `${(s.ev * 100).toFixed(1)}%`} testid="shared-stat-ev" />
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
+      <div className="rounded-xl border border-slate-800 bg-[#121212] overflow-x-auto">
         <table data-testid="shared-bet-table" className="w-full min-w-[760px]">
           <thead>
             <tr className="text-xs text-slate-400">
