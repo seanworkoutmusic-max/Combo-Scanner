@@ -1,0 +1,35 @@
+{
+  "summary": "Verified the SGP 'Refresh odds empties the board' fix and the Amen Thompson missing-books fix. Backend: 3 calls to GET /api/scanner/board?ra=8, about 20s apart, all returned 200 in under 55s. The player count never dropped, no player lost a book between refreshes, sgp_pending was an int every time and sgp_key_rejected was false (4/4 pytest passed). Frontend /kalshi with the 8+ reb & 8+ ast filter: the scan gave 35 rows (33s), refresh 1 gave 37 rows (31s), refresh 2 gave 40 rows (31s). The board kept its rows during and after each refresh and the empty state never appeared. Amen Thompson (MIN vs HOU) showed FanDuel +3109, DK +1900 and Fanatics +2100 on the first scan, and Hard Rock +2419 was added after refresh 1. The sgp-pending-note banner showed after loading finished (54, then 25, then 25 pending) and never while loading. Regression: /bets, /live and /parlay load with no page errors. Total backend board calls: 6 (3 pytest + 3 UI).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/scanner/board (oddsblaze._fetch_price)", "issue": "Non-200 SGP responses (other than 429) return None without being cached in _sgp. Combos a book won't price are re-requested on every scan and use up the 29/min SGP budget. This may be why sgp_pending stayed at 25 across the last two refreshes. Suggestion: cache negative results with a short TTL."},
+      {"endpoint": "/api/scanner/board (oddsblaze.status['sgp_pending'])", "issue": "sgp_pending is a module-level global set inside sgp_prices. Concurrent board calls (two users, or overlapping scans) overwrite each other's value. Return it from sgp_prices instead."},
+      {"endpoint": "/api/scanner/board", "issue": "BetMGM never appeared in any SGP column during the 3 UI scans (only FD, DK, Fanatics and Hard Rock). This may be a data or availability issue rather than a bug; worth checking whether mgm props or SGP calls fail."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/kalshi multi-combo mode", "issues": ["In multi-combo mode, load() resets data to an empty accumulator, so Refresh odds briefly blanks the board until the first combo returns. Single-combo mode keeps old rows, as intended. Consider keeping the previous rows until new data arrives."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_sgp_refresh_stability.py", "/app/test_reports/pytest/sgp_refresh.xml"],
+  "action_items": [
+    "Optional: cache non-200 SGP results briefly so rate-limit budget isn't spent re-querying combos a book won't price",
+    "Optional: return sgp_pending from sgp_prices instead of a shared global",
+    "Optional: check why BetMGM SGP prices never show"
+  ],
+  "critical_code_review_comments": [
+    "oddsblaze._price: when a stale price is served, the background _inflight task's result is never awaited. If it raises httpx.HTTPError, asyncio logs 'Task exception was never retrieved'. Wrap the body of _fetch_price in try/except.",
+    "oddsblaze: the _inflight queue is unbounded. On a big slate (about 40 players x 5 books) background fetches can pile up behind the 29/min limiter for several minutes. Acceptable, but worth noting.",
+    "Dev note: editing files under /app/backend (including tests/) makes uvicorn reload and wipes the in-memory _sgp cache, so the first call after an edit is cold."
+  ],
+  "updated_files": ["/app/backend/tests/test_sgp_refresh_stability.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "None. No bets were tracked or modified.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Slate: 12 Kalshi games (Nov 4). ra=8 board has about 35-40 players. Run test_sgp_refresh_stability.py with REACT_APP_BACKEND_URL set; it makes 3 board calls about 20s apart and takes about 2.5 min. Its print output is hidden by xdist from pytest.ini. Don't edit backend files right before running it, because the reload clears the SGP cache. Respect the OddsBlaze limits: at most about 6 board calls per session. The 60 real user bets hide the matching combos, so don't touch them."
+}
