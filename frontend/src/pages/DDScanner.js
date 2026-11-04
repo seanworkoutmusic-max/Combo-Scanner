@@ -269,7 +269,7 @@ export default function DDScanner({ settings }) {
         {progress && <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400">Loading {progress.done}/{progress.total} combos…</span>}
       </div>
 
-      {data?.books?.sgp_pending > 0 && !loading && (
+      {data?.books?.sgp_pending > 0 && !loading && data?.players?.length > 0 && (
         <div data-testid="sgp-pending-note" className="rounded-xl border border-slate-700 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
           Still pulling {data.books.sgp_pending} sportsbook price{data.books.sgp_pending === 1 ? "" : "s"} (your OddsBlaze plan allows 30 per minute). Hit Load more book odds in a minute to fill in the dashes.
         </div>
@@ -309,7 +309,8 @@ export default function DDScanner({ settings }) {
         )}
         {data && !loading && !rows.length && (
           <div data-testid="scanner-empty" className="py-16 text-center text-sm text-slate-500">
-            {live ? "No games in progress with live Kalshi combos and live sportsbook SGP prices right now."
+            {data?.books?.sgp_pending > 0 ? `Sportsbook prices are still loading (${data.books.sgp_pending} queued — your OddsBlaze plan allows 30 per minute). Hit Refresh odds in about a minute and the plays will show up.`
+              : live ? "No games in progress with live Kalshi combos and live sportsbook SGP prices right now."
               : "No player has both a live Kalshi combo and a FanDuel/DraftKings price right now. Books usually post these on game day."}
           </div>
         )}

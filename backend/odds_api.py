@@ -86,7 +86,8 @@ async def triple_double_odds(away, home, ttl=300):
                                                             "markets": "player_triple_double", "oddsFormat": "american"})
     except httpx.HTTPError as e:
         logger.warning("Odds API failed: %s", e)
-        return (hit or {}).get("players", {}), (hit or {}).get("updated")
+        _odds[key] = {"t": time.time(), "players": (hit or {}).get("players", {}), "updated": (hit or {}).get("updated")}  # back off for ttl
+        return _odds[key]["players"], _odds[key]["updated"]
     players, updated = {}, None
     for b in d.get("bookmakers", []):
         short = BOOKS.get(b.get("key"))

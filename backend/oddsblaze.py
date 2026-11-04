@@ -32,7 +32,7 @@ def _http():
 
 
 class _Limiter:
-    """Sliding 60s window: at most `n` calls per minute; boosted keys skip ahead of the queue."""
+    """Sliding 60s window: at most `n` calls per minute; requests from the newest scan go first."""
     def __init__(self, n):
         self.n, self.calls, self.waiters, self.seq, self.timer = n, [], [], 0, None
 
@@ -51,7 +51,7 @@ class _Limiter:
         self.calls = [t for t in self.calls if now - t < 60]
         self.waiters = [w for w in self.waiters if not w[2].done()]
         while self.waiters and len(self.calls) < self.n:
-            w = min(self.waiters, key=lambda w: (w[1] not in _boost, w[0]))
+            w = max(self.waiters, key=lambda w: (_gen.get(w[1], 0), -w[0]))
             self.waiters.remove(w)
             self.calls.append(now)
             w[2].set_result(None)
@@ -59,7 +59,8 @@ class _Limiter:
             self.timer = asyncio.get_running_loop().call_later(60 - (now - self.calls[0]) + 0.05, self._kick)
 
 
-_boost = set()
+_gen = {}  # key -> id of the newest scan that asked for it; newest scans are served first
+_scan_id = 0
 
 
 _all_limit = _Limiter(290)
@@ -107,16 +108,15 @@ async def _book_props(client, book, ttl=120, live=False):
     return games
 
 
-async def _price(client, book, sgps, ttl=120, boost=False):
+async def _price(client, book, sgps, ttl=120, gen=0):
     key = (book, tuple(sgps))
     hit = _sgp.get(key)
     if hit and time.time() - hit["t"] < ttl:
         return hit["price"]
-    if boost:
-        _boost.add(key)
+    _gen[key] = max(_gen.get(key, 0), gen)
     if key not in _inflight:  # one shared request per combo; it keeps running after a scan's deadline so the cache fills
         _inflight[key] = asyncio.create_task(_fetch_price(client, book, sgps, key))
-        _inflight[key].add_done_callback(lambda _t: (_inflight.pop(key, None), _boost.discard(key)))
+        _inflight[key].add_done_callback(lambda _t: (_inflight.pop(key, None), _gen.pop(key, None)))
     if hit and time.time() - hit["t"] < 1800:  # serve the last price while the refresh queues behind the rate limit
         return hit["price"]
     return await asyncio.shield(_inflight[key])
@@ -138,8 +138,11 @@ async def _fetch_price(client, book, sgps, key):
     return price
 
 
-async def sgp_prices(requests, books=None, timeout=None, live=False, boost=False):
+async def sgp_prices(requests, books=None, timeout=None, live=False):
     """requests: [(away, home, [(player_key, market, threshold|None), ...])] -> list of {"dk": american, "fan": american, ...}."""
+    global _scan_id
+    _scan_id += 1
+    gen = _scan_id
     out = [{} for _ in requests]
     books = {b: s for b, s in BOOKS.items() if books is None or s in books}
     if not configured() or not requests:
@@ -164,7 +167,7 @@ async def sgp_prices(requests, books=None, timeout=None, live=False, boost=False
 
     async def run(i, short, book, sgps):
         try:
-            out[i][short] = await _price(client, book, sgps, ttl=60 if live else 300, boost=boost)
+            out[i][short] = await _price(client, book, sgps, ttl=60 if live else 300, gen=gen)
         except httpx.HTTPError as e:
             logger.warning("OddsBlaze SGP failed: %s", e)
     tasks = [asyncio.create_task(run(*j[1:])) for j in jobs]

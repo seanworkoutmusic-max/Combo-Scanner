@@ -272,6 +272,7 @@ async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Op
     if not td_pts and not ra:
         td_pts = 10
     reb_ast = ra or 10
+    t0 = time.monotonic()
     games = await kalshi_props.load_props()
     if game:
         games = {c: g for c, g in games.items() if c == game}
@@ -299,10 +300,9 @@ async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Op
                     continue
                 c["now"] = {"clock": boxes[g["code"]]["clock"], **{k: stats[k] for k in ("Points", "Rebounds", "Assists")}}
             todo.append((g, p, c, odds))
-    t0 = time.monotonic()
     quotes = {id(c): asyncio.create_task(_quote(c)) for _, _, c, _ in todo}  # Kalshi quotes run alongside SGP pricing
     sgps = await oddsblaze.sgp_prices([(g["code"][-6:-3], g["code"][-3:], [(p["key"], l["market"], l["threshold"]) for l in c["legs"]])
-                                       for g, p, c, _ in todo], timeout=25, live=live)
+                                       for g, p, c, _ in todo], timeout=max(8, min(25, 40 - (time.monotonic() - t0))), live=live)
     todo = [(g, p, c, odds, s) for (g, p, c, odds), s in zip(todo, sgps)
             if s or (odds and td_pts == 10 and reb_ast == 10 and c["legs"][0]["threshold"] == 10)]
     keep = {id(c) for _, _, c, _, _ in todo}
@@ -409,7 +409,7 @@ class FillReq(BaseModel):
 async def scanner_sgp_fill(req: FillReq):
     """Re-price only the combos already on the board (no new Kalshi scan)."""
     sgps = await oddsblaze.sgp_prices([(i.code[-6:-3], i.code[-3:], [(i.player, l.market, l.threshold) for l in i.legs])
-                                       for i in req.items[:200]], timeout=40, live=req.live, boost=True)
+                                       for i in req.items[:200]], timeout=40, live=req.live)
     return {"sgp": sgps, "pending": oddsblaze.status.get("sgp_pending", 0)}
 
 
