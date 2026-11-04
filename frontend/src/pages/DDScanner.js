@@ -140,7 +140,7 @@ export default function DDScanner({ settings }) {
           try {
             const d = await getScannerBoard({ ...pickParams(k), live: live || undefined, game });
             if (id !== reqId.current) return;
-            acc = { ...acc, games: Math.max(acc.games, d.games), updated_at: d.updated_at, books: d.books,
+            acc = { ...acc, games: Math.max(acc.games, d.games), updated_at: d.updated_at, books: { ...d.books, sgp_pending: (acc.books?.sgp_pending || 0) + (d.books?.sgp_pending || 0) },
               players: [...acc.players, ...d.players.map((p) => ({ ...p, comboLabel: label, pts: pickParams(k).td_pts }))] };
             setData(acc);
           } catch (e) {
@@ -240,6 +240,12 @@ export default function DDScanner({ settings }) {
       </div>
         {progress && <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400">Loading {progress.done}/{progress.total} combos…</span>}
       </div>
+
+      {data?.books?.sgp_pending > 0 && !loading && (
+        <div data-testid="sgp-pending-note" className="rounded-xl border border-slate-700 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
+          Still pulling {data.books.sgp_pending} sportsbook price{data.books.sgp_pending === 1 ? "" : "s"} (your OddsBlaze plan allows 30 per minute). Hit Refresh odds in a minute to fill in the dashes.
+        </div>
+      )}
 
       {data?.books?.sgp_key_rejected && (
         <div data-testid="sgp-key-warning" className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">

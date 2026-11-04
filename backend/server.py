@@ -155,6 +155,7 @@ async def props_players():
 
 
 _rfq_sem = asyncio.Semaphore(6)
+_last_quote = {}
 
 # Double-double paths and the triple-double combo. Points falls back to Kalshi's lowest line if 10+ isn't offered.
 PAIRINGS = [
@@ -197,6 +198,8 @@ async def _quote(c):
     async with _rfq_sem:
         try:
             c["live"] = await kalshi_auth.live_combo_quote([l["ticker"] for l in c["legs"]], target_dollars=10)
+            if (c["live"] or {}).get("yes_price"):
+                _last_quote[frozenset(l["ticker"] for l in c["legs"])] = c["live"]
         except (kalshi_auth.KalshiAuthError, httpx.HTTPError) as e:
             c["error"] = str(e)[:160]
 
@@ -297,20 +300,28 @@ async def scanner_board(td_pts: Optional[int] = Query(None, ge=5, le=40), ra: Op
                 c["now"] = {"clock": boxes[g["code"]]["clock"], **{k: stats[k] for k in ("Points", "Rebounds", "Assists")}}
             todo.append((g, p, c, odds))
     t0 = time.monotonic()
+    quotes = {id(c): asyncio.create_task(_quote(c)) for _, _, c, _ in todo}  # Kalshi quotes run alongside SGP pricing
     sgps = await oddsblaze.sgp_prices([(g["code"][-6:-3], g["code"][-3:], [(p["key"], l["market"], l["threshold"]) for l in c["legs"]])
                                        for g, p, c, _ in todo], timeout=25, live=live)
     todo = [(g, p, c, odds, s) for (g, p, c, odds), s in zip(todo, sgps)
             if s or (odds and td_pts == 10 and reb_ast == 10 and c["legs"][0]["threshold"] == 10)]
-    tasks = [asyncio.create_task(_quote(c)) for _, _, c, _, _ in todo]
-    if tasks:  # stay under the 60s proxy limit; combos still quoting are left off this refresh
+    keep = {id(c) for _, _, c, _, _ in todo}
+    for k, t in quotes.items():
+        if k not in keep:
+            t.cancel()
+    tasks = [quotes[id(c)] for _, _, c, _, _ in todo]
+    if tasks:  # stay under the 60s proxy limit; combos still quoting fall back to their last Kalshi quote
         _, late = await asyncio.wait(tasks, timeout=max(8, 50 - (time.monotonic() - t0)))
         for t in late:
             t.cancel()
+    for _, _, c, _, _ in todo:
+        if not (c.get("live") or {}).get("yes_price"):
+            c["live"] = _last_quote.get(frozenset(l["ticker"] for l in c["legs"])) or c.get("live")
     players = [{**_player_payload(p, photos, [c]), "books": odds, "sgp": s, "game": {k: g[k] for k in ("code", "date", "label")}}
                for g, p, c, odds, s in todo if (c.get("live") or {}).get("yes_price")]
     return {"players": players, "games": len(games),
             "books": {"enabled": odds_api.configured(), "credits_left": odds_api.quota["remaining"], "sgp": oddsblaze.configured(),
-                      "sgp_key_rejected": oddsblaze.status["key_rejected"]},
+                      "sgp_key_rejected": oddsblaze.status["key_rejected"], "sgp_pending": oddsblaze.status.get("sgp_pending", 0)},
             "updated_at": datetime.now(timezone.utc).isoformat()}
 
 

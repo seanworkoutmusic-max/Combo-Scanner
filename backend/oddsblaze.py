@@ -19,7 +19,16 @@ MARKETS = {
 _props = {}
 status = {"key_rejected": False}
 _sgp = {}
+_inflight = {}
+_client = None
 _lock = asyncio.Lock()
+
+
+def _http():
+    global _client
+    if _client is None or _client.is_closed:
+        _client = httpx.AsyncClient(timeout=30)
+    return _client
 
 
 class _Limiter:
@@ -88,6 +97,15 @@ async def _price(client, book, sgps, ttl=120):
     hit = _sgp.get(key)
     if hit and time.time() - hit["t"] < ttl:
         return hit["price"]
+    if key not in _inflight:  # one shared request per combo; it keeps running after a scan's deadline so the cache fills
+        _inflight[key] = asyncio.create_task(_fetch_price(client, book, sgps, key))
+        _inflight[key].add_done_callback(lambda _t: _inflight.pop(key, None))
+    if hit and time.time() - hit["t"] < 1800:  # serve the last price while the refresh queues behind the rate limit
+        return hit["price"]
+    return await asyncio.shield(_inflight[key])
+
+
+async def _fetch_price(client, book, sgps, key):
     for attempt in range(3):
         await _sgp_limit.wait()
         await _all_limit.wait()
@@ -109,34 +127,34 @@ async def sgp_prices(requests, books=None, timeout=None, live=False):
     books = {b: s for b, s in BOOKS.items() if books is None or s in books}
     if not configured() or not requests:
         return out
-    async with httpx.AsyncClient(timeout=30) as client:
-        async with _lock:
-            props = {}
-            for b in books:
-                try:
-                    props[b] = await _book_props(client, b, live=live)
-                except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
-                    logger.warning("OddsBlaze %s props failed: %s", b, e)
-                    props[b] = {}
-        jobs = []
-        for i, (away, home, legs) in enumerate(requests):
-            for book, short in books.items():
-                g = props[book].get((away, home), {})
-                sgps = [g.get(pk, {}).get(m, {}).get(t - 0.5 if t is not None else None) for pk, m, t in legs]
-                if None not in sgps:
-                    jobs.append((i, short, book, sgps))
-        sems = {b: asyncio.Semaphore(3) for b in books}
+    client = _http()
+    async with _lock:
+        props = {}
+        for b in books:
+            try:
+                props[b] = await _book_props(client, b, live=live)
+            except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
+                logger.warning("OddsBlaze %s props failed: %s", b, e)
+                props[b] = {}
+    jobs = []
+    for i, (away, home, legs) in enumerate(requests):
+        for rank, (book, short) in enumerate(books.items()):
+            g = props[book].get((away, home), {})
+            sgps = [g.get(pk, {}).get(m, {}).get(t - 0.5 if t is not None else None) for pk, m, t in legs]
+            if None not in sgps:
+                jobs.append((rank, i, short, book, sgps))
+    jobs.sort(key=lambda j: j[0])  # round-robin across books so every combo gets a price before second opinions
 
-        async def run(i, short, book, sgps):
-            async with sems[book]:
-                try:
-                    out[i][short] = await _price(client, book, sgps, ttl=60 if live else 300)
-                except httpx.HTTPError as e:
-                    logger.warning("OddsBlaze SGP failed: %s", e)
-        tasks = [asyncio.create_task(run(*j)) for j in jobs]
-        if tasks:  # prices still pending at the deadline are left out of this refresh
-            _, late = await asyncio.wait(tasks, timeout=timeout)
-            for t in late:
-                t.cancel()
-            await asyncio.gather(*late, return_exceptions=True)
+    async def run(i, short, book, sgps):
+        try:
+            out[i][short] = await _price(client, book, sgps, ttl=60 if live else 300)
+        except httpx.HTTPError as e:
+            logger.warning("OddsBlaze SGP failed: %s", e)
+    tasks = [asyncio.create_task(run(*j[1:])) for j in jobs]
+    status["sgp_pending"] = 0
+    if tasks:  # prices still pending at the deadline finish in the background and show on the next refresh
+        _, late = await asyncio.wait(tasks, timeout=timeout)
+        status["sgp_pending"] = len(late)
+        for t in late:
+            t.cancel()
     return [{k: v for k, v in o.items() if v is not None} for o in out]
