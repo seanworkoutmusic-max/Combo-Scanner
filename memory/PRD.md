@@ -77,3 +77,6 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Scanner empty-board bug: OddsBlaze key 401 (trial ended) -> no SGP -> no EV rows. Added oddsblaze.status key_rejected -> board books.sgp_key_rejected + amber banner sgp-key-warning. New key saved 2026-11-02.
 - 2026-11-03: Reverted to black minimalist theme: neutral slate palette, #121212/#181818/#0E0E0E/#141414 bgs, gray CSS vars, emerald accents (dolphin color removed from tailwind), outline basketball logo restored from git a5458cf (logo.png, favicon), loader card back to PROP OUTLIERS text, hero "Ready when you are" without dolphin/waves (steps + Scan all games kept). Refresh odds = white button.
 - 2026-11-03: Accents now white/gray (buttons bg-white text-slate-950, white checkboxes, white page icons, Pregame active white); EV/won green & loss red kept. Shiny card loader replaced by Loader2 spinner + rotating status text (scanner-spinner, scanner-loading-step). Top-row green glow removed.
+
+## 2026-06 (fork)
+- Verified black/white/gray minimalist theme across Parlay Builder, SGP Scanner (start panel), In-Game Tracker, /sean on new fork. No code changes.

@@ -1,0 +1,131 @@
+<analysis>**original_problem_statement**: Create an EV software app that devigs Kalshi combos for triple-doubles and custom point/reb/ast combinations (like 10+ assists, 10+ rebounds, 10+ points) and devigs them to sportsbook average lines. (PRODUCT REQUIREMENTS: Scan Kalshi combos, pull live Kalshi odds, pull sportsbook SGP odds via OddsBlaze, calculate EV%, bet tracker with auto-grading, in-game live tracker, parlay builder).
+
+**User's preferred language**: English (You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only).
+
+**what currently exists?**: A comprehensive React + FastAPI application called Kalshi SGP Scanner. It scans live Kalshi NBA combo markets (Pts/Reb/Ast) and compares them against DraftKings, Fanatics, BetMGM, and Hard Rock Same-Game-Parlay (SGP) odds fetched via OddsBlaze to calculate Expected Value (EV%). The app includes:
+1. **SGP Scanner**: A board of combos ranked by EV with an advanced filter (Combos, Min/Max odds, Books). Includes a Ready to dive in? start panel to scan all games.
+2. **Parlay Builder**: Compares Kalshi and SGP odds for individual player props. 
+3. **Bet Tracker**: Tracks placed bets (clicking '+' on the scanner), auto-grades them based on live ESPN box scores, and calculates ROI.
+4. **Shared Bets Page ()**: A public, read-only view of tracked bets.
+5. **In-Game Tracker**: A live dashboard tracking games in progress, showing how close players are to hitting their combo legs, with an All Players / My Bets toggle.
+The theme is currently a minimalist black background with white and gray accents, reverting from a previous dolphin blue theme.
+
+**Last working item**: 
+    - Last item agent was working: The user requested to revert the site's theme back to the old black minimalist theme with white and gray accents, removing the dolphin branding and jumping dolphin loading animation. The loader was changed to a simple spinner with status text, while keeping the newly built Ready to dive in / Scan all games start panel. The user was also instructed by Emergent support to fork the session to bypass a persistent phishing/trust-and-safety deployment block caused by sportsbook logos.
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y
+    - Which testing method agent to use? screenshot tool
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**: 
+  None critical blocking functionality. 
+  Issue 1: Code Quality / React Hook Dependencies (Low Priority)
+     - Attempted fixes: A code review agent flagged several React hook dependency warnings (e.g., in , , ) and cyclomatic complexity issues in the backend. 
+     - Next debug checklist: Refactor hook dependencies arrays if the user asks for full refactor or real fixes.
+     - Why fix this issue and what will be achieved with the fix?: Prevents stale closures and potential infinite re-renders. 
+     - Status: NOT STARTED (User ignored the code review to focus on theme reverts).
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix?: Both
+     - Blocked on other issue: N/A
+
+**In progress Task List**: 
+  None. 
+
+**Upcoming and Future Tasks**: 
+  None explicitly requested. The immediate next action is for the user to verify the deployment on the new fork.
+
+**Completed work in this session**:
+- Integrated OddsBlaze API () to fetch DK, Fanatics, BetMGM, and Hard Rock SGP prices (DONE).
+- Added an extensive list of Pts/Reb/Ast combos (e.g., 10/10/10, 15/10/10, 25/10/10, 8/8, 4/4) (DONE).
+- Created a comprehensive Bet Tracker with auto-grading via ESPN box scores (DONE).
+- Created an In-Game Tracker for live game stats (DONE).
+- Added a read-only  page to share tracked bets (DONE).
+- Added a Filter dropdown for combos, min/max odds, and books (DONE).
+- Completely overhauled UI several times (Kalshi green -> Dolphin Blue -> Navy Mockup -> Black/White minimalist) (DONE).
+- Built a Scan all games Start Panel / Overview Card (DONE).
+- Re-architected backend  to parse live boxes and  to cache and manage SGP prices (DONE).
+
+**Earlier issues found/mentioned but not fixed**:
+  None.
+
+**Known issue recurrence from previous fork**:
+  - Issue recurrence in previous fork: The application deployment was blocked multiple times by Emergent's automated trust and safety/phishing classifier due to the presence of sportsbook logos (DraftKings, Fanatics, Kalshi) and Bet on Kalshi buttons.
+  - Recurrence count: 5+ 
+  - Status: BLOCKED (Support advised the user to fork the session, which is why this new fork exists. The block should be cleared on this new fork).
+  Note: Do not attempt to fix deployment blocks via code changes (e.g., modifying manifests). This is a platform-side security block.
+
+**Code Architecture**:
+
+
+**Key Technical Concepts**:
+- Frontend: React, Tailwind CSS. Theme uses CSS variables mapped in .
+- Backend: FastAPI, Python Asyncio, HTTPX, MongoDB.
+- Integrations: OddsBlaze (for SGP odds), Kalshi (Live markets/RFQs), ESPN (undocumented API for live game stats and player headshots).
+
+**key DB schema**:
+  -  collection (MongoDB): Stores tracked bets. Fields include player, legs, odds, stake, ROI, and graded status (Won, Lost, Void).
+
+**changes in tech stack**:
+  - OddsBlaze API was added as the primary source of truth for Same Game Parlay (SGP) odds, replacing estimations.
+
+**All files of reference**:
+  - : Core OddsBlaze integration.
+  - : The main Kalshi SGP Scanner UI.
+  - : Contains the loading spinner and the Ready to dive in start panel.
+  -  & : Theme definitions (recently reverted to minimalist black/white/gray).
+  - : Auto-grading logic utilizing  live box scores.
+
+**Areas that need refactoring**: 
+-  and  have high cyclomatic complexity and missing React hook dependencies. A code review agent flagged them, but the user deferred fixes to focus on UI adjustments.
+-  is named after Double Doubles but handles custom SGP Combos.
+
+**key api endpoints**:
+- : Returns active NBA games for the scanner.
+- : Scans a specific game or all games for Kalshi combos, DEVIGs them against OddsBlaze SGP prices.
+- : Returns live ESPN box score data for the In-Game Tracker.
+- : Retrieves, grades, and inserts tracked bets in MongoDB.
+
+**Critical Info for New Agent**: 
+- **API Keys**: , , , and  are required in .  was rotated during the session due to a trial expiring.
+- **Theme Rules**: The user specifically requested a minimalist black/white/gray theme without flashy colors (no green, no blue, no dolphin emojis). Keep buttons white/gray. Use simple spinners instead of complex animations.
+- **Deployment Blocks**: The previous session was repeatedly blocked by Emergent's automated phishing/abuse classifier due to Bet on Kalshi buttons and sportsbook logos. The user is starting this fork to bypass it. **Do not attempt to debug deployment errors if they return a **. Inform the user it is a platform restriction.
+- **Testing**: The backend utilizes live APIs heavily. Always use  to run regression smoke tests, as live odds formatting changes frequently.
+
+**documents and test reports created in this job**:
+  - 
+  - 
+  - 
+
+**Last 10 User Messages and any pending HUMAN messages**: 
+1. **User**: Where is the fork button (Status: FINISHED)
+2. **User**: This is what emergent support said Hi... we kindly request that you fork the project... (Status: FINISHED)
+3. **User**: Can u revert it further back without the green accents and Shiny card animation (Status: FINISHED)
+4. **User**: Can you revert the theme back to the old black minimalist theme with the basketball logo (Status: FINISHED)
+5. **User**: Run the Security Audit on the deployed app. (Status: FINISHED)
+6. **User**: Every game on one board: live Kalshi combos... Can u remove this text under the sgp scanner (Status: FINISHED)
+7. **User**: Can u just show ROI in bet tracker instead of avg ev (Status: FINISHED)
+8. **User**: Add the kalshi logo to the books filter dropdown on the sgp scanner page (Status: FINISHED)
+9. **User**: I meant white [for the Bet on Kalshi button] (Status: FINISHED)
+10. **User**: Can u make the bet on kalshi button blue, (Status: FINISHED)
+
+**Project Health Check**:
+- Overall App: Healthy, 100% test pass rate in recent testing agent runs. 
+- Deployment: Was blocked due to platform Trust & Safety rules (expected to be resolved in this fork).
+
+**3rd Party Integrations**: 
+- Kalshi API — requires User API Key (, )
+- OddsBlaze API (SGP Pricing) — requires User API Key (). **Mandatory integration_expert used**.
+- The Odds API v4 — requires User API Key ()
+- ESPN API (Public/Undocumented) — No key required.
+
+**Testing status**:
+  - Testing agent used after significant changes: YES (Iteration 14 & 15 tests passed).
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: None manually, just  JSONs.
+  - Known regressions: None functional. 
+
+**Credentials to test flow**:
+Relies entirely on API keys set in . No local username/password auth exists.
+
+**What agent forgot to execute**:
+- The agent left several React hook dependencies and cyclomatic complexity issues unresolved because the user pivoted to UI changes and deployment issues. Be prepared to fix them if the user requests a full refactor.</analysis>
