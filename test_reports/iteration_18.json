@@ -1,0 +1,34 @@
+{
+  "summary": "Retested the bug 'SGP scanner not loading anything' against live Kalshi and OddsBlaze data (14 games). The fix works. Backend: the default board (10+ pts triple-double) returned 200 in 39.6s with 5 players on the FIRST call, all with SGP prices (18 cells). The Odds API credits are 0 and it fails gracefully. The ra=8 board returned 200 in 28.6s with 15 players on the first call. A later ra=8 board in the fill test returned 53 players. Frontend /kalshi: the default scan showed 5-6 rows in 25-43s, so the empty state never appeared. The pending note showed correctly. Load more book odds on the TD board took 40.3s; rows never dropped (6 to 6) and the toast read 'No new book prices yet, try again in a minute' (no new prices were available). Refresh took 44s and the board never emptied (min 6 rows). With the regression filter (8+ reb & 8+ ast only) the scan showed 29 rows with 86 price cells in 49.3s. The fill API test on ra=8 raised prices from 146 to 157, lost none of the existing book prices and kept the order. Bad legs now return 422 (fixed since iteration_17). Every board call measured finished in under 60s; the slowest was 49.3s in the UI.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/scanner/board", "issue": "Worst-case time can still pass 60s. The SGP timeout is max(8, ...) and the Kalshi-quote wait is max(8, 50-elapsed). If setup (load_props, headshots, the 5 OddsBlaze props fetches behind _lock and _all_limit) takes more than about 44s, the floors push the total past 60s. Not seen in testing (max 49s). Consider a hard cap such as min(..., 55 - elapsed) without the 8s floors when elapsed is high."},
+      {"endpoint": "GET /api/scanner/board", "issue": "sgp_pending is still a global value and counts jobs for combos dropped from the board. Example: the TD board said 5 pending, but the fill added 0 prices (toast 'No new book prices yet'). The note can promise prices that never arrive."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/kalshi default TD board", "issues": ["The 'FD' and 'DK' columns (Odds API triple-double prices) sit next to the 'FanDuel' and 'DraftKings' SGP columns and are all dashes while the Odds API key has no credits. This is confusing; hide those columns when credits_left == '0' or the Odds API is failing.", "The row-flip animation still leaves rows half faded for about 1s after a scan (seen on the ra8 screenshot)."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_board_loading.py", "/app/backend/tests/test_sgp_fill_api.py", "/app/test_reports/pytest/board_loading.xml", "/app/test_reports/pytest/sgp_fill.xml"],
+  "action_items": [
+    "Optional: tighten the board time budget so the 8s floors cannot push past 60s when setup is slow.",
+    "Optional: hide the FD/DK triple-double columns when the Odds API is out of credits.",
+    "Optional: make sgp_pending count only combos that are on the board."
+  ],
+  "critical_code_review_comments": [
+    "In oddsblaze._Limiter._kick, waiters with key=None (the _book_props calls on _all_limit) always get gen 0, so they rank below every SGP waiter. With n=290 this is harmless, but props fetches could starve if _all_limit ever fills up.",
+    "_price pops _gen[key] in the done callback. If a new scan raises _gen during the fetch, that priority is lost on retry, which is fine because the task has finished.",
+    "The empty-state branch (scanner-empty with the 'Sportsbook prices are still loading ... Hit Refresh odds in about a minute' text) is in DDScanner.js lines 311-312 but could not be triggered with live data, because rows always appeared on the first scan. Verified by code review only."
+  ],
+  "updated_files": ["/app/backend/tests/test_board_loading.py"],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% of reachable flows (empty state not reachable with live data)"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run with: pytest -n 0 -s tests/test_board_loading.py tests/test_sgp_fill_api.py. Board calls take 25-50s. Space calls 30s or more apart because of the 30/min OddsBlaze limit. The Odds API key has 0 credits (expected). The empty state is hard to trigger live; to test it, scan right after a backend restart with a large backlog."
+}
