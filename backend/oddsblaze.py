@@ -22,6 +22,26 @@ _sgp = {}
 _lock = asyncio.Lock()
 
 
+class _Limiter:
+    """Sliding 60s window: at most `n` calls per minute."""
+    def __init__(self, n):
+        self.n, self.calls, self.lock = n, [], asyncio.Lock()
+
+    async def wait(self):
+        async with self.lock:
+            while True:
+                now = time.time()
+                self.calls = [t for t in self.calls if now - t < 60]
+                if len(self.calls) < self.n:
+                    self.calls.append(now)
+                    return
+                await asyncio.sleep(60 - (now - self.calls[0]) + 0.05)
+
+
+_all_limit = _Limiter(290)
+_sgp_limit = _Limiter(29)
+
+
 def configured():
     return bool(os.environ.get("ODDSBLAZE_API_KEY"))
 
@@ -39,6 +59,7 @@ async def _book_props(client, book, ttl=120, live=False):
     params = {"key": os.environ["ODDSBLAZE_API_KEY"], "sportsbook": book, "league": "nba", "market": ",".join(MARKETS)}
     if not live:
         params["live"] = "false"
+    await _all_limit.wait()
     r = await client.get(ODDS, params=params)
     games = {}
     if r.status_code in (401, 403):
@@ -68,6 +89,8 @@ async def _price(client, book, sgps, ttl=120):
     if hit and time.time() - hit["t"] < ttl:
         return hit["price"]
     for attempt in range(3):
+        await _sgp_limit.wait()
+        await _all_limit.wait()
         r = await client.post(f"https://{book}.sgp.oddsblaze.com/", params={"key": os.environ["ODDSBLAZE_API_KEY"]}, json=list(sgps))
         if r.status_code != 429:
             break
@@ -107,7 +130,7 @@ async def sgp_prices(requests, books=None, timeout=None, live=False):
         async def run(i, short, book, sgps):
             async with sems[book]:
                 try:
-                    out[i][short] = await _price(client, book, sgps, ttl=20 if live else 120)
+                    out[i][short] = await _price(client, book, sgps, ttl=60 if live else 300)
                 except httpx.HTTPError as e:
                     logger.warning("OddsBlaze SGP failed: %s", e)
         tasks = [asyncio.create_task(run(*j)) for j in jobs]
