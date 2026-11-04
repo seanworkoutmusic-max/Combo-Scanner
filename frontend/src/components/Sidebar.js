@@ -2,8 +2,8 @@ import { BookOpen, ClipboardList, Crosshair, Layers, Search } from "lucide-react
 import { HowItWorks } from "./HowItWorks";
 
 const TABS = [
-  { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers },
   { id: "scanner", label: "SGP Scanner", testid: "nav-tab-scanner", icon: Search },
+  { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers },
   { id: "live", label: "In-Game Tracker", testid: "nav-tab-live", icon: Crosshair },
   { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList },
 ];

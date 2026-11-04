@@ -19,10 +19,14 @@ const loadSettings = () => {
   }
 };
 
+const PATH_TAB = { "/sean": "sean", "/kalshi": "scanner", "/parlay": "props", "/live": "live", "/bets": "bets" };
+const TAB_PATH = { scanner: "/kalshi", props: "/parlay", live: "/live", bets: "/bets" };
+const pathTab = () => PATH_TAB[window.location.pathname.replace(/\/+$/, "")];
+
 function App() {
-  const [tab, setTabState] = useState(window.location.pathname.replace(/\/+$/, "") === "/sean" ? "sean" : "props");
+  const [tab, setTabState] = useState(() => pathTab() || "scanner");
   const setTab = (t) => {
-    if (window.location.pathname !== "/") window.history.pushState({}, "", "/");
+    if (window.location.pathname !== TAB_PATH[t]) window.history.pushState({}, "", TAB_PATH[t]);
     setTabState(t);
   };
   const [status, setStatus] = useState(null);
@@ -39,7 +43,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const onPop = () => { if (window.location.pathname.replace(/\/+$/, "") === "/sean") setTabState("sean"); };
+    if (!pathTab()) window.history.replaceState({}, "", "/kalshi");
+    const onPop = () => setTabState(pathTab() || "scanner");
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
