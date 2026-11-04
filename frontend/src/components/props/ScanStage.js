@@ -21,14 +21,14 @@ export const ScanReady = ({ onScan, games }) => (
       <div>
         <h3 className="font-display text-3xl font-bold text-white">Ready when you are</h3>
         <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-300">
-          Set your combos in the filters, then we scan every game for live Kalshi combo prices against the sportsbooks.
+          Pick your combos in the filter, then we scan every game for live Kalshi combo prices against the sportsbooks.
         </p>
         <button data-testid="scanner-scan-btn" onClick={onScan}
           className="mt-6 inline-flex items-center gap-2 h-12 px-7 rounded-xl bg-white text-slate-950 text-base font-bold hover:bg-slate-200 hover:-translate-y-0.5 transition-[background-color,transform]">
           <Sparkles className="h-4 w-4" /> Scan all {games ? `${games} ` : ""}games
         </button>
       </div>
-      <div className="hidden lg:block space-y-3">
+      <div className="space-y-3">
         {STEPS_HOW.map(([t, s], i) => (
           <div key={t} data-testid={`scanner-step-${i + 1}`} className="flex items-center gap-4 rounded-xl border border-slate-800 bg-[#0E0E0E] px-4 py-3">
             <span className="grid place-items-center h-7 w-7 shrink-0 rounded-full bg-white/10 text-xs font-bold text-white">{i + 1}</span>
