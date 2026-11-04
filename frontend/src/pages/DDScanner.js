@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, ExternalLink, Plus, Check, Search } from "lucide-react";
-import { ComboFilter } from "../components/props/ComboFilter";
+import { ComboFilter, ActiveFilters } from "../components/props/ComboFilter";
 import { ScanLoader, ScanReady } from "../components/props/ScanStage";
 import { SlateCards } from "../components/props/ScannerOverview";
 import { getScannerBoard, getScannerGames, getBets, addBet, errMsg } from "../lib/api";
@@ -106,6 +106,9 @@ export default function DDScanner({ settings }) {
   const [minOdds, setMinOdds] = useState("");
   const [maxOdds, setMaxOdds] = useState("");
   const [sel, setSel] = useState(["10"]);
+  const [draft, setDraft] = useState(["10"]);
+  const [minEv, setMinEv] = useState(0);
+  const scanNext = useRef(false);
   const [progress, setProgress] = useState(null);
   const selRef = useRef(sel);
   selRef.current = sel;
@@ -159,7 +162,15 @@ export default function DDScanner({ settings }) {
     }
   }, [all, ra, tdPts, live, selKey]);
 
-  useEffect(() => { reqId.current++; setData(null); setLoading(false); setProgress(null); setScanning(null); setScannedGames(null); }, [load]);
+  useEffect(() => {
+    reqId.current++; setData(null); setLoading(false); setProgress(null); setScanning(null); setScannedGames(null);
+    if (scanNext.current) { scanNext.current = false; load(); }
+  }, [load]);
+  const pending = draft.join() !== selKey;
+  const scan = () => {
+    if (!draft.length) return toast.error("Pick at least one combo");
+    if (pending) { scanNext.current = true; setSel(draft); } else load();
+  };
 
   const [tracked, setTracked] = useState(new Set());
   useEffect(() => {
@@ -199,6 +210,7 @@ export default function DDScanner({ settings }) {
   const showLoader = loading && !rows.length;
   const shown = rows.filter((r) => {
     if (tracked.has(betKey(r.game.code, r.combos[0].legs))) return false;  // tracked plays leave the board
+    if (r.ev < minEv / 100) return false;
     const a = probToAmerican(settings.fees ? Math.min(r.price + 0.07 * r.price * (1 - r.price), 0.999) : r.price);
     return a != null && (lo == null || a >= lo) && (hi == null || a <= hi);
   });
@@ -212,6 +224,9 @@ export default function DDScanner({ settings }) {
 
   return (
     <div className="space-y-6">
+      <ComboFilter combos={COMBOS} draft={draft} setDraft={setDraft} live={live} setLive={setLive} minOdds={minOdds} maxOdds={maxOdds}
+        setMinOdds={setMinOdds} setMaxOdds={setMaxOdds} minEv={minEv} setMinEv={setMinEv}
+        onReset={() => { setDraft(["10"]); setMinOdds(""); setMaxOdds(""); setMinEv(0); }} />
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 data-testid="scanner-title" className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight"><Search className="h-8 w-8 text-white" strokeWidth={2.5} /> Kalshi SGP Scanner</h1>
@@ -219,25 +234,15 @@ export default function DDScanner({ settings }) {
             {data ? `Updated ${new Date(data.updated_at).toLocaleTimeString()} · ${shown.length === rows.length ? rows.length : `${shown.length} of ${rows.length}`} combos across ${data.games} games` : loading ? "Pricing combos with Kalshi market makers…" : ""}
           </p>
         </div>
-        <button data-testid="scanner-refresh-btn" onClick={() => load()} disabled={loading}
+        <button data-testid="scanner-refresh-btn" onClick={scan} disabled={loading}
           className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border bg-white text-slate-950 text-sm font-semibold hover:bg-slate-200 disabled:opacity-50 transition-colors">
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh odds
         </button>
       </div>
 
       <div className="flex items-center gap-5 flex-wrap">
-      <div data-testid="scanner-mode" className="flex rounded-lg border border-slate-700 bg-[#0E0E0E] p-0.5">
-        {[["pregame", "Pregame"], ["live", "Live"]].map(([k, l]) => (
-          <button key={k} data-testid={`scanner-mode-${k}`} onClick={() => setLive(k === "live")}
-            className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-sm font-semibold transition-colors ${(k === "live") === live ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"}`}>
-            {k === "live" && <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-red-500 animate-pulse" : "bg-red-500/60"}`} />}{l}
-          </button>
-        ))}
-      </div>
-      <div className="flex items-center gap-2 text-sm text-slate-400">
-        Filter
-        <ComboFilter combos={COMBOS} value={sel} onChange={setSel} minOdds={minOdds} maxOdds={maxOdds} setMinOdds={setMinOdds} setMaxOdds={setMaxOdds} />
-      </div>
+        <ActiveFilters combos={COMBOS} draft={draft} setDraft={setDraft} minOdds={minOdds} maxOdds={maxOdds}
+          clearOdds={() => { setMinOdds(""); setMaxOdds(""); }} minEv={minEv} setMinEv={setMinEv} pending={pending && !!data} />
         {progress && <span data-testid="all-combos-progress" className="text-xs font-mono text-slate-400">Loading {progress.done}/{progress.total} combos…</span>}
       </div>
 
@@ -249,7 +254,7 @@ export default function DDScanner({ settings }) {
       )}
 
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
-        {ready ? <ScanReady onScan={() => load()} games={slate?.length} /> : showLoader ? <ScanLoader progress={progress} /> : (
+        {ready ? <ScanReady onScan={scan} games={slate?.length} /> : showLoader ? <ScanLoader progress={progress} /> : (
         <table data-testid="scanner-board" className="w-full min-w-[1000px]">
           <thead>
             <tr className="text-xs text-slate-400">

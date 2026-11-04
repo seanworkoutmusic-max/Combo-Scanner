@@ -56,7 +56,7 @@ function App() {
   return (
     <div className="App min-h-screen bg-[#121212]">
       <Sidebar tab={tab} setTab={setTab} kalshiOk={!gamesErr && games.length > 0} />
-      <main className={`lg:pl-16 min-[1440px]:pl-56 min-h-screen ${["scanner", "live", "bets"].includes(tab) ? "dot-grid" : ""}`}>
+      <main className={`min-h-screen ${tab === "scanner" ? "lg:pl-80 min-[1440px]:pl-[30rem]" : "lg:pl-16 min-[1440px]:pl-56"} ${["scanner", "live", "bets"].includes(tab) ? "dot-grid" : ""}`}>
         <div className="max-w-[1320px] mx-auto px-4 sm:px-6 2xl:px-10 py-6 lg:py-8 space-y-5">
           {tab === "props" ? (
             <Props settings={settings} update={update} status={status} />

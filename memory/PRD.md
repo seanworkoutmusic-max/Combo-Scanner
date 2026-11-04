@@ -83,3 +83,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - OddsBlaze Starter plan key saved via secure card. Added sliding-window limiters in oddsblaze.py (29 SGP/min, 290 total/min); SGP price cache 300s pregame / 60s live.
 - Renamed site from "Prop Outliers" to "Kalshi Combo Scanner" (browser tab title + logo alt text).
 - SGP Scanner is now first in sidebar and the default landing page. Each page has its own URL: /kalshi (scanner, "/" redirects here), /parlay, /live, /bets, /sean. Dotted grid background on scanner/live/bets. Active sidebar item has outline.
+- SGP Scanner filters moved from dropdown to a left Filters panel (Market, Combos, Odds range, Min EV 0/3/5/10, Sport, Books, Reset). Combos apply when Scan/Refresh is pressed; odds & Min EV apply instantly. Active filter chips row under title. On mobile panel stacks above results and 1/2/3 steps are hidden.
