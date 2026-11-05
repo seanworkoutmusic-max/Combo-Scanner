@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, ChevronDown } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getAllBets, errMsg } from "../lib/api";
 import { americanToProb } from "../lib/slip";
 import { fmtAmerican, probToAmerican } from "../lib/ev";
 import { Stat, profit, money } from "./BetTracker";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
+import { Checkbox } from "../components/ui/checkbox";
 
 const UNIT = 10;
 const STATUS_TONE = { won: "text-emerald-400", lost: "text-red-400", void: "text-slate-400", pending: "text-white" };
@@ -36,17 +37,37 @@ const UnitToggle = ({ units, setUnits }) => (
   </div>
 );
 
-const Pick = ({ value, onChange, items, testid, label }) => (
-  <label className="flex items-center gap-2 text-sm text-slate-400">
-    {label}
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger data-testid={testid} className="h-9 w-56 border-slate-700 bg-[#0E0E0E] text-white"><SelectValue /></SelectTrigger>
-      <SelectContent className="bg-[#0E0E0E] border-slate-700 text-white">
-        {items.map(([k, l]) => <SelectItem key={k} value={k} data-testid={`${testid}-${k.replace(/\W+/g, "-").toLowerCase()}`}>{l}</SelectItem>)}
-      </SelectContent>
-    </Select>
-  </label>
-);
+const NbaLogo = () => <img src="/nba.png" alt="" className="h-4 w-4 object-contain shrink-0" />;
+
+const ComboPicker = ({ items, value, onChange }) => {
+  const toggle = (k) => onChange(value.includes(k) ? value.filter((x) => x !== k) : [...value, k]);
+  const label = !value.length ? "All combos" : value.length === 1 ? value[0] : `${value.length} combos`;
+  return (
+    <div className="flex items-center gap-2 text-sm text-slate-400">
+      Combo
+      <Popover>
+        <PopoverTrigger asChild>
+          <button data-testid="results-combo-filter" className="flex items-center gap-2 h-9 w-64 px-3 rounded-md border border-slate-700 bg-[#0E0E0E] text-white text-sm">
+            <NbaLogo /><span className="truncate flex-1 text-left">{label}</span><ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-[22rem] p-1.5 bg-[#0E0E0E] border-slate-700 text-white">
+          <div role="button" data-testid="results-combo-all" onClick={() => onChange([])}
+            className={`flex w-full items-center gap-2.5 px-2 py-2 rounded-md text-sm cursor-pointer hover:bg-white/[0.05] ${!value.length ? "font-semibold" : "text-slate-300"}`}>
+            <Checkbox checked={!value.length} className={`${CHECK} pointer-events-none`} tabIndex={-1} /><NbaLogo />All combos
+          </div>
+          {items.map(([k, l]) => (
+            <label key={k} data-testid={`results-combo-${k.replace(/\W+/g, "-").toLowerCase()}`}
+              className={`flex items-center gap-2.5 px-2 py-2 rounded-md text-sm cursor-pointer hover:bg-white/[0.05] ${value.includes(k) ? "text-white font-semibold" : "text-slate-300"}`}>
+              <Checkbox checked={value.includes(k)} onCheckedChange={() => toggle(k)} className={CHECK} /><NbaLogo />{l}
+            </label>
+          ))}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+const CHECK = "border-slate-500 data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-black";
 
 const ChartTip = ({ active, payload, fmt }) => active && payload?.length ? (
   <div className="rounded-lg border border-slate-700 bg-[#0E0E0E] px-3 py-2 text-xs">
@@ -101,7 +122,7 @@ const ResultRow = ({ b, fmt }) => (
 
 export default function Results() {
   const [bets, setBets] = useState(null);
-  const [combo, setCombo] = useState("all");
+  const [combo, setCombo] = useState([]);
   const [units, setUnits] = useState(true);
   const fmt = units ? fmtUnits : money;
 
@@ -110,11 +131,11 @@ export default function Results() {
   const combos = useMemo(() => {
     const n = {};
     (bets || []).forEach((b) => { n[b.combo] = (n[b.combo] || 0) + 1; });
-    return [["all", "All combos"], ...Object.entries(n).sort((a, b) => b[1] - a[1]).map(([c, k]) => [c, `${c} (${k})`])];
+    return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([c, k]) => [c, `${c} (${k})`]);
   }, [bets]);
 
   const rows = useMemo(() => (bets || [])
-    .filter((b) => combo === "all" || b.combo === combo)
+    .filter((b) => !combo.length || combo.includes(b.combo))
     .map((b) => ({ ...b, pl: profit(b), odds: avgOdds(b), evX: b.ev })), [bets, combo]);
 
   const s = useMemo(() => {
@@ -144,7 +165,7 @@ export default function Results() {
       </div>
 
       <div className="flex items-center gap-5 flex-wrap">
-        <Pick label="Combo" value={combo} onChange={setCombo} items={combos} testid="results-combo-filter" />
+        <ComboPicker items={combos} value={combo} onChange={setCombo} />
         <UnitToggle units={units} setUnits={setUnits} />
       </div>
 
