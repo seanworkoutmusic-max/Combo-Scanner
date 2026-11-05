@@ -19,6 +19,13 @@ const avgOdds = (b) => {
 const pct = (v) => (v == null ? "—" : `${v > 0 ? "+" : ""}${(v * 100).toFixed(1)}%`);
 const day = (iso) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 const fmtUnits = (v) => `${v > 0 ? "+" : v < 0 ? "-" : ""}${Math.abs(v / UNIT).toFixed(2)}u`;
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+// Slate day from the game code (e.g. 26NOV04...) so bets group by the game date, as sortable YYYYMMDD.
+const slateKey = (b) => {
+  const m = /^(\d{2})([A-Z]{3})(\d{2})/.exec(b.game_code || "");
+  return m ? `20${m[1]}${String(MONTHS.indexOf(m[2]) + 1).padStart(2, "0")}${m[3]}` : b.created_at.slice(0, 10).replace(/-/g, "");
+};
+const slateLabel = (k) => new Date(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8)).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 const UnitToggle = ({ units, setUnits }) => (
   <div data-testid="results-unit-toggle" className="flex rounded-lg border border-slate-700 bg-[#0E0E0E] p-0.5">
@@ -43,27 +50,33 @@ const Pick = ({ value, onChange, items, testid, label }) => (
 
 const ChartTip = ({ active, payload, fmt }) => active && payload?.length ? (
   <div className="rounded-lg border border-slate-700 bg-[#0E0E0E] px-3 py-2 text-xs">
-    <div className="text-slate-400">{payload[0].payload.date} · {payload[0].payload.player}</div>
+    <div className="text-slate-400">{payload[0].payload.date}{payload[0].payload.date !== "Start" && ` · day ${fmt(payload[0].payload.day)}`}</div>
     <div className="font-mono font-bold text-white">{fmt(payload[0].value)}</div>
   </div>
 ) : null;
 
+const axisFmt = (units) => (v) => `${v > 0 ? "+" : v < 0 ? "-" : ""}${units ? `${Math.abs(v / UNIT).toFixed(1)}u` : `$${Math.abs(v).toFixed(0)}`}`;
+const tick = { fill: "#64748b", fontSize: 11 };
+
 const ProfitChart = ({ points, fmt, units }) => (
-  <div data-testid="results-chart" className="rounded-xl border border-slate-800 bg-[#181818] p-4 h-80">
-    {points.length < 2 ? <div className="h-full grid place-items-center text-sm text-slate-500">Not enough settled bets for a graph yet.</div> : (
+  <div data-testid="results-chart" className="rounded-xl border border-slate-800 bg-[#181818] p-4 h-80 flex flex-col">
+    <div className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Cumulative returns ({units ? "units" : "dollars"})</div>
+    {points.length < 2 ? <div className="flex-1 grid place-items-center text-sm text-slate-500">Not enough settled bets for a graph yet.</div> : (
+      <div className="flex-1 min-h-0">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={points} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="pl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#fff" stopOpacity={0.18} /><stop offset="100%" stopColor="#fff" stopOpacity={0} /></linearGradient>
           </defs>
           <CartesianGrid stroke="#262626" vertical={false} />
-          <XAxis dataKey="n" hide />
-          <YAxis tickFormatter={(v) => (units ? `${v / UNIT}u` : `$${v}`)} tick={{ fill: "#64748b", fontSize: 11 }} tickLine={false} axisLine={false} width={56} />
+          <XAxis dataKey="date" tick={tick} tickLine={false} axisLine={{ stroke: "#334155" }} minTickGap={24} />
+          <YAxis tickFormatter={axisFmt(units)} tick={tick} tickLine={false} axisLine={{ stroke: "#334155" }} width={64} />
           <ReferenceLine y={0} stroke="#475569" strokeDasharray="4 4" />
           <Tooltip content={<ChartTip fmt={fmt} />} />
-          <Area type="monotone" dataKey="pl" stroke="#fff" strokeWidth={2} fill="url(#pl)" dot={false} />
+          <Area type="linear" dataKey="pl" stroke="#fff" strokeWidth={2} fill="url(#pl)" dot={false} activeDot={{ r: 4, fill: "#fff" }} />
         </AreaChart>
       </ResponsiveContainer>
+      </div>
     )}
   </div>
 );
@@ -110,7 +123,9 @@ export default function Results() {
     const risked = settled.reduce((a, b) => a + b.stake, 0);
     const evs = rows.filter((b) => b.evX != null);
     let run = 0;
-    const points = settled.map((b, i) => ({ n: i + 1, pl: Number((run += b.pl).toFixed(2)), date: day(b.created_at), player: b.player }));
+    const byDay = {};
+    settled.forEach((b) => { const k = slateKey(b); byDay[k] = (byDay[k] || 0) + b.pl; });
+    const points = [{ date: "Start", day: 0, pl: 0 }, ...Object.keys(byDay).sort().map((k) => ({ date: slateLabel(k), day: byDay[k], pl: Number((run += byDay[k]).toFixed(2)) }))];
     return {
       n: rows.length, pl, roi: risked ? pl / risked : null, points,
       record: `${rows.filter((b) => b.status === "won").length}-${rows.filter((b) => b.status === "lost").length}-${rows.filter((b) => b.status === "void").length}`,
