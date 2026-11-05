@@ -9,8 +9,8 @@ import { PriceTag } from "../components/props/MarketList";
 export const STAKE_KEY = "bet-stake";
 export const getStake = () => Number(localStorage.getItem(STAKE_KEY)) || 10;
 
-const profit = (b) => (b.status === "won" ? (b.stake * (1 - b.price)) / b.price : b.status === "lost" ? -b.stake : 0);
-const money = (v) => `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(2)}`;
+export const profit = (b) => (b.status === "won" ? (b.stake * (1 - b.price)) / b.price : b.status === "lost" ? -b.stake : 0);
+export const money = (v) => `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(2)}`;
 export const STATUS_LABEL = { won: "Won", lost: "Lost", void: "Void" };
 
 export const LegProgress = ({ b, live }) => live ? (

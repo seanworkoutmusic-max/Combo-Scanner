@@ -6,6 +6,7 @@ import DDScanner from "./pages/DDScanner";
 import LiveTracker from "./pages/LiveTracker";
 import BetTracker from "./pages/BetTracker";
 import SharedBets from "./pages/SharedBets";
+import Results from "./pages/Results";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
 
@@ -19,8 +20,8 @@ const loadSettings = () => {
   }
 };
 
-const PATH_TAB = { "/sean": "sean", "/kalshi": "scanner", "/parlay": "props", "/live": "live", "/bets": "bets" };
-const TAB_PATH = { scanner: "/kalshi", props: "/parlay", live: "/live", bets: "/bets" };
+const PATH_TAB = { "/sean": "sean", "/kalshi": "scanner", "/parlay": "props", "/live": "live", "/bets": "bets", "/results": "results" };
+const TAB_PATH = { scanner: "/kalshi", props: "/parlay", live: "/live", bets: "/bets", results: "/results" };
 const pathTab = () => PATH_TAB[window.location.pathname.replace(/\/+$/, "")];
 
 function App() {
@@ -56,7 +57,7 @@ function App() {
   return (
     <div className="App min-h-screen bg-[#121212]">
       <Sidebar tab={tab} setTab={setTab} kalshiOk={!gamesErr && games.length > 0} />
-      <main className={`lg:pl-16 min-[1440px]:pl-56 min-h-screen ${["scanner", "live", "bets"].includes(tab) ? "dot-grid" : ""}`}>
+      <main className={`lg:pl-16 min-[1440px]:pl-56 min-h-screen ${["scanner", "live", "bets", "results"].includes(tab) ? "dot-grid" : ""}`}>
         <div className={`max-w-[1320px] ${tab === "scanner" ? "" : "mx-auto"} px-4 sm:px-6 2xl:px-10 py-6 lg:py-8 space-y-5`}>
           {tab === "props" ? (
             <Props settings={settings} update={update} status={status} />
@@ -66,6 +67,8 @@ function App() {
             <BetTracker />
           ) : tab === "sean" ? (
             <SharedBets />
+          ) : tab === "results" ? (
+            <Results settings={settings} />
           ) : (
             <DDScanner settings={settings} />
           )}

@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardList, Crosshair, Layers, Search } from "lucide-react";
+import { BookOpen, ClipboardList, Crosshair, Layers, Search, TrendingUp } from "lucide-react";
 import { HowItWorks } from "./HowItWorks";
 
 const TABS = [
@@ -6,6 +6,7 @@ const TABS = [
   { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers },
   { id: "live", label: "In-Game Tracker", testid: "nav-tab-live", icon: Crosshair },
   { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList },
+  { id: "results", label: "Results", testid: "nav-tab-results", icon: TrendingUp },
 ];
 
 const Logo = () => (
