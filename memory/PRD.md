@@ -90,3 +90,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Reverted FanDuel-only devig; SGP Scanner uses FD, DK, Fanatics, BetMGM, Hard Rock again.
 - Added "Load more book odds" button on SGP Scanner (POST /api/scanner/sgp-fill): re-prices only plays already on the board, requests jump ahead of background queue (priority limiter). Tested iteration_17; malformed legs now 422.
 - Fix "SGP scanner not loading": OddsBlaze limiter serves newest scan first (_gen priority), board total time budget from request start (<50s), Odds API failures cached 5 min (ODDS_API_KEY out of credits -> 401), clearer empty state when prices queued. Tested iteration_18 (100%).
+- Added Results page (/results, TrendingUp icon): all tracked bets across all days (GET /api/bets/all), running profit chart, Bets/Record/Profit/ROI/Avg EV, Book filter (EV from that book alone) and Combo filter. Tested iteration_19.

@@ -1,0 +1,35 @@
+{
+  "summary": "Tested the new Results page and GET /api/bets/all, read-only (no bets were added, changed or deleted). Found and fixed a regression: in backend/bets.py, the new @r.get('/all') line had replaced the @r.post('/grade') decorator. That left POST /api/bets/grade unregistered, and the backend logs show 405s. ESPN auto-grading on Bet Tracker and /sean was silently broken because the frontend swallows the error. After restoring the decorator, the logs show POST /api/bets/grade returning 200. Backend: /api/bets/all returns 141 bets, oldest first, with no _id. /api/bets returns today's subset (0 today). Frontend: the Results tab has the lucide trending-up icon and opens /results; reload and back both work. With all books and all combos the stats are 141 bets, 5-131-5, -$101.10, -7.4% ROI, +97.4% avg EV, all matching an independent Python recompute. I checked every book filter (fd 25, dk 102, fan 105, mgm 15, hr 96) and the combo and book+combo combinations (6/6 all, 6/6 dk, 4/4 dk). Counts, record, profit and ROI match the recompute exactly. The odds column header changes to the book name. The FanDuel + 4+ Reb & 4+ Ast filter shows results-empty. Chart tooltip values match the expected running P/L (for example 6/6 dk: -$190, then $326.32, then $642.98). Rows are newest first. At 390px there is no page-level horizontal overflow; the table scrolls inside its container.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/bets/grade", "issue": "REGRESSION (FIXED by testing agent): adding @r.get('/all') removed the @r.post('/grade') decorator, so grade_bets was no longer a route and returned 405. Bet Tracker and SharedBets auto-grading silently failed. The decorator is restored and the route now returns 200.", "priority": "CRITICAL"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/results filters", "issues": ["The combo Select trigger is w-56, so long labels get cut off (e.g. '6+ Rebounds & 6+ Assists (5'). Widen the trigger or let it size to its content.", "On mobile the Results tab is the 5th item in the horizontal nav and is off-screen until you scroll the nav (minor)."]},
+      {"screen": "/results chart", "issues": ["The x-axis is the bet index (1..136), not a date, so you can't tell when swings happened. Consider date ticks or a date in the axis label.", "type='monotone' smooths the step-like P/L jumps. type='linear' or 'stepAfter' would show them more accurately."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_results_api.py", "/app/test_reports/pytest/results_api.xml"],
+  "action_items": [
+    "Keep the restored @r.post('/grade') decorator in backend/bets.py, and take care not to overwrite decorators when adding routes.",
+    "Optional: widen the combo filter trigger so labels aren't cut off.",
+    "Optional: add dates to the chart x-axis or tooltip header, and consider linear interpolation."
+  ],
+  "critical_code_review_comments": [
+    "Results 'All books (avg)' EV uses the stored b.ev, which was computed with the settings in use when the bet was tracked. Per-book EV is recomputed with the current settings.singleHold and fees. Mixing these is a bit inconsistent but acceptable.",
+    "avgOdds averages every key in b.books, including both 'fd' (Odds API triple-double) and 'fd_sgp' for the same bet. The 'Book avg' column can therefore count a book twice.",
+    "/api/bets/all uses to_list(10000) with no pagination. That's fine now (141 bets) but is a hard cap.",
+    "Pending bets count toward 'Bets' but not the record or ROI, which is correct. Void bets show $0.00 P/L."
+  ],
+  "updated_files": ["/app/backend/bets.py", "/app/backend/tests/test_results_api.py"],
+  "success_rate": {"backend": "100% (6/6) after the grade route fix", "frontend": "100%"},
+  "seed_data_creation": "None. Read-only testing; no bets were created, modified or deleted (status counts unchanged: 131 lost, 5 won, 5 void).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run: pytest -n 0 tests/test_results_api.py (read-only). Expected values (Nov 5 2026 data): all 141 / 5-131-5 / -$101.10 / -7.4%; fd 25, dk 102 (+$232.40, +24.0%), fan 105, mgm 15, hr 96. Combo testids are slugified, e.g. results-combo-filter-6-rebounds-6-assists. Wait about 2.5s after a filter change before taking screenshots; recharts animates, and mid-animation shots look wrong."
+}

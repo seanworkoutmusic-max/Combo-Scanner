@@ -79,6 +79,8 @@ def make_router(db):
         """Every tracked bet across all days (oldest first) for the Results page."""
         docs = await col.find({}).sort("created_at", 1).to_list(10000)
         return [Bet.from_mongo(d).model_dump() for d in docs]
+
+    @r.post("/grade")
     async def grade_bets():
         """Live/final ESPN grading: all legs hit -> won (even mid-game); final with a miss -> lost; final with player DNP -> void."""
         pending = [Bet.from_mongo(d) for d in await col.find({"status": "pending"}).to_list(2000)]
