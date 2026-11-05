@@ -6,6 +6,7 @@ import { getAllBets, errMsg } from "../lib/api";
 import { americanToProb } from "../lib/slip";
 import { fmtAmerican, probToAmerican } from "../lib/ev";
 import { Stat, profit, money } from "./BetTracker";
+import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
 const UNIT = 10;
@@ -70,7 +71,12 @@ const ProfitChart = ({ points, fmt, units }) => (
 const ResultRow = ({ b, fmt }) => (
   <tr data-testid={`result-row-${b.id}`} className="border-t border-slate-800/80">
     <td className="py-2.5 px-4 text-slate-400 whitespace-nowrap">{day(b.created_at)}</td>
-    <td className="py-2.5 px-4 text-white font-semibold whitespace-nowrap">{b.player}<div className="text-xs font-normal text-slate-500">{b.game_label}</div></td>
+    <td className="py-2.5 px-4 whitespace-nowrap">
+      <div className="flex items-center gap-2.5">
+        <PlayerPhoto src={b.headshot} name={b.player} size={28} testid={`result-photo-${b.id}`} />
+        <div className="text-white font-semibold">{b.player}<div className="text-xs font-normal text-slate-500">{b.game_label}</div></div>
+      </div>
+    </td>
     <td className="py-2.5 px-4 text-slate-300 whitespace-nowrap">{b.combo}</td>
     <td className="py-2.5 px-4 font-mono text-white text-right">{fmtAmerican(probToAmerican(b.price))}</td>
     <td className="py-2.5 px-4 font-mono text-slate-300 text-right">{fmtAmerican(b.odds)}</td>
@@ -120,7 +126,6 @@ export default function Results() {
         <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
           <TrendingUp className="h-8 w-8 text-white" /> Results
         </h1>
-        <p className="text-sm text-slate-400 mt-1">Every bet you've tracked from the Kalshi SGP Scanner, across all days. 1 unit = ${UNIT}.</p>
       </div>
 
       <div className="flex items-center gap-5 flex-wrap">
