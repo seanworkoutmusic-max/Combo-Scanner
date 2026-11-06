@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ChevronDown, Search } from "lucide-react";
 import { getInjuries, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
+import { LineupPanel } from "../components/props/LineupPanel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
 const POS = ["ALL", "PG", "SG", "SF", "PF", "C"];
@@ -11,23 +12,10 @@ const TONE = {
   out: "bg-red-500/15 text-red-300", doubtful: "bg-orange-500/15 text-orange-300", questionable: "bg-amber-500/15 text-amber-300",
   probable: "bg-emerald-500/15 text-emerald-300", "day-to-day": "bg-amber-500/15 text-amber-300",
 };
-const TAG = { Starts: "bg-emerald-600/80 text-white", "If out": "bg-emerald-900/70 text-emerald-200", "More minutes": "bg-slate-700 text-slate-200" };
 const tip = (iso) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 const ret = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Day-to-day");
 
-const DepthCard = ({ c, r }) => {
-  const isHim = c.name === r.name, isNext = c.name === r.next_up;
-  const label = c.depth === 1 ? "Starter" : isNext ? "Next up" : "Bench";
-  return (
-    <div className={`rounded-lg border px-4 py-3 ${isHim ? "border-red-900/70 bg-red-950/30" : isNext ? "border-emerald-500/70 bg-emerald-950/40" : "border-slate-800 bg-[#121212]"}`}>
-      <div className={`text-[10px] font-bold uppercase tracking-wider ${isHim ? "text-red-300" : isNext ? "text-emerald-300" : "text-slate-500"}`}>{c.depth} · {isNext ? "Next up" : label}</div>
-      <div className={`mt-1 font-bold text-white ${c.out ? "line-through text-slate-400" : ""}`}>{c.name}</div>
-      <div className="text-xs text-slate-400">{isHim ? `${r.status} · ${r.injury}` : c.out ? "Out" : isNext ? (r.tag === "Starts" ? "Projected to start" : "Bump in minutes") : "Depth"}</div>
-    </div>
-  );
-};
-
-const InjuryRow = ({ r, open, onToggle, i }) => (
+const InjuryRow = ({ r, g, settings, open, onToggle, i }) => (
   <>
     <tr data-testid={`injury-row-${i}`} onClick={onToggle} className="border-t border-slate-800/80 cursor-pointer hover:bg-white/[0.02] transition-colors">
       <td className="py-3 px-5">
@@ -39,25 +27,20 @@ const InjuryRow = ({ r, open, onToggle, i }) => (
       <td className="py-3 px-4"><span data-testid={`injury-status-${i}`} className={`px-2.5 py-1 rounded-full text-xs font-bold ${TONE[r.status.toLowerCase()] || "bg-slate-700 text-slate-200"}`}>{r.status}</span></td>
       <td className="py-3 px-4 text-slate-300">{r.injury}</td>
       <td className="py-3 px-4 text-slate-300 whitespace-nowrap">{ret(r.return)}</td>
-      <td className="py-3 px-4 whitespace-nowrap">
-        {r.next_up ? <span className="inline-flex items-center gap-2 font-bold text-white">{r.next_up}<span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${TAG[r.tag]}`}>{r.tag}</span></span> : <span className="text-slate-500">—</span>}
+      <td className="py-3 pr-5 text-right whitespace-nowrap text-slate-400">
+        Starting 5 <ChevronDown className={`inline h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
       </td>
-      <td className="py-3 pr-5 text-right"><ChevronDown className={`inline h-4 w-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} /></td>
     </tr>
     {open && (
-      <tr data-testid={`injury-depth-${i}`}><td colSpan={6} className="px-5 pb-5">
-        <div className="pl-12">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">{r.team} {r.pos} depth chart</div>
-          {r.chart.length ? <div className="grid sm:grid-cols-3 gap-3">{r.chart.slice(0, Math.max(3, r.chart.findIndex((c) => c.name === r.next_up) + 1)).map((c) => <DepthCard key={c.name} c={c} r={r} />)}</div>
-            : <div className="text-sm text-slate-500">Not on ESPN's depth chart.</div>}
-          {r.comment && <p className="mt-3 text-xs text-slate-400">{r.comment}</p>}
-        </div>
+      <tr data-testid={`injury-depth-${i}`}><td colSpan={5} className="px-5 pb-5">
+        <LineupPanel r={r} g={g} settings={settings} />
+        {r.comment && <p className="mt-3 text-xs text-slate-400 sm:pl-12">{r.comment}</p>}
       </td></tr>
     )}
   </>
 );
 
-export default function Injuries() {
+export default function Injuries({ settings }) {
   const [data, setData] = useState(null);
   const [pos, setPos] = useState("ALL");
   const [status, setStatus] = useState("all");
@@ -67,7 +50,7 @@ export default function Injuries() {
   useEffect(() => { getInjuries().then(setData).catch((e) => { toast.error(errMsg(e)); setData({ games: [] }); }); }, []);
 
   const games = useMemo(() => (data?.games || []).map((g) => ({ ...g, rows: g.rows.filter((r) => (pos === "ALL" || r.pos === pos)
-    && (status === "all" || r.status === status) && (!q || r.name.toLowerCase().includes(q.toLowerCase()) || (r.next_up || "").toLowerCase().includes(q.toLowerCase()))) }))
+    && (status === "all" || r.status === status) && (!q || [r.name, ...(r.lineup || []).map((p) => p.name)].some((n) => n.toLowerCase().includes(q.toLowerCase())))) }))
     .filter((g) => g.rows.length), [data, pos, status, q]);
   const day = data?.games?.[0] ? new Date(data.games[0].start).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "";
 
@@ -99,7 +82,7 @@ export default function Injuries() {
               className={`px-3.5 py-1 ${k ? "border-l border-slate-700" : "pl-0"} ${pos === p ? "font-bold text-white" : "text-slate-400 hover:text-white"}`}>{p}</button>
           ))}
         </div>
-        <span className="text-sm text-slate-500">Click a row to see the full depth chart</span>
+        <span className="text-sm text-slate-500">Click a row for the projected lineup and Kalshi combos</span>
       </div>
 
       <div className="rounded-xl border border-slate-800 bg-[#181818] overflow-x-auto">
@@ -108,17 +91,17 @@ export default function Injuries() {
           <table className="w-full text-sm">
             <thead><tr className="text-xs font-semibold text-slate-300 text-left">
               <th className="py-3.5 px-5">Player</th><th className="py-3.5 px-4">Status</th><th className="py-3.5 px-4">Injury</th>
-              <th className="py-3.5 px-4">Est. return</th><th className="py-3.5 px-4">Next up on depth chart</th><th />
+              <th className="py-3.5 px-4">Est. return</th><th className="py-3.5 pr-5 text-right">Lineup</th>
             </tr></thead>
             <tbody>
               {games.map((g) => (
                 <Fragment key={`${g.away}${g.home}`}>
-                  <tr><td colSpan={6} className="pt-3"><div className="border-t border-slate-300/70" />
+                  <tr><td colSpan={5} className="pt-3"><div className="border-t border-slate-300/70" />
                     <span data-testid={`injuries-game-${g.away}-${g.home}`} className="relative -top-2.5 ml-0 inline-block rounded-r-md bg-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-900">{g.away} @ {g.home} · {tip(g.start)}</span>
                   </td></tr>
                   {g.rows.map((r) => {
                     const id = `${g.away}${g.home}-${r.name}`;
-                    return <InjuryRow key={id} r={r} i={id.replace(/\W+/g, "-").toLowerCase()} open={open === id} onToggle={() => setOpen(open === id ? null : id)} />;
+                    return <InjuryRow key={id} r={r} g={g} settings={settings} i={id.replace(/\W+/g, "-").toLowerCase()} open={open === id} onToggle={() => setOpen(open === id ? null : id)} />;
                   })}
                 </Fragment>
               ))}

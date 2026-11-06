@@ -20,7 +20,7 @@ const HEAD_LOGOS = { Kalshi: "/kalshi.png", FD: "/fd.png", DK: "/dk.png", FanDue
 
 const fmt = (v) => (v == null ? null : v > 0 ? `+${v}` : `${v}`);
 
-const fairFrom = (books, hold) => {
+export const fairFrom = (books, hold) => {
   const ps = Object.values(books || {}).map((v) => americanToProb(fmt(v))).filter((p) => p != null).map((p) => devigOneSided(p, hold));
   return ps.length ? ps.reduce((a, x) => a + x, 0) / ps.length : null;
 };

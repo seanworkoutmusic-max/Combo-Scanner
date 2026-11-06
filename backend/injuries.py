@@ -42,6 +42,36 @@ def _next_up(chart, out_keys, name, starter=False):
     return None, None, None
 
 
+def _headshot(aid):
+    return aid and f"https://a.espncdn.com/i/headshots/nba/players/full/{aid}.png"
+
+
+def _lineup(chart, out_keys, injured, stats):
+    """Projected starting five with the injured player out, plus an estimated usage bump for each starter."""
+    lineup, used = [], {norm_name(injured)}
+    for pos in POSITIONS:
+        names = chart.get(pos, [])
+        a = next((c for c in names if norm_name(c["name"]) not in out_keys | used), None)
+        if not a:
+            continue
+        used.add(norm_name(a["name"]))
+        st = stats.get(norm_name(a["name"])) or {}
+        new = bool(names) and a["name"] != names[0]["name"]
+        lineup.append({"pos": pos.upper(), "name": a["name"], "key": norm_name(a["name"]), "headshot": _headshot(a["id"]), "new": new,
+                       "pts": st.get("pts", 0), "reb": st.get("reb", 0), "ast": st.get("ast", 0), "min": st.get("min", 0)})
+    inj = stats.get(norm_name(injured)) or {}
+    pool = inj.get("pts", 0) or 0
+    rest = [p for p in lineup if not p["new"]]
+    share = 0.65 if len(rest) < len(lineup) else 1
+    tot = sum(p["pts"] ** 2 for p in rest) or 1
+    for p in lineup:
+        if p["new"]:  # steps into the injured starter's minutes
+            p["bump"] = round(min(max((inj.get("min") or 30) / max(p["min"], 12) - 1, 0.1), 1), 3)
+        else:  # bigger usage share absorbs more of the injured starter's shots
+            p["bump"] = round(min(pool * share * p["pts"] / tot, 1), 3)
+    return lineup
+
+
 async def slate(ttl=600):
     """Tonight's games with every injured player, his depth chart spot and who is next up."""
     if _cache["data"] and time.time() - _cache["t"] < ttl:
@@ -79,9 +109,10 @@ async def slate(ttl=600):
             sitting = status.lower() in ("out", "doubtful")
             d = i.get("details") or {}
             aid = _athlete_id(a)
+            others = out_keys - {key} if not sitting else out_keys
             g["rows"].append({
                 "name": a["displayName"], "team": abbr, "pos": pos or (a.get("position") or {}).get("abbreviation"), "depth": depth,
-                "headshot": (a.get("headshot") or {}).get("href") or (aid and f"https://a.espncdn.com/i/headshots/nba/players/full/{aid}.png"),
+                "headshot": (a.get("headshot") or {}).get("href") or _headshot(aid), "lineup": _lineup(chart, others, a["displayName"], stats),
                 "status": status, "injury": " ".join(x for x in (d.get("side") if d.get("side") not in (None, "Not Specified") else None, d.get("type")) if x) or "—",
                 "return": d.get("returnDate"), "comment": i.get("shortComment") or "", "next_up": nxt,
                 "tag": None if not nxt else ("Starts" if depth == 1 and sitting else "If out" if depth == 1 else "More minutes"),

@@ -74,7 +74,7 @@ function App() {
           ) : tab === "outliers" ? (
             <Outliers />
           ) : tab === "injuries" ? (
-            <Injuries />
+            <Injuries settings={settings} />
           ) : (
             <DDScanner settings={settings} />
           )}
