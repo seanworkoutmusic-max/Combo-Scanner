@@ -102,3 +102,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Added Outliers page (/outliers, Zap icon): NBA player-prop Overs where Fanatics pays more than DK/FD/BetMGM/Hard Rock for the same line (GET /api/outliers, backend/outliers.py, 2-min cache per book). Game strip, game/market/min-books filters, Pays more %, Open for. Tested iteration_20 (100%).
 - Outliers tab moved to bottom of sidebar; Fanatics price uses red-F icon (public/fanatics-f.png cropped from fanatics-sb.png).
 - Outliers: clicking a row opens odds breakdown popup (game, Over line market, player, Fanatics + every other book price with % vs Fanatics, What moved: opened snapshot). Backend rows now include prices[] and opened{at,next_best,next_book}.
+- SGP Scanner: clicking the Kalshi price opens a dropdown of all market-maker RFQ quotes for that combo (odds, price, contracts, cost; best first) plus resting order book ask if any (components/props/ComboBook.js).

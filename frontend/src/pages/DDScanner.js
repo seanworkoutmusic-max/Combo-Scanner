@@ -12,6 +12,7 @@ const parseOdds = (v) => (v.trim() === "" || Number.isNaN(Number(v)) ? null : Nu
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
+import { ComboBook } from "../components/props/ComboBook";
 import { kalshiGameUrl, americanToProb, devigOneSided, evPct } from "../lib/slip";
 
 const BOOKS = [["fd", "FanDuel"], ["dk", "DraftKings"]];
@@ -94,7 +95,7 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, playerTracked, o
         )}
       </td>
       <td className="py-3 px-4 text-right">
-        <span data-testid={`td-${slug}`} className="font-mono text-base font-bold text-white"><PriceTag p={r.price} format={format} /></span>
+        <span data-testid={`td-${slug}`} className="font-mono text-base font-bold text-white"><ComboBook live={r.combos[0].live} slug={slug}><PriceTag p={r.price} format={format} /></ComboBook></span>
         {r.comboLabel && <div data-testid={`combo-label-${slug}`} className="text-[10px] font-mono text-slate-400 whitespace-nowrap">{r.combos[0].legs.map((l) => `${l.threshold}+ ${LEG_SHORT[l.market] || l.market}`).join(" · ")}</div>}
         {legs[0].market === "Points" && legs[0].threshold !== (r.comboLabel ? r.pts : tdPts) && <div data-testid={`td-leg-note-${slug}`} className="text-[10px] font-mono text-amber-400">{legs[0].threshold}+ pts (lowest Kalshi line)</div>}
       </td>
