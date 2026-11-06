@@ -98,3 +98,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Performance graph now plots a point after every settled bet (sorted by game day, then time tracked); date labels only where a new day starts; tooltip shows player and that bet result.
 - Reverted Performance graph to day-by-day. Bet Tracker game cell now one-click links to Kalshi /combos/games/<away>-at-<home>/props.
 - Imported 14 bets the user tracked on the live site (Nov 6, $10 each, 13x 6+reb/6+ast + Doncic 8/8) into the preview tracker with real Kalshi tickers & ESPN headshots, created_at set to original times. Total history now 157.
+- Added Jared McCain 4+ reb & 4+ ast +1281 $10 (OKC vs MEM, Nov 6).
