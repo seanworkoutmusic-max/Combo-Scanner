@@ -105,3 +105,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - SGP Scanner: clicking the Kalshi price opens a dropdown of all market-maker RFQ quotes for that combo (odds, price, contracts, cost; best first) plus resting order book ask if any (components/props/ComboBook.js).
 - Removed the Kalshi combo quotes dropdown from the scanner (user did not like the look).
 - Added Injuries page (/injuries, HeartPulse icon, below In-Game Tracker): tonight NBA injuries from ESPN grouped by game, status pill, injury, est. return, next up on ESPN depth chart with Starts / If out / More minutes tag; row expands depth chart cards; position tabs, status filter, search (GET /api/injuries, backend/injuries.py, 10-min cache). Tested iteration_21.
+- Injuries page: key starters only (depth-1 on ESPN chart or >=24 season mpg); stars ESPN moved down the chart are treated as the starter (shown first, next up = top healthy player at the position).
