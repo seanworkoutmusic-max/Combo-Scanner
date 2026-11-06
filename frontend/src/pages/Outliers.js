@@ -4,6 +4,7 @@ import { RefreshCw, Zap } from "lucide-react";
 import { getOutliers, errMsg } from "../lib/api";
 import { fmtAmerican } from "../lib/ev";
 import { TeamLogo } from "../components/props/TeamLogo";
+import { OutlierDetail } from "../components/props/OutlierDetail";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
 const MARKETS = ["points", "rebounds", "assists", "pts + reb", "pts + ast", "reb + ast", "pts + reb + ast", "threes", "steals", "blocks"];
@@ -39,8 +40,8 @@ const GameStrip = ({ games, sel, onPick }) => (
   </div>
 );
 
-const Row = ({ r, i }) => (
-  <tr data-testid={`outlier-row-${i}`} className="border-t border-slate-800/80 hover:bg-white/[0.02]">
+const Row = ({ r, i, onOpen }) => (
+  <tr data-testid={`outlier-row-${i}`} onClick={() => onOpen(r)} className="border-t border-slate-800/80 hover:bg-white/[0.03] cursor-pointer transition-colors">
     <td className="py-4 px-5 text-white font-semibold whitespace-nowrap">{r.player} {r.market}<span className="text-slate-500 font-normal"> · </span>Over {r.line}</td>
     <td className="py-4 px-4 whitespace-nowrap text-sm"><Teams g={r.game} /><span className="ml-2 font-mono text-xs text-slate-500">{time(r.game.date)}</span></td>
     <td className="py-4 px-4 whitespace-nowrap">
@@ -60,6 +61,7 @@ export default function Outliers() {
   const [game, setGame] = useState("all");
   const [market, setMarket] = useState("all");
   const [minBooks, setMinBooks] = useState("2");
+  const [open, setOpen] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -102,10 +104,11 @@ export default function Outliers() {
               <th className="py-3 px-5">Bet</th><th className="py-3 px-4">Game</th><th className="py-3 px-4">Book price</th>
               <th className="py-3 px-4">Next best</th><th className="py-3 px-4 text-right text-white">Pays more</th><th className="py-3 px-5 text-right">Open for</th>
             </tr></thead>
-            <tbody>{rows.slice(0, 300).map((r, i) => <Row key={`${r.player}${r.market}${r.line}`} r={r} i={i} />)}</tbody>
+            <tbody>{rows.slice(0, 300).map((r, i) => <Row key={`${r.player}${r.market}${r.line}`} r={r} i={i} onOpen={setOpen} />)}</tbody>
           </table>
         )}
       </div>
+      <OutlierDetail r={open} onClose={() => setOpen(null)} />
     </div>
   );
 }

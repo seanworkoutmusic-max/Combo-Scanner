@@ -101,3 +101,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Added Jared McCain 4+ reb & 4+ ast +1281 $10 (OKC vs MEM, Nov 6).
 - Added Outliers page (/outliers, Zap icon): NBA player-prop Overs where Fanatics pays more than DK/FD/BetMGM/Hard Rock for the same line (GET /api/outliers, backend/outliers.py, 2-min cache per book). Game strip, game/market/min-books filters, Pays more %, Open for. Tested iteration_20 (100%).
 - Outliers tab moved to bottom of sidebar; Fanatics price uses red-F icon (public/fanatics-f.png cropped from fanatics-sb.png).
+- Outliers: clicking a row opens odds breakdown popup (game, Over line market, player, Fanatics + every other book price with % vs Fanatics, What moved: opened snapshot). Backend rows now include prices[] and opened{at,next_best,next_book}.

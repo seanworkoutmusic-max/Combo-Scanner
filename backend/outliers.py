@@ -74,9 +74,11 @@ async def scan():
         edge = _decimal(price) / _decimal(best) - 1
         if edge <= 0:
             continue
-        seen = _first_seen.setdefault((k, price), now)
+        opened = _first_seen.setdefault((k, price), {"t": now, "next_best": best, "next_book": best_book})
         rows.append({"player": name, "market": MARKETS[k[3]], "line": k[4], "game": ev, "price": price, "next_best": best,
-                     "next_book": best_book, "books": len(others), "pays_more": round(edge, 4), "open_for": int(now - seen)})
+                     "next_book": best_book, "books": len(others), "pays_more": round(edge, 4), "open_for": int(now - opened["t"]),
+                     "prices": [{"book": label, "price": p} for p, label in sorted(others, key=lambda x: -_decimal(x[0]))],
+                     "opened": {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(opened["t"])), "next_best": opened["next_best"], "next_book": opened["next_book"]}})
     rows.sort(key=lambda r: -r["pays_more"])
     return {"rows": rows, "games": sorted(games.values(), key=lambda g: g["date"] or ""),
             "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))}
