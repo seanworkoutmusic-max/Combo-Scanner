@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, Link2, RefreshCw, Trash2 } from "lucide-react";
+import { ClipboardList, ExternalLink, Link2, RefreshCw, Trash2 } from "lucide-react";
 import { getBets, gradeBets, deleteBet, errMsg } from "../lib/api";
+import { kalshiGameUrl } from "../lib/slip";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
 import { GameLabel } from "../components/props/TeamLogo";
 import { PriceTag } from "../components/props/MarketList";
@@ -41,7 +42,12 @@ const BetRow = ({ b, live, onDelete }) => {
           </div>
         </div>
       </td>
-      <td className="py-3 px-4 text-sm font-semibold text-slate-300 whitespace-nowrap"><GameLabel code={b.game_code} size={15} /></td>
+      <td className="py-3 px-4 text-sm font-semibold text-slate-300 whitespace-nowrap">
+        <a data-testid={`bet-game-link-${b.id}`} href={kalshiGameUrl(b.legs?.[0]?.ticker)} target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 hover:text-white transition-colors">
+          <GameLabel code={b.game_code} size={15} /><ExternalLink className="h-3 w-3 text-slate-500" />
+        </a>
+      </td>
       <td data-testid={`bet-price-${b.id}`} className="py-3 px-4 text-right font-mono text-sm font-bold text-white"><PriceTag p={b.price} format="raw" /></td>
       <td className={`py-3 px-4 text-right font-mono text-sm font-bold ${b.ev > 0 ? "text-emerald-400" : "text-red-400"}`}>{b.ev == null ? "—" : `${b.ev > 0 ? "+" : ""}${(b.ev * 100).toFixed(1)}%`}</td>
       <td className="py-3 px-4 text-right font-mono text-sm text-slate-300">{money(b.stake)}</td>
