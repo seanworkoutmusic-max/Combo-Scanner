@@ -78,13 +78,13 @@ export default function Injuries() {
           <div className="text-xs font-semibold text-slate-500">NBA · {day}</div>
           <h1 className="mt-1 font-display text-3xl sm:text-4xl font-bold tracking-tight">Injuries &amp; depth chart</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm">
-            <Search className="h-4 w-4 text-slate-500" />
-            <input data-testid="injuries-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players" className="bg-transparent outline-none text-white placeholder:text-slate-500 w-40" />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <label className="flex flex-1 sm:flex-none items-center gap-2 h-10 px-3 rounded-lg border border-slate-700 bg-[#0E0E0E] text-sm min-w-0">
+            <Search className="h-4 w-4 text-slate-500 shrink-0" />
+            <input data-testid="injuries-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players" className="bg-transparent outline-none text-white placeholder:text-slate-500 w-full sm:w-40 min-w-0" />
           </label>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger data-testid="injuries-status-filter" className="h-10 w-40 border-slate-700 bg-[#0E0E0E] text-white"><SelectValue /></SelectTrigger>
+            <SelectTrigger data-testid="injuries-status-filter" className="h-10 w-36 sm:w-40 shrink-0 border-slate-700 bg-[#0E0E0E] text-white"><SelectValue /></SelectTrigger>
             <SelectContent className="bg-[#0E0E0E] border-slate-700 text-white">
               {STATUSES.map((s) => <SelectItem key={s} value={s}>{s === "all" ? "All statuses" : s}</SelectItem>)}
             </SelectContent>

@@ -1,0 +1,35 @@
+{
+  "summary": "Tested the Injuries feature end to end. Backend: /api/injuries returns 200 in about 0.3s with 9 games and 60 rows for tonight. Field structure, tonight-only teams, next_up, tag and chart.out logic all match the spec, checked on every row (8/8 pytest pass). Frontend: the Injuries sidebar tab sits below In-Game Tracker, and both the tab and a direct /injuries load open the page (URL updates). There are 9 game chips. Clicking a row expands the depth cards: starter in red and struck through, out players struck through, next up in green. Clicking again collapses it. Position tabs give PG19/SG7/SF8/PF14/C12/ALL60, which matches the API. The status filter works (Day-To-Day gives 12 rows; Doubtful gives the empty state). Search matches player and next_up names, and nonsense input gives the empty state. Mobile 390px: the table scrolls horizontally. One small overflow, listed below.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/injuries", "issue": "25 of 60 rows have next_up=None and tag=None because ESPN already moves long-term injured players to the bottom of their depth chart (e.g. Anthony Edwards SG depth 8, Chet Holmgren PF 7, Jalen Williams SF 8, Ja Morant PG 6). The 'who gets more usage' answer is missing for exactly the high-impact players. Suggestion: when an injured player is at the bottom of the chart, show the current depth-1 player (or the healthy player in his usual slot) as the beneficiary, or label the row 'Already reflected in depth chart'."},
+      {"endpoint": "/api/injuries", "issue": "Players listed at several positions (e.g. Asa Newell at PF and C) only get matched to the first position in POSITIONS order, so their beneficiaries at other positions are not shown."},
+      {"endpoint": "/api/injuries", "issue": "When a team's depthcharts fetch fails (return_exceptions), the result is cached for 10 minutes with an empty chart. A short ESPN blip leaves that team without depth data until the TTL expires."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Injuries mobile 390px", "issues": ["The header row with search (w-40) and status Select (w-40) does not wrap. Document scrollWidth is 394 > 390 and the status dropdown is clipped at the right edge. Make the controls row wrap or use w-full on mobile.", "The expanded depth cards span the full 720px table width, so users need to scroll horizontally to see the right edge of the cards on mobile."]},
+      {"screen": "Injuries header", "issues": ["The date and tip times use the browser's timezone. That is fine for users, but the date label comes from games[0].start, so for UTC browsers it shows the next day (Sat) for a Friday slate."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_injuries_api.py", "/app/test_reports/pytest/pytest_injuries.xml"],
+  "action_items": [
+    "Optional: handle injured players ESPN has already moved to the bottom of the depth chart (next_up is currently null for stars like Edwards, Holmgren and Morant)",
+    "Make the Injuries header controls wrap on mobile so the status Select is not clipped at 390px"
+  ],
+  "critical_code_review_comments": [
+    "injuries._next_up matches by exact displayName, while out_keys uses norm_name. A name mismatch between the injuries feed and the depth chart (Jr./II suffixes, accents) silently drops pos/depth. Consider matching on athlete id, since _athlete_id is already parsed.",
+    "Failed depth chart fetches are cached alongside good data for the full TTL.",
+    "The frontend uses status strings case-sensitively in the filter ('Day-To-Day'). That matches current ESPN values but is fragile."
+  ],
+  "updated_files": ["/app/backend/tests/test_injuries_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "100% (minor mobile overflow)"},
+  "seed_data_creation": "None; read-only feature",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Injuries is read-only from the ESPN public API. Regression: pytest tests/test_injuries_api.py (validates next_up/tag logic against the chart on every row). UI testids: nav-tab-injuries, injuries-page, injuries-game-AWAY-HOME, injury-row-{away}{home}-{name}, injury-depth-*, injuries-pos-*, injuries-status-filter (Radix Select, options by role=option), injuries-search, injuries-empty."
+}
