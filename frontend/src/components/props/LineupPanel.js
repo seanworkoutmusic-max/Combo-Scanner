@@ -4,9 +4,10 @@ import { ArrowUpRight, RefreshCw } from "lucide-react";
 import { postInjuryLines, errMsg } from "../../lib/api";
 import { kalshiGameUrl, evPct } from "../../lib/slip";
 import { fairFrom } from "../../pages/DDScanner";
+import { fmtAmerican, probToAmerican, kalshiFee } from "../../lib/ev";
 import { PlayerPhoto } from "./PlayerPhoto";
 
-const cents = (p) => (p == null ? "—" : `${Math.round(p * 100)}¢`);
+const odds = (p) => (p == null ? "—" : fmtAmerican(probToAmerican(p)));
 const pct = (v) => (v == null ? "—" : `${v > 0 ? "+" : ""}${(v * 100).toFixed(1)}%`);
 
 const StarterRow = ({ p, max, line, loading, slug }) => (
@@ -29,7 +30,7 @@ const StarterRow = ({ p, max, line, loading, slug }) => (
     </td>
     <td className="py-2.5 px-4 text-right whitespace-nowrap">
       <span className="text-slate-400 mr-2">6+ reb & 6+ ast</span>
-      <span data-testid={`lineup-kalshi-${slug}`} className="rounded bg-white/[0.06] px-2 py-1 font-bold text-white">{loading && !line ? "…" : cents(line?.price)}</span>
+      <span data-testid={`lineup-kalshi-${slug}`} className="rounded bg-white/[0.06] px-2 py-1 font-bold text-white">{loading && !line ? "…" : odds(line?.cost)}</span>
     </td>
   </tr>
 );
@@ -37,8 +38,8 @@ const StarterRow = ({ p, max, line, loading, slug }) => (
 const ComboRow = ({ c, i }) => (
   <tr data-testid={`front-run-row-${i}`} className="border-t border-slate-800/80">
     <td className="py-2.5 px-4 text-slate-200">{c.name}</td>
-    <td className="py-2.5 px-4 text-right font-bold text-white">{cents(c.price)}</td>
-    <td className="py-2.5 px-4 text-right text-slate-400">{cents(c.fair)}</td>
+    <td className="py-2.5 px-4 text-right font-bold text-white">{odds(c.cost)}</td>
+    <td className="py-2.5 px-4 text-right text-slate-400">{odds(c.fair)}</td>
     <td className={`py-2.5 px-4 text-right font-bold ${c.ev > 0 ? "text-emerald-400" : "text-slate-400"}`}>{pct(c.ev)}</td>
     <td className="py-2.5 px-4 text-right">
       <a data-testid={`front-run-bet-${i}`} href={kalshiGameUrl(c.ticker)} target="_blank" rel="noreferrer"
@@ -62,7 +63,7 @@ export const LineupPanel = ({ r, g, settings }) => {
 
   const combos = useMemo(() => (data?.combos || []).map((c) => {
     const fair = fairFrom(c.sgp, settings.singleHold);
-    return { ...c, fair, ev: evPct(fair, c.price, settings.fees) };
+    return { ...c, fair, cost: c.price && Math.min(c.price + (settings.fees ? kalshiFee(c.price) : 0), 0.999), ev: evPct(fair, c.price, settings.fees) };
   }).filter((c) => c.price).sort((a, b) => (b.ev ?? -9) - (a.ev ?? -9)), [data, settings.singleHold, settings.fees]);
   const max = Math.max(...lineup.map((p) => p.bump), 0.01);
   const out = r.pos ? `${r.pos} out` : "starter out";
@@ -81,7 +82,7 @@ export const LineupPanel = ({ r, g, settings }) => {
                 <th className="py-2.5 px-4">Pos</th><th className="py-2.5 px-4">Starter</th><th className="py-2.5 px-4">Usage bump</th><th className="py-2.5 px-4 text-right">Kalshi line</th>
               </tr></thead>
               <tbody>{lineup.map((p) => <StarterRow key={p.key} p={p} max={max} loading={loading} slug={p.key.replace(/\W+/g, "-")}
-                line={(data?.combos || []).find((c) => c.kind === "RA6" && c.player === p.key)} />)}</tbody>
+                line={combos.find((c) => c.player === p.key)} />)}</tbody>
             </table>
           )}
         </div>
@@ -91,7 +92,7 @@ export const LineupPanel = ({ r, g, settings }) => {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <div className="font-bold text-white">Kalshi combos to front-run</div>
-            <div className="text-xs text-slate-400">Combos with these starters, priced against the devigged books before Kalshi adjusts</div>
+            <div className="text-xs text-slate-400">6+ reb & 6+ ast combos for these starters, priced against the devigged books before Kalshi adjusts</div>
           </div>
           <button data-testid="rescan-lines-btn" onClick={scan} disabled={loading}
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-black hover:bg-emerald-400 disabled:opacity-60 transition-colors">

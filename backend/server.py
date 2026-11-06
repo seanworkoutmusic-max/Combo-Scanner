@@ -255,14 +255,9 @@ class LineupReq(BaseModel):
     anchors: List[str] = []
 
 
-def _near(p, market, target):
-    lines = sorted((l for l in p["markets"].get(market, []) if l["threshold"]), key=lambda l: l["threshold"])
-    return next((l for l in reversed(lines) if l["threshold"] <= target), lines[0] if lines else None)
-
-
 @api_router.post("/injuries/lines")
 async def injuries_lines(req: LineupReq):
-    """Kalshi combos for a projected starting five (6+ reb & 6+ ast each, plus anchor-starter pairings), priced vs book SGPs."""
+    """Kalshi combos for a projected starting five (6+ reb & 6+ ast for each), priced vs book SGPs."""
     t0 = time.monotonic()
     g = next((x for c, x in (await kalshi_props.load_props()).items() if c[-6:] == f"{req.away}{req.home}"), None)
     if not g:
@@ -274,13 +269,6 @@ async def injuries_lines(req: LineupReq):
         legs = [_pick(p["markets"], "Rebounds", 6), _pick(p["markets"], "Assists", 6)]
         if None not in legs:
             combos.append({"kind": "RA6", "player": p["key"], "legs": [{**l, "player": p["name"], "key": p["key"]} for l in legs]})
-    for a in (p for p in ps if p["key"] in req.anchors):
-        pts = _near(a, "Points", (stats.get(a["key"]) or {}).get("pts", 10))
-        for t in ps:
-            st = stats.get(t["key"]) or {}
-            leg = t is not a and _pick(t["markets"], "Rebounds" if st.get("reb", 0) >= st.get("ast", 0) else "Assists", 6)
-            if pts and leg:
-                combos.append({"kind": "PAIR", "player": a["key"], "legs": [{**pts, "player": a["name"], "key": a["key"]}, {**leg, "player": t["name"], "key": t["key"]}]})
     tasks = [asyncio.create_task(_quote(c)) for c in combos]
     sgps = await oddsblaze.sgp_prices([(req.away, req.home, [(l["key"], l["market"], l["threshold"]) for l in c["legs"]]) for c in combos],
                                       timeout=25)

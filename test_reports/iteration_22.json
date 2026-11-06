@@ -1,0 +1,37 @@
+{
+  "summary": "Tested the redesigned Injuries page and its APIs end to end. Backend 13/13 pass: the 8 regression tests in test_injuries_api.py plus 5 new tests in test_injuries_lineup_api.py. GET /api/injuries returns 9 games and 20 key-starter rows. Every row has a lineup of 5 entries with all fields, no duplicates, and the injured player is never in it. POST /api/injuries/lines: a real game (WAS@ATL) returns its game code and RA6 combos with sgp, price, name and ticker in about 16s. An unknown game returns game null and empty combos. A missing body returns 422. Frontend at 1920px: the table columns are Player/Status/Injury/Est. return/Lineup ('Starting 5' chevron). Clicking a row opens injury-depth-* with 5 lineup rows (bump bars, +x%, NEW STARTER badge, Kalshi 6+reb&6+ast cell showing a price or '—'). The front-run panel scans on its own when the row opens and shows 'Scanning…' on a disabled button, then lists combos sorted by EV desc (OKC: +20.0, +10.2, +9.2, +8.4, +4.7, —). Bet links go to kalshi.com/combos/games/.... Rescan works, and the sgp_pending note shows. Clicking the row again collapses it. Search matches lineup names ('Kenrich' gives the 3 OKC rows; nonsense gives the empty state). Position filters give PG4/SG2/SF5/PF5/C4/ALL20, and the status filter (Day-To-Day) works. Mobile 390px: the document does not overflow (scrollWidth 390), but the expanded panel sits inside the outer scrolling table, so you have to scroll sideways to reach the bump bars, Kalshi column, Fair/EV and the Rescan button (x=577).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/injuries (_lineup bump)", "issue": "Two different units share one bar. NEW STARTER bumps use a minutes ratio, capped at 100% and floored at 10%; regular starters use a share of points. Low-minute subs often show +100% (e.g. Khris Middleton, Thomas Bryant). A player who is NEW because of a different injury on the same team still gets a bump computed from this row's player (e.g. Kalkbrenner on Knueppel's row)."},
+      {"endpoint": "GET /api/injuries (_lineup new flag)", "issue": "When ESPN has already moved the injured star down the depth chart (Jaren Jackson Jr., Anthony Edwards, Ja Morant, Kawhi Leonard), nobody gets NEW STARTER. All bumps then use share=1, so Edwards' row shows about +50% for every starter. The frontend then anchors PAIR combos on the top-bump player."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "LineupPanel scan race", "issue": "Opening a row fires /api/injuries/lines twice (useEffect double-run under React StrictMode in dev). Requests are not cancelled or ordered, so the first response's finally() sets loading=false while the second is still in flight. Seen in testing: the front-run table first showed 4 rows while the lineup Kalshi cell already had Kenrich's 2¢, and right after a rescan click the button already read 'Rescan lines' again. Doubles the OddsBlaze rate-limit cost. Fix: AbortController or a request-id/ref guard.", "selector": "[data-testid=rescan-lines-btn]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Injuries mobile 390px", "issues": ["The expanded LineupPanel is nested in the outer overflow-x table, so the panel stretches the table. The bump bars, Kalshi line, Fair/EV/Bet columns and the Rescan button are only reachable by scrolling sideways. Consider rendering the panel full-width (e.g. sticky left / max-w equal to the viewport) or stacking columns on mobile.", "The NEW STARTER badge wraps onto 2 lines on mobile (add whitespace-nowrap)."]},
+      {"screen": "Injuries desktop", "issues": ["Column widths shift a little when the scan finishes ('…' becomes a price).", "Tip times show as 12:00 AM / 1:00 AM in a UTC browser (timezone-dependent, cosmetic)."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_injuries_lineup_api.py", "/app/backend/tests/test_injuries_api.py", "/app/test_reports/pytest/pytest_injuries_lineup.xml"],
+  "action_items": [
+    "Guard LineupPanel.scan against duplicate or stale requests (AbortController or request id) so loading state and data stay consistent and OddsBlaze calls are not doubled",
+    "Make the expanded lineup/front-run panel usable at 390px without scrolling the outer table sideways (Rescan button is off-screen); add whitespace-nowrap to the NEW STARTER badge",
+    "Optional: normalise the usage-bump scale between new and existing starters, and only treat a starter as NEW when he replaces this row's injured player"
+  ],
+  "critical_code_review_comments": [
+    "LineupPanel.scan: no cancellation; a stale response can overwrite a newer one",
+    "injuries_lines builds PAIR combos for every anchor times every starter; with several NEW starters the RFQ and OddsBlaze count grows quickly against the 30 req/min limit",
+    "_lineup bump formula mixes a minutes ratio and a points share, so bar lengths are not comparable"
+  ],
+  "updated_files": ["/app/backend/tests/test_injuries_lineup_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "90%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "test_injuries_lineup_api.py::test_lines_real_game makes 1 real /api/injuries/lines call (about 16s). Rows use the testid pattern injury-row-{away}{home}-{name-slug}, e.g. injury-row-okcmem-chet-holmgren. In this session about 7 lines calls were made with no rate-limit errors."
+}
