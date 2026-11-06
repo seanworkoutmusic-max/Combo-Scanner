@@ -7,6 +7,7 @@ import LiveTracker from "./pages/LiveTracker";
 import BetTracker from "./pages/BetTracker";
 import SharedBets from "./pages/SharedBets";
 import Results from "./pages/Results";
+import Outliers from "./pages/Outliers";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
 
@@ -20,8 +21,8 @@ const loadSettings = () => {
   }
 };
 
-const PATH_TAB = { "/sean": "sean", "/kalshi": "scanner", "/parlay": "props", "/live": "live", "/bets": "bets", "/performance": "results", "/results": "results" };
-const TAB_PATH = { scanner: "/kalshi", props: "/parlay", live: "/live", bets: "/bets", results: "/performance" };
+const PATH_TAB = { "/sean": "sean", "/kalshi": "scanner", "/parlay": "props", "/live": "live", "/bets": "bets", "/performance": "results", "/results": "results", "/outliers": "outliers" };
+const TAB_PATH = { scanner: "/kalshi", props: "/parlay", live: "/live", bets: "/bets", results: "/performance", outliers: "/outliers" };
 const pathTab = () => PATH_TAB[window.location.pathname.replace(/\/+$/, "")];
 
 function App() {
@@ -69,6 +70,8 @@ function App() {
             <SharedBets />
           ) : tab === "results" ? (
             <Results />
+          ) : tab === "outliers" ? (
+            <Outliers />
           ) : (
             <DDScanner settings={settings} />
           )}

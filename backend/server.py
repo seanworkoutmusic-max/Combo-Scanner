@@ -22,6 +22,7 @@ import espn  # noqa: E402
 import kalshi_auth  # noqa: E402
 import odds_api  # noqa: E402
 import oddsblaze  # noqa: E402
+import outliers  # noqa: E402
 import bets  # noqa: E402
 import nhl  # noqa: E402
 
@@ -235,6 +236,12 @@ async def td_watch(limit: int = Query(40, ge=5, le=200)):
             for r in stats["rows"] if r["gp"] > 0 and r["min"] >= 15]
     rows.sort(key=lambda r: (-r["score"], -(r["pts"] + r["reb"] + r["ast"])))
     return {"season": stats["season"], "players": rows[:limit], "updated_at": datetime.fromtimestamp(stats["t"], timezone.utc).isoformat() if stats["t"] else None}
+
+
+@api_router.get("/outliers")
+async def outliers_board():
+    """Fanatics NBA player-prop overs priced above every other book's same line."""
+    return await outliers.scan()
 
 
 @api_router.get("/scanner/games")

@@ -18,6 +18,7 @@ export const getLiveTracker = (params) => axios.get(`${API}/live-tracker`, { par
 export const gradeBets = () => axios.post(`${API}/bets/grade`).then((r) => r.data);
 export const getBets = () => axios.get(`${API}/bets`).then((r) => r.data);
 export const getAllBets = () => axios.get(`${API}/bets/all`).then((r) => r.data);
+export const getOutliers = () => axios.get(`${API}/outliers`).then((r) => r.data);
 export const addBet = (bet) => axios.post(`${API}/bets`, bet).then((r) => r.data);
 export const setBetStatus = (id, status) => axios.patch(`${API}/bets/${id}`, { status }).then((r) => r.data);
 export const deleteBet = (id) => axios.delete(`${API}/bets/${id}`).then((r) => r.data);
