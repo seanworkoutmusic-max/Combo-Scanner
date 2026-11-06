@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardList, Crosshair, Layers, Search, TrendingUp, Zap } from "lucide-react";
+import { BookOpen, ClipboardList, Crosshair, HeartPulse, Layers, Search, TrendingUp, Zap } from "lucide-react";
 import { HowItWorks } from "./HowItWorks";
 
 const TABS = [
@@ -6,6 +6,7 @@ const TABS = [
   { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers },
   { id: "outliers", label: "Outliers", testid: "nav-tab-outliers", icon: Zap },
   { id: "live", label: "In-Game Tracker", testid: "nav-tab-live", icon: Crosshair },
+  { id: "injuries", label: "Injuries", testid: "nav-tab-injuries", icon: HeartPulse },
   { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList },
   { id: "results", label: "Performance", testid: "nav-tab-results", icon: TrendingUp },
 ];

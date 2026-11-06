@@ -8,6 +8,7 @@ import BetTracker from "./pages/BetTracker";
 import SharedBets from "./pages/SharedBets";
 import Results from "./pages/Results";
 import Outliers from "./pages/Outliers";
+import Injuries from "./pages/Injuries";
 import Props from "./pages/Props";
 import { getGames, getStatus, errMsg } from "./lib/api";
 
@@ -21,8 +22,8 @@ const loadSettings = () => {
   }
 };
 
-const PATH_TAB = { "/sean": "sean", "/kalshi": "scanner", "/parlay": "props", "/live": "live", "/bets": "bets", "/performance": "results", "/results": "results", "/outliers": "outliers" };
-const TAB_PATH = { scanner: "/kalshi", props: "/parlay", live: "/live", bets: "/bets", results: "/performance", outliers: "/outliers" };
+const PATH_TAB = { "/sean": "sean", "/kalshi": "scanner", "/parlay": "props", "/live": "live", "/bets": "bets", "/performance": "results", "/results": "results", "/outliers": "outliers", "/injuries": "injuries" };
+const TAB_PATH = { scanner: "/kalshi", props: "/parlay", live: "/live", bets: "/bets", results: "/performance", outliers: "/outliers", injuries: "/injuries" };
 const pathTab = () => PATH_TAB[window.location.pathname.replace(/\/+$/, "")];
 
 function App() {
@@ -72,6 +73,8 @@ function App() {
             <Results />
           ) : tab === "outliers" ? (
             <Outliers />
+          ) : tab === "injuries" ? (
+            <Injuries />
           ) : (
             <DDScanner settings={settings} />
           )}
