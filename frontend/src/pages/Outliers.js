@@ -44,7 +44,7 @@ const Row = ({ r, i }) => (
     <td className="py-4 px-5 text-white font-semibold whitespace-nowrap">{r.player} {r.market}<span className="text-slate-500 font-normal"> · </span>Over {r.line}</td>
     <td className="py-4 px-4 whitespace-nowrap text-sm"><Teams g={r.game} /><span className="ml-2 font-mono text-xs text-slate-500">{time(r.game.date)}</span></td>
     <td className="py-4 px-4 whitespace-nowrap">
-      <span className="inline-flex items-center gap-2"><img src="/fanatics.png" alt="" className="h-5 w-5 rounded object-cover" />
+      <span className="inline-flex items-center gap-2"><span className="grid place-items-center h-6 w-6 rounded bg-white"><img src="/fanatics.png" alt="" className="h-4 w-4 object-contain" /></span>
         <span className="font-mono font-bold text-white">{fmtAmerican(r.price)}</span><span className="text-xs text-slate-400">Fanatics</span></span>
     </td>
     <td className="py-4 px-4 whitespace-nowrap"><span className="font-mono text-slate-200">{fmtAmerican(r.next_best)}</span>

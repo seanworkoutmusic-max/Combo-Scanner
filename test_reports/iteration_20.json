@@ -1,0 +1,28 @@
+{
+  "summary": "Tested the new Outliers feature (Fanatics vs DK/FD/BetMGM/Hard Rock, NBA player-prop Overs) on the backend and frontend using live OddsBlaze data. I made no bets and no data changes. Backend: 7/7 pytest tests pass. The response shape is {rows, games, updated_at}. For every row (1176), pays_more matches decimal(price)/decimal(next_best)-1 within 1e-3 and is greater than 0. Rows are sorted by pays_more descending, books is between 1 and 4, next_book is one of the 4 books, and markets are within the 10 allowed. Every row's game is in the game strip, no row appears twice, and games are sorted by date. Frontend: the Outliers sidebar tab goes to /outliers, and the page renders 9 game cards and the table. A game card click filters the table (47 rows, all from that game) and syncs the game dropdown; a second click resets it to 541. The market filter works (rebounds 113, pts+reb+ast 73), and so does the books filter (1+ 1176, 2+ 541 by default, 3+ 292, All 4 143). The game dropdown filters, Refresh works, and the pays-more cell is green. The page threw no errors. Regression: /kalshi, /bets and /performance all load.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/outliers", "issue": "outliers._first_seen dict is never pruned (keyed by line+price), so it grows without limit in a long-running process. Prune keys that are no longer in the current scan."},
+      {"endpoint": "/api/outliers", "issue": "If OddsBlaze returns non-200 (e.g. 429), an empty result is cached for the full 120s TTL, so that book silently drops out of the 'next best' comparison for 2 minutes. If this hits a non-Fanatics book, outliers can be overstated."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Outliers Row pays-more", "issue": "Math.round(pays_more*100) shows '0%' for edges under 0.5%. In the default 2+ view, 38 of 541 rows show 0%. Use one decimal place or a '<1%' label.", "selector": "[data-testid^=outlier-pays-]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Outliers", "issues": ["Next best column shows only the price and book count. The name of the best book appears only in a title tooltip, so consider showing it inline.", "The game strip has no visible scroll cue; the last card is cut off on the right at 1920px."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_outliers_api.py", "/app/test_reports/pytest/outliers.xml"],
+  "action_items": ["(Low) Show decimal or '<1%' for tiny pays_more", "(Low) Prune _first_seen", "(Low) Don't cache failed (non-200) book fetches for the full TTL"],
+  "critical_code_review_comments": ["outliers.py and Outliers.js are compact and correct. The key (away, home, norm_name, market, line) matches lines exactly across books.", "_first_seen grows forever", "Failed fetches are cached as empty for 120s"],
+  "updated_files": ["/app/backend/tests/test_outliers_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Outliers is a read-only page using live data. Run pytest normally, because pytest.ini adds xdist flags. Market filter testids replace non-word characters with '-' (e.g. outliers-market-filter-pts-reb-ast). Game filter testids look like outliers-game-filter-was-atl."
+}
