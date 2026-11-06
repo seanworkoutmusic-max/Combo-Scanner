@@ -95,3 +95,4 @@ EV software that devigs Kalshi combos for double-doubles and triple-doubles (10+
 - Results: multi-select combo filter with checkboxes + NBA logos; green cumulative returns chart (day by day). Kalshi one-click links now open /combos/games/<away>-at-<home>/props.
 - Scanner shows a green "Tracked" badge next to a player who already has a tracked bet today (any combo); hover lists the tracked combos.
 - Results renamed to Performance (tab, page title, path /performance; /results still works). Chart title removed; dotted square grid background.
+- Performance graph now plots a point after every settled bet (sorted by game day, then time tracked); date labels only where a new day starts; tooltip shows player and that bet result.

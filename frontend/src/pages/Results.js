@@ -71,7 +71,7 @@ const CHECK = "border-slate-500 data-[state=checked]:bg-white data-[state=checke
 
 const ChartTip = ({ active, payload, fmt }) => active && payload?.length ? (
   <div className="rounded-lg border border-slate-700 bg-[#0E0E0E] px-3 py-2 text-xs">
-    <div className="text-slate-400">{payload[0].payload.date}{payload[0].payload.date !== "Start" && ` · day ${fmt(payload[0].payload.day)}`}</div>
+    <div className="text-slate-400">{payload[0].payload.date}{payload[0].payload.player && ` · ${payload[0].payload.player} ${fmt(payload[0].payload.bet)}`}</div>
     <div className="font-mono font-bold text-white">{fmt(payload[0].value)}</div>
   </div>
 ) : null;
@@ -89,7 +89,8 @@ const ProfitChart = ({ points, fmt, units }) => (
             <linearGradient id="pl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#22c55e" stopOpacity={0.22} /><stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} /></linearGradient>
           </defs>
           <CartesianGrid stroke="#2e2e2e" strokeDasharray="3 3" />
-          <XAxis dataKey="date" tick={tick} tickLine={false} axisLine={false} minTickGap={24} />
+          <XAxis dataKey="i" type="number" domain={[0, "dataMax"]} ticks={points.filter((p, k) => !k || p.date !== points[k - 1].date).map((p) => p.i)}
+            tickFormatter={(i) => points[i]?.date} tick={tick} tickLine={false} axisLine={false} />
           <YAxis tickFormatter={axisFmt(units)} tick={tick} tickLine={false} axisLine={{ stroke: "#2a2a2a" }} width={64} />
           <ReferenceLine y={0} stroke="#2a2a2a" />
           <Tooltip content={<ChartTip fmt={fmt} />} cursor={{ stroke: "#334155" }} />
@@ -143,9 +144,8 @@ export default function Results() {
     const risked = settled.reduce((a, b) => a + b.stake, 0);
     const evs = rows.filter((b) => b.evX != null);
     let run = 0;
-    const byDay = {};
-    settled.forEach((b) => { const k = slateKey(b); byDay[k] = (byDay[k] || 0) + b.pl; });
-    const points = [{ date: "Start", day: 0, pl: 0 }, ...Object.keys(byDay).sort().map((k) => ({ date: slateLabel(k), day: byDay[k], pl: Number((run += byDay[k]).toFixed(2)) }))];
+    const ordered = [...settled].sort((a, b) => slateKey(a).localeCompare(slateKey(b)) || a.created_at.localeCompare(b.created_at));
+    const points = [{ i: 0, date: "Start", pl: 0 }, ...ordered.map((b, i) => ({ i: i + 1, date: slateLabel(slateKey(b)), player: b.player, bet: b.pl, pl: Number((run += b.pl).toFixed(2)) }))];
     return {
       n: rows.length, pl, roi: risked ? pl / risked : null, points,
       record: `${rows.filter((b) => b.status === "won").length}-${rows.filter((b) => b.status === "lost").length}-${rows.filter((b) => b.status === "void").length}`,
