@@ -1,8 +1,8 @@
 const ESPN = { GSW: "gs", NOP: "no", NYK: "ny", SAS: "sa", UTA: "utah", WAS: "wsh" };
 
-export const TeamLogo = ({ team, size = 16 }) => (
+export const TeamLogo = ({ team, size = 16, light }) => (
   <img
-    src={`https://a.espncdn.com/i/teamlogos/nba/500-dark/${ESPN[team] || team.toLowerCase()}.png`}
+    src={`https://a.espncdn.com/i/teamlogos/nba/${light ? "500" : "500-dark"}/${ESPN[team] || team.toLowerCase()}.png`}
     alt=""
     width={size}
     height={size}

@@ -35,9 +35,9 @@ const StarterRow = ({ p, max, line, loading, slug }) => (
   </tr>
 );
 
-const ComboRow = ({ c, i }) => (
+const ComboRow = ({ c, i, p }) => (
   <tr data-testid={`front-run-row-${i}`} className="border-t border-slate-800/80">
-    <td className="py-2.5 px-4 text-slate-200">{c.name}</td>
+    <td className="py-2.5 px-4 text-slate-200"><div className="flex items-center gap-2.5"><PlayerPhoto src={p?.headshot} name={p?.name || c.name} size={28} /><span>{c.name}</span></div></td>
     <td className="py-2.5 px-4 text-right font-bold text-white">{odds(c.cost)}</td>
     <td className="py-2.5 px-4 text-right text-slate-400">{odds(c.fair)}</td>
     <td className={`py-2.5 px-4 text-right font-bold ${c.ev > 0 ? "text-emerald-400" : "text-slate-400"}`}>{pct(c.ev)}</td>
@@ -108,7 +108,7 @@ export const LineupPanel = ({ r, g, settings }) => {
                 <th className="py-2.5 px-4 text-left">Combo</th><th className="py-2.5 px-4 text-right">Kalshi</th><th className="py-2.5 px-4 text-right">Fair</th>
                 <th className="py-2.5 px-4 text-right">EV</th><th />
               </tr></thead>
-              <tbody>{combos.map((c, i) => <ComboRow key={c.name} c={c} i={i} />)}</tbody>
+              <tbody>{combos.map((c, i) => <ComboRow key={c.name} c={c} i={i} p={lineup.find((x) => x.key === c.player)} />)}</tbody>
             </table>
           )}
         </div>

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ChevronDown, Search } from "lucide-react";
 import { getInjuries, errMsg } from "../lib/api";
 import { PlayerPhoto } from "../components/props/PlayerPhoto";
+import { TeamLogo } from "../components/props/TeamLogo";
 import { LineupPanel } from "../components/props/LineupPanel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
@@ -97,7 +98,7 @@ export default function Injuries({ settings }) {
               {games.map((g) => (
                 <Fragment key={`${g.away}${g.home}`}>
                   <tr><td colSpan={5} className="pt-3"><div className="border-t border-slate-300/70" />
-                    <span data-testid={`injuries-game-${g.away}-${g.home}`} className="relative -top-2.5 ml-0 inline-block rounded-r-md bg-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-900">{g.away} @ {g.home} · {tip(g.start)}</span>
+                    <span data-testid={`injuries-game-${g.away}-${g.home}`} className="relative -top-3 ml-0 inline-flex items-center gap-1.5 rounded-r-md bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-900"><TeamLogo team={g.away} size={16} light />{g.away} @ <TeamLogo team={g.home} size={16} light />{g.home} · {tip(g.start)}</span>
                   </td></tr>
                   {g.rows.map((r) => {
                     const id = `${g.away}${g.home}-${r.name}`;

@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardList, Crosshair, HeartPulse, Layers, Search, TrendingUp, Zap } from "lucide-react";
+import { BookOpen, ClipboardList, Crosshair, Users, Layers, Search, TrendingUp, Zap } from "lucide-react";
 import { HowItWorks } from "./HowItWorks";
 
 const TABS = [
@@ -6,10 +6,10 @@ const TABS = [
   { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers },
   { id: "outliers", label: "Outliers", testid: "nav-tab-outliers", icon: Zap },
   { id: "live", label: "In-Game Tracker", testid: "nav-tab-live", icon: Crosshair },
-  { id: "injuries", label: "Injuries", testid: "nav-tab-injuries", icon: HeartPulse },
   { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList },
   { id: "results", label: "Performance", testid: "nav-tab-results", icon: TrendingUp },
 ];
+const INJURIES = { id: "injuries", label: "Injuries", testid: "nav-tab-injuries", icon: Users };
 
 const Logo = () => (
   <div className="flex items-center gap-2.5">
@@ -36,7 +36,8 @@ export const Sidebar = ({ tab, setTab, kalshiOk }) => (
       <nav className="space-y-0.5">
         {TABS.map((t) => <NavItem key={t.id} t={t} active={tab === t.id} onClick={() => setTab(t.id)} />)}
       </nav>
-      <div className="mt-auto space-y-3 px-1 min-[1440px]:px-3">
+      <div className="mt-auto mb-3"><NavItem t={INJURIES} active={tab === "injuries"} onClick={() => setTab("injuries")} /></div>
+      <div className="space-y-3 px-1 min-[1440px]:px-3">
         <HowItWorks trigger={
           <button data-testid="nav-btn-how-it-works" title="How it works" className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
             <BookOpen className="h-4 w-4 shrink-0" /> <span className="hidden min-[1440px]:inline">How it works</span>
@@ -51,7 +52,7 @@ export const Sidebar = ({ tab, setTab, kalshiOk }) => (
     <header className="lg:hidden sticky top-0 z-30 border-b border-slate-800/80 bg-[#0E0E0E]/95 backdrop-blur-xl px-4 py-3 space-y-3">
       <Logo />
       <nav className="flex gap-1 overflow-x-auto">
-        {TABS.map((t) => <NavItem key={t.id} t={t} compact active={tab === t.id} onClick={() => setTab(t.id)} />)}
+        {[...TABS, INJURIES].map((t) => <NavItem key={t.id} t={t} compact active={tab === t.id} onClick={() => setTab(t.id)} />)}
       </nav>
     </header>
   </>
