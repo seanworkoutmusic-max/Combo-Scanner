@@ -54,7 +54,7 @@ const pickParams = (k) => {
   return { td_pts: p ? Number(p) : undefined, ra: r ? Number(r) : undefined };
 };
 
-const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
+const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, playerTracked, onTrack }) => {
   const slug = r.key.replace(/\s/g, "-");
   const legs = r.combos[0].legs;
   return (
@@ -67,7 +67,15 @@ const Row = ({ r, format, i, tdPts, sgpBooks, tdBooks, tracked, onTrack }) => {
           </button>
           <PlayerPhoto src={r.headshot} name={r.name} size={34} />
           <div className="leading-tight">
-            <div className="text-sm font-semibold text-white whitespace-nowrap">{r.name}</div>
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-white whitespace-nowrap">
+              {r.name}
+              {playerTracked?.length > 0 && (
+                <span data-testid={`player-tracked-${slug}`} title={`Already tracked: ${playerTracked.join(", ")}`}
+                  className="inline-flex items-center gap-0.5 h-4 px-1.5 rounded-full border border-emerald-500/50 bg-emerald-500/10 text-[10px] font-semibold text-emerald-400">
+                  <Check className="h-2.5 w-2.5" /> Tracked
+                </span>
+              )}
+            </div>
             {r.combos[0].now ? (
               <div data-testid={`live-now-${slug}`} className="text-[11px] font-mono text-slate-400 whitespace-nowrap">
                 <span className="text-slate-500">{r.team}</span> · {r.combos[0].now.Points} PTS · {r.combos[0].now.Rebounds} REB · {r.combos[0].now.Assists} AST
@@ -181,13 +189,19 @@ export default function DDScanner({ settings }) {
   };
 
   const [tracked, setTracked] = useState(new Set());
+  const [trackedPlayers, setTrackedPlayers] = useState({});
+  const addPlayer = (code, name, combo) => setTrackedPlayers((m) => ({ ...m, [`${code}|${name}`]: [...(m[`${code}|${name}`] || []), combo] }));
   useEffect(() => {
-    getBets().then((bs) => setTracked(new Set(bs.map((b) => betKey(b.game_code, b.legs))))).catch(() => {});
+    getBets().then((bs) => {
+      setTracked(new Set(bs.map((b) => betKey(b.game_code, b.legs))));
+      bs.forEach((b) => addPlayer(b.game_code, b.player, b.combo));
+    }).catch(() => {});
   }, []);
   const onTrack = async (r) => {
     const c = r.combos[0];
     const k = betKey(r.game.code, c.legs);
     setTracked((s) => new Set(s).add(k));
+    addPlayer(r.game.code, r.name, c.name);
     try {
       await addBet({
         player: r.name, team: r.team, headshot: r.headshot, game_code: r.game.code, game_label: r.game.label, combo: c.name,
@@ -300,7 +314,7 @@ export default function DDScanner({ settings }) {
           </thead>
           <tbody key={scanId}>
             {shown.map((r, i) => <Row key={`${r.game.code}-${r.key}`} r={r} i={i} format={format} tdPts={tdPts} sgpBooks={sgpBooks} tdBooks={tdBooks}
-              tracked={tracked.has(betKey(r.game.code, r.combos[0].legs))} onTrack={onTrack} />)}
+              tracked={tracked.has(betKey(r.game.code, r.combos[0].legs))} playerTracked={trackedPlayers[`${r.game.code}|${r.name}`]} onTrack={onTrack} />)}
           </tbody>
         </table>
         )}
