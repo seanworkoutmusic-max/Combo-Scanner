@@ -6,7 +6,7 @@ const TABS = [
   { id: "props", label: "Parlay Builder", testid: "nav-tab-props", icon: Layers },
   { id: "live", label: "In-Game Tracker", testid: "nav-tab-live", icon: Crosshair },
   { id: "bets", label: "Bet Tracker", testid: "nav-tab-bets", icon: ClipboardList },
-  { id: "results", label: "Results", testid: "nav-tab-results", icon: TrendingUp },
+  { id: "results", label: "Performance", testid: "nav-tab-results", icon: TrendingUp },
 ];
 
 const Logo = () => (

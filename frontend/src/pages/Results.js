@@ -81,7 +81,6 @@ const tick = { fill: "#94a3b8", fontSize: 11 };
 
 const ProfitChart = ({ points, fmt, units }) => (
   <div data-testid="results-chart" className="rounded-xl border border-slate-800 bg-[#161616] px-5 pt-5 pb-3 h-96 flex flex-col">
-    <div className="text-xs font-medium uppercase tracking-wider text-slate-400 mb-4">Cumulative returns ({units ? "units" : "dollars"})</div>
     {points.length < 2 ? <div className="flex-1 grid place-items-center text-sm text-slate-500">Not enough settled bets for a graph yet.</div> : (
       <div className="flex-1 min-h-0">
       <ResponsiveContainer width="100%" height="100%">
@@ -89,7 +88,7 @@ const ProfitChart = ({ points, fmt, units }) => (
           <defs>
             <linearGradient id="pl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#22c55e" stopOpacity={0.22} /><stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} /></linearGradient>
           </defs>
-          <CartesianGrid stroke="#1f1f1f" vertical={false} />
+          <CartesianGrid stroke="#2e2e2e" strokeDasharray="3 3" />
           <XAxis dataKey="date" tick={tick} tickLine={false} axisLine={false} minTickGap={24} />
           <YAxis tickFormatter={axisFmt(units)} tick={tick} tickLine={false} axisLine={{ stroke: "#2a2a2a" }} width={64} />
           <ReferenceLine y={0} stroke="#2a2a2a" />
@@ -160,7 +159,7 @@ export default function Results() {
     <div data-testid="results-page" className="space-y-6">
       <div>
         <h1 className="flex items-center gap-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-          <TrendingUp className="h-8 w-8 text-white" /> Results
+          <TrendingUp className="h-8 w-8 text-white" /> Performance
         </h1>
       </div>
 

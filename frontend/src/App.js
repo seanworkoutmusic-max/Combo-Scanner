@@ -20,8 +20,8 @@ const loadSettings = () => {
   }
 };
 
-const PATH_TAB = { "/sean": "sean", "/kalshi": "scanner", "/parlay": "props", "/live": "live", "/bets": "bets", "/results": "results" };
-const TAB_PATH = { scanner: "/kalshi", props: "/parlay", live: "/live", bets: "/bets", results: "/results" };
+const PATH_TAB = { "/sean": "sean", "/kalshi": "scanner", "/parlay": "props", "/live": "live", "/bets": "bets", "/performance": "results", "/results": "results" };
+const TAB_PATH = { scanner: "/kalshi", props: "/parlay", live: "/live", bets: "/bets", results: "/performance" };
 const pathTab = () => PATH_TAB[window.location.pathname.replace(/\/+$/, "")];
 
 function App() {
