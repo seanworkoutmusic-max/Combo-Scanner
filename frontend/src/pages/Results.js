@@ -77,24 +77,24 @@ const ChartTip = ({ active, payload, fmt }) => active && payload?.length ? (
 ) : null;
 
 const axisFmt = (units) => (v) => `${v > 0 ? "+" : v < 0 ? "-" : ""}${units ? `${Math.abs(v / UNIT).toFixed(1)}u` : `$${Math.abs(v).toFixed(0)}`}`;
-const tick = { fill: "#64748b", fontSize: 11 };
+const tick = { fill: "#94a3b8", fontSize: 11 };
 
 const ProfitChart = ({ points, fmt, units }) => (
-  <div data-testid="results-chart" className="rounded-xl border border-slate-800 bg-[#181818] p-4 h-80 flex flex-col">
-    <div className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Cumulative returns ({units ? "units" : "dollars"})</div>
+  <div data-testid="results-chart" className="rounded-xl border border-slate-800 bg-[#161616] px-5 pt-5 pb-3 h-96 flex flex-col">
+    <div className="text-xs font-medium uppercase tracking-wider text-slate-400 mb-4">Cumulative returns ({units ? "units" : "dollars"})</div>
     {points.length < 2 ? <div className="flex-1 grid place-items-center text-sm text-slate-500">Not enough settled bets for a graph yet.</div> : (
       <div className="flex-1 min-h-0">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={points} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
           <defs>
-            <linearGradient id="pl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#fff" stopOpacity={0.18} /><stop offset="100%" stopColor="#fff" stopOpacity={0} /></linearGradient>
+            <linearGradient id="pl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#22c55e" stopOpacity={0.22} /><stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} /></linearGradient>
           </defs>
-          <CartesianGrid stroke="#262626" vertical={false} />
-          <XAxis dataKey="date" tick={tick} tickLine={false} axisLine={{ stroke: "#334155" }} minTickGap={24} />
-          <YAxis tickFormatter={axisFmt(units)} tick={tick} tickLine={false} axisLine={{ stroke: "#334155" }} width={64} />
-          <ReferenceLine y={0} stroke="#475569" strokeDasharray="4 4" />
-          <Tooltip content={<ChartTip fmt={fmt} />} />
-          <Area type="linear" dataKey="pl" stroke="#fff" strokeWidth={2} fill="url(#pl)" dot={false} activeDot={{ r: 4, fill: "#fff" }} />
+          <CartesianGrid stroke="#1f1f1f" vertical={false} />
+          <XAxis dataKey="date" tick={tick} tickLine={false} axisLine={false} minTickGap={24} />
+          <YAxis tickFormatter={axisFmt(units)} tick={tick} tickLine={false} axisLine={{ stroke: "#2a2a2a" }} width={64} />
+          <ReferenceLine y={0} stroke="#2a2a2a" />
+          <Tooltip content={<ChartTip fmt={fmt} />} cursor={{ stroke: "#334155" }} />
+          <Area type="linear" dataKey="pl" stroke="#22c55e" strokeWidth={2} fill="url(#pl)" dot={false} activeDot={{ r: 4, fill: "#22c55e", stroke: "#0E0E0E" }} />
         </AreaChart>
       </ResponsiveContainer>
       </div>

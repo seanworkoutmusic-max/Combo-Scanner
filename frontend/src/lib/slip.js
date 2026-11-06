@@ -51,10 +51,10 @@ const NICK = {
 const CITY = { LAC: "la", LAL: "la", GSW: "gs", SAS: "sa", NYK: "ny" };
 const slugTeam = (t) => `${CITY[t] || t.toLowerCase()}-${NICK[t] || ""}`;
 
-// Kalshi combos page for the game a leg belongs to, e.g. /combos/games/chi-bulls-at-mil-bucks/game-lines
+// Kalshi combos props page for the game a leg belongs to, e.g. /combos/games/chi-bulls-at-mil-bucks/props
 export const kalshiGameUrl = (ticker) => {
   const m = (ticker || "").split("-")[1]?.match(/^\d{2}[A-Z]{3}\d{2}([A-Z]{3})([A-Z]{3})$/);
   if (!m || !NICK[m[1]] || !NICK[m[2]]) return "https://kalshi.com/combos/basketball/nba";
-  return `https://kalshi.com/combos/games/${slugTeam(m[1])}-at-${slugTeam(m[2])}/game-lines`;
+  return `https://kalshi.com/combos/games/${slugTeam(m[1])}-at-${slugTeam(m[2])}/props`;
 };
 export const legOver = (l) => (l.threshold ? `Over ${l.threshold - 0.5}` : "Yes");
