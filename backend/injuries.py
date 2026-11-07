@@ -2,6 +2,7 @@ import asyncio
 import logging
 import re
 import time
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
@@ -10,6 +11,7 @@ from kalshi import norm_name
 
 logger = logging.getLogger(__name__)
 POSITIONS = ["pg", "sg", "sf", "pf", "c"]
+MAX_RETURN_DAYS = 3  # hide players whose est. return is further out than this
 KEY_MINUTES = 24  # season minutes for a non-starter on the depth chart to count as a key player
 _cache = {"t": 0, "data": None}
 
@@ -92,6 +94,7 @@ async def slate(ttl=600):
         ids = list(teams)
         charts = dict(zip(ids, await asyncio.gather(*(_depth(client, t) for t in ids), return_exceptions=True)))
     stats = {r["key"]: r for r in (await season_averages())["rows"]}
+    cutoff = (datetime.now(timezone(timedelta(hours=-5))) + timedelta(days=MAX_RETURN_DAYS)).strftime("%Y-%m-%d")
     for t in inj.json().get("injuries", []):
         if t["id"] not in teams:
             continue
@@ -103,8 +106,9 @@ async def slate(ttl=600):
             a, status = i["athlete"], i.get("status") or ""
             key = norm_name(a["displayName"])
             starter = key in starters or (stats.get(key) or {}).get("min", 0) >= KEY_MINUTES
-            if not starter:
-                continue  # key starters only
+            ret = (i.get("details") or {}).get("returnDate")
+            if not starter or (ret and ret > cutoff):
+                continue  # key starters back within a few days only
             pos, depth, nxt = _next_up(chart, out_keys, a["displayName"], starter=True)
             sitting = status.lower() in ("out", "doubtful")
             d = i.get("details") or {}
