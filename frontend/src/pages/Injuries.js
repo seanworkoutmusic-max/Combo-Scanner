@@ -8,13 +8,13 @@ import { LineupPanel } from "../components/props/LineupPanel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
 const POS = ["ALL", "PG", "SG", "SF", "PF", "C"];
-const STATUSES = ["all", "Out", "Doubtful", "Questionable", "Probable", "Day-To-Day"];
+const STATUSES = ["all", "Out", "Doubtful", "Questionable", "Probable"];
 const TONE = {
   out: "bg-red-500/15 text-red-300", doubtful: "bg-orange-500/15 text-orange-300", questionable: "bg-amber-500/15 text-amber-300",
   probable: "bg-emerald-500/15 text-emerald-300", "day-to-day": "bg-amber-500/15 text-amber-300",
 };
 const tip = (iso) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-const ret = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Day-to-day");
+const ret = (d, status) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : status);
 
 const InjuryRow = ({ r, g, settings, open, onToggle, i }) => (
   <>
@@ -27,7 +27,7 @@ const InjuryRow = ({ r, g, settings, open, onToggle, i }) => (
       </td>
       <td className="py-3 px-4"><span data-testid={`injury-status-${i}`} className={`px-2.5 py-1 rounded-full text-xs font-bold ${TONE[r.status.toLowerCase()] || "bg-slate-700 text-slate-200"}`}>{r.status}</span></td>
       <td className="py-3 px-4 text-slate-300">{r.injury}</td>
-      <td className="py-3 px-4 text-slate-300 whitespace-nowrap">{ret(r.return)}</td>
+      <td className="py-3 px-4 text-slate-300 whitespace-nowrap">{ret(r.return, r.status)}</td>
       <td className="py-3 pr-5 text-right whitespace-nowrap text-slate-400">
         Starting 5 <ChevronDown className={`inline h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
       </td>

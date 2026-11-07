@@ -74,6 +74,19 @@ def _lineup(chart, out_keys, injured, stats):
     return lineup
 
 
+def _status(i):
+    """ESPN only says Out / Day-To-Day; read the real game status from the blurb."""
+    text = (i.get("shortComment") or "").lower()
+    for word in ("doubtful", "questionable", "probable"):
+        if re.search(rf"\b{word}\b", text):
+            return word.title()
+    if re.search(r"\b(ruled out|is out|listed as out|won't play|will not play|out for)\b", text):
+        return "Out"
+    if i.get("status") == "Out":
+        return "Out"
+    return "Questionable"
+
+
 async def slate(ttl=600):
     """Tonight's games with every injured player, his depth chart spot and who is next up."""
     if _cache["data"] and time.time() - _cache["t"] < ttl:
@@ -101,9 +114,9 @@ async def slate(ttl=600):
         g, abbr = teams[t["id"]]
         chart = charts[t["id"]] if isinstance(charts[t["id"]], dict) else {}
         starters = {norm_name(v[0]["name"]) for v in chart.values() if v}
-        out_keys = {norm_name(i["athlete"]["displayName"]) for i in t.get("injuries", []) if (i.get("status") or "").lower() in ("out", "doubtful")}
+        out_keys = {norm_name(i["athlete"]["displayName"]) for i in t.get("injuries", []) if _status(i) in ("Out", "Doubtful")}
         for i in t.get("injuries", []):
-            a, status = i["athlete"], i.get("status") or ""
+            a, status = i["athlete"], _status(i)
             key = norm_name(a["displayName"])
             starter = key in starters or (stats.get(key) or {}).get("min", 0) >= KEY_MINUTES
             ret = (i.get("details") or {}).get("returnDate")
